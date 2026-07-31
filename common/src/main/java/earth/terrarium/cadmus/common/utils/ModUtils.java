@@ -8,7 +8,6 @@ import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.protections.ProtectionApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.compat.prometheus.PrometheusCompat;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimsPacket;
@@ -100,12 +99,8 @@ public class ModUtils {
         if (protection == null) {
             return ConstantComponents.NO_PERMISSION_ROLE;
         }
-        if (!player.hasPermissions(2)) {
-            if (!TeamApi.API.canModifySettings(player, id)) {
-                return ConstantComponents.NO_PERMISSION_TEAM;
-            } else if (player.getServer() == null || !PrometheusCompat.hasPermission(player.getServer(), player.getGameProfile(), protection.permission())) {
-                return ConstantComponents.NO_PERMISSION_ROLE;
-            }
+        if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, id)) {
+            return ConstantComponents.NO_PERMISSION_TEAM;
         }
         return null;
     }

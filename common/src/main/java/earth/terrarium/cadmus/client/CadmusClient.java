@@ -3,9 +3,7 @@ package earth.terrarium.cadmus.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
-import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.client.compat.prometheus.PrometheusClientCompat;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
@@ -34,11 +32,7 @@ public class CadmusClient {
         InputConstants.KEY_M,
         ConstantComponents.PROJECT_ODYSSEY_CATEGORY.getString());
 
-    public static void init() {
-        if (Cadmus.IS_PROMETHEUS_LOADED) {
-            PrometheusClientCompat.init();
-        }
-    }
+    public static void init() {}
 
     public static void onClientTick() {
         if (KEY_OPEN_CLAIM_MAP.consumeClick()) {

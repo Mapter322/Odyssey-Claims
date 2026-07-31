@@ -54,10 +54,10 @@ subprojects {
             }
         }
         maven(url = "https://jm.gserv.me/repository/maven-public/")
+        maven(url = "https://repo.lucko.me/")
     }
 
     dependencies {
-        val prometheusVersion: String by project
         val reiVersion: String by project
         val journeymapVersion: String by project
         val journeymapApiVersion: String by project
@@ -81,14 +81,9 @@ subprojects {
         "modCompileOnly"(group = "info.journeymap", name = "journeymap-api-$modLoader", version = journeymapApiVersion)
 
         if (isCommon) {
-            "modCompileOnly"(group = "earth.terrarium.prometheus", name = "prometheus-$modLoader-$minecraftVersion", version = prometheusVersion) {
-                isTransitive = false
-            }
-
             "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-api", version = reiVersion)
             "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-default-plugin", version = reiVersion)
         } else {
-            "modCompileOnly"(group = "earth.terrarium.prometheus", name = "prometheus-$modLoader-$minecraftVersion", version = prometheusVersion)
             // "modLocalRuntime"(group = "me.shedaniel", name = "RoughlyEnoughItems-$modLoader", version = reiVersion)
             "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-api-$modLoader", version = reiVersion)
             "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-default-plugin-$modLoader", version = reiVersion)
@@ -97,9 +92,13 @@ subprojects {
             // "modRuntimeOnly"(group = "maven.modrinth", name = "journeymap", version = "$journeymapVersion+$modLoader")
             // "modRuntimeOnly"(group = "maven.modrinth", name = "common-network", version = project.properties["commonNetwork${modLoader}Version"] as String)
         }
+
     }
 
     java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
         withSourcesJar()
     }
 

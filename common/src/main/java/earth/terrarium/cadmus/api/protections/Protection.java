@@ -1,13 +1,11 @@
 package earth.terrarium.cadmus.api.protections;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.compat.prometheus.PrometheusCompat;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import it.unimi.dsi.fastutil.Pair;
@@ -32,14 +30,14 @@ public interface Protection {
     String setting();
 
     /**
-     * The permission name, used to enable or disable the protection. Used when Prometheus is installed in the `/roles` menu.
+     * The permission name, used to enable or disable the protection.
      *
      * @return the permission name
      */
     String permission();
 
     /**
-     * The personal permission name, used to allow players to manage their personal claim settings. Used when Prometheus is installed in the `/roles` menu.
+     * The personal permission name, used to allow players to manage their personal claim settings.
      *
      * @return the personal permission name
      */
@@ -58,14 +56,6 @@ public interface Protection {
      * @return the game rule key
      */
     GameRules.Key<GameRules.BooleanValue> gameRule();
-
-    private boolean hasPermission(MinecraftServer server, GameProfile profile) {
-        return Cadmus.IS_PROMETHEUS_LOADED && PrometheusCompat.hasPermission(server, profile, permission());
-    }
-
-    private boolean hasPermission(Player player) {
-        return hasPermission(player.getServer(), player.getGameProfile());
-    }
 
     private boolean gameRuleEnabled(Level level) {
         return level.getGameRules().getBoolean(gameRule());
@@ -99,7 +89,6 @@ public interface Protection {
             return flagEnabled(level.getServer(), id);
         }
 
-        if (hasPermission(level.getServer(), player)) return true;
         if (gameRuleEnabled(level)) return true;
 
         if (settingEnabled(level.getServer(), id)) return true;

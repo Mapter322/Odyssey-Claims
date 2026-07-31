@@ -1,6 +1,5 @@
 package earth.terrarium.cadmus;
 
-import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
@@ -8,7 +7,7 @@ import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
 import earth.terrarium.cadmus.common.claims.limit.VanillaClaimLimiter;
-import earth.terrarium.cadmus.common.compat.prometheus.PrometheusCompat;
+import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.protections.ClaimSettings;
@@ -29,9 +28,8 @@ public class Cadmus {
 
     public static final String MOD_ID = "cadmus";
 
-    public static final boolean IS_PROMETHEUS_LOADED = ModInfoUtils.isModLoaded("prometheus");
-    public static final int DEFAULT_MAX_CLAIMS = 1096;
-    public static final int DEFAULT_MAX_CHUNK_LOADED_CLAIMS = 64;
+    public static final int DEFAULT_MAX_CLAIMS = CadmusConfig.get().defaultMaxClaims;
+    public static final int DEFAULT_MAX_CHUNK_LOADED_CLAIMS = CadmusConfig.get().defaultMaxChunkLoadedClaims;
 
     public static int FORCE_LOADED_CHUNK_COUNT;
 
@@ -49,7 +47,6 @@ public class Cadmus {
         TeamApi.API.register(VanillaTeamProvider.ID, new VanillaTeamProvider());
         TeamApi.API.register(AdminTeamProvider.ID, new AdminTeamProvider());
         ClaimLimitApi.API.register(new VanillaClaimLimiter());
-        if (IS_PROMETHEUS_LOADED) PrometheusCompat.init();
     }
 
     public static void onEnterSection(Player player, ChunkPos pos) {

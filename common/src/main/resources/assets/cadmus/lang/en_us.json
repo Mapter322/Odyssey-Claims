@@ -89,8 +89,6 @@
   "gamerule.doClaimedMobGriefing.description": "Claimed Mob Griefing",
   "gamerule.doClaimedItemPickup.description": "Claimed Item Pickup",
 
-  "option.prometheus.cadmus/v1": "Cadmus",
-
   "cadmus.block_breaking.permission":  "Claimed Block Breaking",
   "cadmus.block_placing.permission":  "Claimed Block Placing",
   "cadmus.block_interactions.permission":  "Claimed Block Interactions",
