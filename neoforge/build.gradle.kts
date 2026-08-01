@@ -24,6 +24,6 @@ dependencies {
 
     forgeRuntimeLibrary("com.teamresourceful:bytecodecs:1.0.2")
 
-    modLocalRuntime(group = "maven.modrinth", name = "xaeros-world-map", version = "1.39.0_NeoForge_1.21")
-    modLocalRuntime(group = "maven.modrinth", name = "xaeros-minimap", version = "24.3.0_NeoForge_1.21")
+    modLocalRuntime(group = "maven.modrinth", name = "xaeros-world-map", version = "neoforge-1.21.1-1.44.2")
+    modLocalRuntime(group = "maven.modrinth", name = "xaeros-minimap", version = "neoforge-1.21.1-26.4.2")
 }

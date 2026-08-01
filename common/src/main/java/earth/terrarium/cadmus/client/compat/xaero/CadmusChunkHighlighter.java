@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import xaero.map.WorldMap;
+import xaero.map.common.config.option.WorldMapProfiledConfigOptions;
 import xaero.map.highlight.ChunkHighlighter;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class CadmusChunkHighlighter extends ChunkHighlighter {
 
     @Override
     protected int[] getColors(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        if (!WorldMap.settings.displayClaims) return null;
+        if (!displayClaims()) return null;
 
         TeamId id = getClaim(dimension, chunkX, chunkZ).map(Pair::left).orElse(null);
         if (id == null) return null;
@@ -46,8 +47,8 @@ public class CadmusChunkHighlighter extends ChunkHighlighter {
 
         int color = getColor(id);
         int claimColorFormatted = (color & 255) << 24 | (color >> 8 & 255) << 16 | (color >> 16 & 255) << 8;
-        int fillOpacity = WorldMap.settings.claimsFillOpacity;
-        int borderOpacity = WorldMap.settings.claimsBorderOpacity;
+        int fillOpacity = claimsFillOpacity();
+        int borderOpacity = claimsBorderOpacity();
         int centerColor = claimColorFormatted | 255 * fillOpacity / 100;
         int sideColor = claimColorFormatted | 255 * borderOpacity / 100;
 
@@ -61,18 +62,18 @@ public class CadmusChunkHighlighter extends ChunkHighlighter {
 
     @Override
     public int calculateRegionHash(ResourceKey<Level> dimension, int regionX, int regionZ) {
-        if (!WorldMap.settings.displayClaims) return 0;
+        if (!displayClaims()) return 0;
         if (!regionHasHighlights(dimension, regionX, regionZ)) return 0;
 
         TeamId id = getClaim(dimension, regionX << 5, regionZ << 5).map(Pair::left).orElse(null);
         if (id == null) return 0;
 
-        long accumulator = WorldMap.settings.claimsBorderOpacity;
+        long accumulator = claimsBorderOpacity();
         accumulator += id.id().getLeastSignificantBits();
         accumulator *= 37L;
         accumulator += id.id().getMostSignificantBits();
         accumulator *= 37L;
-        accumulator = accumulator * 37L + (long) WorldMap.settings.claimsFillOpacity;
+        accumulator = accumulator * 37L + (long) claimsFillOpacity();
         accumulator = accumulator * 37L + regionX;
         accumulator = accumulator * 37L + regionZ;
 
@@ -86,7 +87,7 @@ public class CadmusChunkHighlighter extends ChunkHighlighter {
 
     @Override
     public Component getChunkHighlightSubtleTooltip(ResourceKey<Level> dimension, int x, int z) {
-        if (!WorldMap.settings.displayClaims) return null;
+        if (!displayClaims()) return null;
         var claim = getClaim(dimension, x, z).orElse(null);
         if (claim == null) return null;
         Component name = TeamApi.API.getName(CadmusClient.level(), claim.left());
@@ -119,5 +120,17 @@ public class CadmusChunkHighlighter extends ChunkHighlighter {
             TeamApi.API.getColor(CadmusClient.level(), id),
             Color::getValue,
             MinecraftColors.AQUA.getValue());
+    }
+
+    private static boolean displayClaims() {
+        return (Boolean) WorldMap.INSTANCE.getConfigs().getClientConfigManager().getEffective(WorldMapProfiledConfigOptions.OPAC_CLAIMS);
+    }
+
+    private static int claimsBorderOpacity() {
+        return (Integer) WorldMap.INSTANCE.getConfigs().getClientConfigManager().getEffective(WorldMapProfiledConfigOptions.OPAC_CLAIMS_BORDER_OPACITY);
+    }
+
+    private static int claimsFillOpacity() {
+        return (Integer) WorldMap.INSTANCE.getConfigs().getClientConfigManager().getEffective(WorldMapProfiledConfigOptions.OPAC_CLAIMS_FILL_OPACITY);
     }
 }
