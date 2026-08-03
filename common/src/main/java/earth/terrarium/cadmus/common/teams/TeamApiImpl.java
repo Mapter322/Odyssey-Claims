@@ -58,7 +58,7 @@ public class TeamApiImpl implements TeamApi {
 
     @Override
     public Component getName(Level level, TeamId id) {
-        return teams.get(id.provider()).getName(level, id.id()).orElseGet(() -> {
+        return Optional.ofNullable(teams.get(id.provider())).flatMap(it -> it.getName(level, id.id())).orElseGet(() -> {
             if (!level.isClientSide()) {
                 MinecraftServer server = level.getServer();
                 if (server == null) return ConstantComponents.UNKNOWN;
@@ -87,7 +87,7 @@ public class TeamApiImpl implements TeamApi {
 
     @Override
     public Color getColor(Level level, TeamId id) {
-        return Optional.ofNullable(getProvider(id.provider())).flatMap(it -> it.getColor(level, id.id())).orElseGet(() -> Optional.ofNullable(CadmusClient.TEAM_INFO.get(id).color()).orElse(ModUtils.uuidToColor(id.id())));
+        return Optional.ofNullable(getProvider(id.provider())).flatMap(it -> it.getColor(level, id.id())).orElseGet(() -> Optional.ofNullable(CadmusClient.TEAM_INFO.get(id)).map(TeamInfo::color).orElse(ModUtils.uuidToColor(id.id())));
     }
 
     @Override
