@@ -37,10 +37,14 @@ public class CadmusClientNeoForge {
     }
 
     public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
-        event.getDispatcher().register((Commands.literal("claimmap").executes(context -> {
-            Minecraft.getInstance().tell(CadmusClient::openClaimMap);
-            return 0;
-        })));
+        event.getDispatcher().register(Commands.literal("cadmus")
+            .then(Commands.literal("claimmap")
+                .executes(context -> {
+                    Minecraft.getInstance().tell(CadmusClient::openClaimMap);
+                    return 0;
+                })
+            )
+        );
     }
 
     @SubscribeEvent

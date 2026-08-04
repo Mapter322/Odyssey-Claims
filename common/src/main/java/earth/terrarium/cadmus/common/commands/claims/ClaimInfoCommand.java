@@ -15,20 +15,21 @@ import net.minecraft.world.level.ChunkPos;
 public class ClaimInfoCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("claim")
-            .then(Commands.literal("info")
-                .then(Commands.argument("pos", ColumnPosArgument.columnPos())
+        dispatcher.register(Commands.literal("cadmus")
+            .then(Commands.literal("claim")
+                .then(Commands.literal("info")
+                    .then(Commands.argument("pos", ColumnPosArgument.columnPos())
+                        .executes(context -> {
+                            ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
+                            getInfo(context.getSource(), pos);
+                            return 1;
+                        }))
                     .executes(context -> {
-                        ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
-                        getInfo(context.getSource(), pos);
+                        getInfo(context.getSource(), context.getSource().getPlayerOrException().chunkPosition());
                         return 1;
-                    }))
-                .executes(context -> {
-                    getInfo(context.getSource(), context.getSource().getPlayerOrException().chunkPosition());
-                    return 1;
-                })
-            )
-        );
+                    })
+                )
+            ));
     }
 
     private static void getInfo(CommandSourceStack source, ChunkPos pos) {

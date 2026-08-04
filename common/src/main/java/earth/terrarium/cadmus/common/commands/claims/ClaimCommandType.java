@@ -1,11 +1,11 @@
 package earth.terrarium.cadmus.common.commands.claims;
 
 public enum ClaimCommandType {
-    CLAIM("claim"),
-    CLAIM_AREA("claim area"),
-    UNCLAIM("unclaim"),
-    UNCLAIM_AREA("unclaim area"),
-    UNCLAIM_ALL("unclaim all"),
+    CLAIM("cadmus claim"),
+    CLAIM_AREA("cadmus claim area"),
+    UNCLAIM("cadmus unclaim"),
+    UNCLAIM_AREA("cadmus unclaim area"),
+    UNCLAIM_ALL("cadmus unclaim all"),
     ;
 
     private final String command;

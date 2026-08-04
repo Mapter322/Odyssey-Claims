@@ -31,32 +31,33 @@ public class ClaimSettingsCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ProtectionApi.API.getSettings().forEach(setting ->
-            dispatcher.register(Commands.literal("claim")
-                .then(Commands.literal("settings")
-                    .then(Commands.literal(setting)
-                        .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
-                            .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
-                                .then(Commands.argument("value", StringArgumentType.string())
-                                    .suggests(TRI_STATE_SUGGESTION_PROVIDER)
+            dispatcher.register(Commands.literal("cadmus")
+                .then(Commands.literal("claim")
+                    .then(Commands.literal("settings")
+                        .then(Commands.literal(setting)
+                            .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
+                                .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
+                                    .then(Commands.argument("value", StringArgumentType.string())
+                                        .suggests(TRI_STATE_SUGGESTION_PROVIDER)
+                                        .executes(context -> {
+                                            ServerPlayer player = context.getSource().getPlayerOrException();
+                                            TeamId teamId = TeamId.fromCommand(context);
+                                            checkPermissions(player, teamId, setting);
+                                            String value = StringArgumentType.getString(context, "value");
+                                            set(context.getSource(), teamId, setting, value);
+                                            return 1;
+                                        })
+                                    )
                                     .executes(context -> {
-                                        ServerPlayer player = context.getSource().getPlayerOrException();
-                                        TeamId teamId = TeamId.fromCommand(context);
-                                        checkPermissions(player, teamId, setting);
-                                        String value = StringArgumentType.getString(context, "value");
-                                        set(context.getSource(), teamId, setting, value);
+                                        get(context.getSource(), TeamId.fromCommand(context), setting);
                                         return 1;
                                     })
                                 )
-                                .executes(context -> {
-                                    get(context.getSource(), TeamId.fromCommand(context), setting);
-                                    return 1;
-                                })
                             )
                         )
                     )
                 )
-            )
-        );
+        ));
     }
 
     private static void set(CommandSourceStack source, TeamId id, String setting, String value) throws CommandSyntaxException {

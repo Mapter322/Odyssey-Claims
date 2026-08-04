@@ -22,32 +22,33 @@ public class UnclaimCommand {
     private static final SimpleCommandExceptionType NOT_OWNER = new SimpleCommandExceptionType(ConstantComponents.NOT_OWNER);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("unclaim")
-            .then(Commands.literal("all")
-                .executes(context -> {
-                    unclaimAll(context.getSource());
-                    return 1;
-                }))
-            .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
-                .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
+        dispatcher.register(Commands.literal("cadmus")
+            .then(Commands.literal("unclaim")
+                .then(Commands.literal("all")
                     .executes(context -> {
-                        unclaimAll(context.getSource(), TeamId.fromCommand(context));
+                        unclaimAll(context.getSource());
+                        return 1;
+                    }))
+                .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
+                    .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
+                        .executes(context -> {
+                            unclaimAll(context.getSource(), TeamId.fromCommand(context));
+                            return 1;
+                        })
+                    )
+                )
+                .then(Commands.argument("pos", ColumnPosArgument.columnPos())
+                    .executes(context -> {
+                        ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
+                        unclaim(context.getSource(), pos);
                         return 1;
                     })
                 )
-            )
-            .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                 .executes(context -> {
-                    ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
-                    unclaim(context.getSource(), pos);
+                    unclaim(context.getSource(), context.getSource().getPlayerOrException().chunkPosition());
                     return 1;
                 })
-            )
-            .executes(context -> {
-                unclaim(context.getSource(), context.getSource().getPlayerOrException().chunkPosition());
-                return 1;
-            })
-        );
+            ));
     }
 
     private static void unclaim(CommandSourceStack source, ChunkPos pos) throws CommandSyntaxException {

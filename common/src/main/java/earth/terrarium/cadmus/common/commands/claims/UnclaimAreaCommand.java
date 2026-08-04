@@ -19,20 +19,21 @@ import java.util.stream.Collectors;
 public class UnclaimAreaCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("unclaim")
-            .then(Commands.literal("area")
-                .then(Commands.argument("startPos", ColumnPosArgument.columnPos())
-                    .then(Commands.argument("endPos", ColumnPosArgument.columnPos())
-                        .executes(context -> {
-                            ChunkPos startPos = ColumnPosArgument.getColumnPos(context, "startPos").toChunkPos();
-                            ChunkPos endPos = ColumnPosArgument.getColumnPos(context, "endPos").toChunkPos();
-                            unclaim(context.getSource(), startPos, endPos);
-                            return 1;
-                        })
+        dispatcher.register(Commands.literal("cadmus")
+            .then(Commands.literal("unclaim")
+                .then(Commands.literal("area")
+                    .then(Commands.argument("startPos", ColumnPosArgument.columnPos())
+                        .then(Commands.argument("endPos", ColumnPosArgument.columnPos())
+                            .executes(context -> {
+                                ChunkPos startPos = ColumnPosArgument.getColumnPos(context, "startPos").toChunkPos();
+                                ChunkPos endPos = ColumnPosArgument.getColumnPos(context, "endPos").toChunkPos();
+                                unclaim(context.getSource(), startPos, endPos);
+                                return 1;
+                            })
+                        )
                     )
                 )
-            )
-        );
+            ));
     }
 
     private static void unclaim(CommandSourceStack source, ChunkPos startPos, ChunkPos endPos) throws CommandSyntaxException {

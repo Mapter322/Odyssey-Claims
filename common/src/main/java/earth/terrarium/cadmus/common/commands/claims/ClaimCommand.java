@@ -26,33 +26,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ClaimCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("claim")
-            .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
-                .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
-                    .then(Commands.argument("pos", ColumnPosArgument.columnPos())
-                        .then(Commands.argument("chunkload", BoolArgumentType.bool())
+        dispatcher.register(Commands.literal("cadmus")
+            .then(Commands.literal("claim")
+                .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
+                    .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
+                        .then(Commands.argument("pos", ColumnPosArgument.columnPos())
+                            .then(Commands.argument("chunkload", BoolArgumentType.bool())
+                                .executes(context -> {
+                                    ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
+                                    boolean chunkload = BoolArgumentType.getBool(context, "chunkload");
+                                    TeamId id = TeamId.fromCommand(context);
+                                    claim(context.getSource(), id, pos, chunkload);
+                                    return 1;
+                                })
+                                .executes(context -> {
+                                    ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
+                                    TeamId id = TeamId.fromCommand(context);
+                                    claim(context.getSource(), id, pos, false);
+                                    return 1;
+                                }))
                             .executes(context -> {
-                                ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
-                                boolean chunkload = BoolArgumentType.getBool(context, "chunkload");
                                 TeamId id = TeamId.fromCommand(context);
-                                claim(context.getSource(), id, pos, chunkload);
+                                claim(context.getSource(), id, context.getSource().getPlayerOrException().chunkPosition(), false);
                                 return 1;
                             })
-                            .executes(context -> {
-                                ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
-                                TeamId id = TeamId.fromCommand(context);
-                                claim(context.getSource(), id, pos, false);
-                                return 1;
-                            }))
-                        .executes(context -> {
-                            TeamId id = TeamId.fromCommand(context);
-                            claim(context.getSource(), id, context.getSource().getPlayerOrException().chunkPosition(), false);
-                            return 1;
-                        })
+                        )
                     )
                 )
-            )
-        );
+            ));
     }
 
     private static void claim(CommandSourceStack source, TeamId id, ChunkPos pos, boolean chunkload) throws CommandSyntaxException {
