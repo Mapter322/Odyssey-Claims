@@ -17,7 +17,7 @@ public record ColorFlag(String id, Color value) implements Flag<Color> {
 
     @Override
     public ArgumentBuilder<CommandSourceStack, ?> createArgument(String argument) {
-        return Commands.argument(argument, StringArgumentType.word());
+        return Commands.argument(argument, StringArgumentType.greedyString());
     }
 
     @Override

@@ -15,6 +15,7 @@ public class LabelledEntry extends BaseParentWidget {
     private int color = 0xFFFFFF;
     private int leftPadding = 2;
     private boolean lockedWidth = false;
+    private int entryYOffset = 0;
 
     public LabelledEntry(Font font, Component label, AbstractWidget entry) {
         super(0, Math.max(font.lineHeight, entry.getHeight()));
@@ -54,6 +55,11 @@ public class LabelledEntry extends BaseParentWidget {
         return this;
     }
 
+    public LabelledEntry setEntryYOffset(int offset) {
+        this.entryYOffset = offset;
+        return this;
+    }
+
     @Override
     public void setX(int x) {
         super.setX(x);
@@ -63,7 +69,7 @@ public class LabelledEntry extends BaseParentWidget {
     @Override
     public void setY(int y) {
         super.setY(y);
-        this.entry.setY(y + (int) ((this.height - this.entry.getHeight()) * this.alignment));
+        this.entry.setY(y + (int) ((this.height - this.entry.getHeight()) * this.alignment) + entryYOffset);
     }
 
     public int getTextY() {

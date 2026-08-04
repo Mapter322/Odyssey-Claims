@@ -1,22 +1,18 @@
 package earth.terrarium.cadmus.client;
 
-import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.BulkClaimSettingsPacket;
-import earth.terrarium.cadmus.common.network.packets.serverbound.ClaimColorPacket;
 import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.base.BaseParentWidget;
 import earth.terrarium.olympus.client.components.base.ListWidget;
 import earth.terrarium.olympus.client.components.compound.radio.RadioState;
 import earth.terrarium.olympus.client.components.renderers.WidgetRenderers;
 import earth.terrarium.olympus.client.constants.MinecraftColors;
-import earth.terrarium.olympus.client.ui.OverlayAlignment;
 import earth.terrarium.olympus.client.ui.UIConstants;
 import earth.terrarium.olympus.client.ui.modals.BaseModal;
-import earth.terrarium.olympus.client.utils.State;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.network.chat.Component;
@@ -26,9 +22,7 @@ import java.util.Map;
 
 public class ClaimConfigModal extends BaseModal {
     private final Map<String, RadioState<TriState>> settings = new HashMap<>();
-    private final State<Color> color;
     private final TeamId selectedTeam;
-    private final boolean canModifyColor;
 
     protected ClaimConfigModal(ClaimMapScreen background) {
         super(ConstantComponents.SETTINGS, background);
@@ -39,9 +33,7 @@ public class ClaimConfigModal extends BaseModal {
             case FALSE -> 2;
         })));
 
-        this.color = State.of(background.getColor());
         this.selectedTeam = background.selected.get();
-        this.canModifyColor = background.canModifyColor();
     }
 
     @Override
@@ -51,22 +43,6 @@ public class ClaimConfigModal extends BaseModal {
         renderedSettings.setPosition(modalContentLeft, modalContentTop - 4);
 
         renderedSettings.add(new BaseParentWidget(0, 0) {});
-
-        if (canModifyColor) {
-            renderedSettings.add(Widgets.labelled(font, Component.literal("Color"), Widgets.carousel(widget -> {
-                widget.withSize(100, 20);
-                widget.withContents(colorLayout -> {
-                    colorLayout.withChild(Widgets.colorInput(color, textBox -> {
-                        textBox.withSize(80, 20);
-                    }));
-                    colorLayout.withChild(Widgets.colorPicker(color, false, button -> {
-                        button.withSize(20);
-                    }, colorPickerOverlay -> {
-                        colorPickerOverlay.withAlignment(OverlayAlignment.BOTTOM_RIGHT);
-                    }));
-                });
-            })));
-        }
 
         this.settings.forEach((setting, state) -> renderedSettings.add(Widgets.labelled(font, Component.literal(setting), Widgets.tristate(state))));
 
@@ -82,11 +58,6 @@ public class ClaimConfigModal extends BaseModal {
                 this.settings.forEach((key, value) -> finalSettings.put(key, value.get()));
                 var packet = new BulkClaimSettingsPacket(selectedTeam, finalSettings);
                 NetworkHandler.CHANNEL.sendToServer(packet);
-
-                if (canModifyColor) {
-                    NetworkHandler.CHANNEL.sendToServer(new ClaimColorPacket(selectedTeam, color.get()));
-                    ((ClaimMapScreen) this.background).updateColor(color.get());
-                }
                 onClose();
             });
         }), layoutSettings -> {
