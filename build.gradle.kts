@@ -74,7 +74,7 @@ subprojects {
         })
 
         "modApi"(group = "com.teamresourceful.resourcefullib", name = "resourcefullib-$modLoader-$minecraftVersion", version = "3.0.12")
-        val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-$minecraftVersion", version = "1.0.9") {
+        val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-$minecraftVersion", version = "1.0.19") {
             isTransitive = false
         }
 
