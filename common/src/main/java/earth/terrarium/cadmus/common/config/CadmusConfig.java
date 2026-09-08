@@ -19,6 +19,7 @@ public class CadmusConfig {
 
     public int defaultMaxClaims = 1096;
     public int defaultMaxChunkLoadedClaims = 64;
+    public int minChunksBetweenTowns = 10;
 
     public static CadmusConfig get() {
         if (INSTANCE == null) {

@@ -4,6 +4,7 @@ import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTownsPacket;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
@@ -40,6 +41,7 @@ public final class TownManager {
         if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return false;
         int current = ClaimApi.API.getOwnedClaims(player.level(), team).map(Map::size).orElse(0);
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return false;
+        if (isTooCloseToOtherTowns(player.server, positions, null)) return false;
 
         Town town = new Town(UUID.randomUUID(), team);
         town.chunks().addAll(positions);
@@ -68,6 +70,7 @@ public final class TownManager {
         if (!reachable.containsAll(positions)) return false;
         int current = ClaimApi.API.getOwnedClaims(player.level(), town.team()).map(Map::size).orElse(0);
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(town.team())) return false;
+        if (isTooCloseToOtherTowns(player.server, positions, townId)) return false;
 
         town.chunks().addAll(positions);
         CadmusSaveData.read(player.server).setDirty();
@@ -80,6 +83,20 @@ public final class TownManager {
 
     private static Set<ChunkPos> positions(ChunkPos start, ChunkPos end) {
         return ChunkPos.rangeClosed(start, end).collect(Collectors.toSet());
+    }
+
+    private static boolean isTooCloseToOtherTowns(MinecraftServer server, Set<ChunkPos> positions, UUID excludeTownId) {
+        int minDistance = CadmusConfig.get().minChunksBetweenTowns;
+        if (minDistance <= 1) return false;
+        for (Town other : CadmusSaveData.read(server).towns().values()) {
+            if (other.id().equals(excludeTownId)) continue;
+            for (ChunkPos pos : positions) {
+                for (ChunkPos otherPos : other.chunks()) {
+                    if (Math.max(Math.abs(pos.x - otherPos.x), Math.abs(pos.z - otherPos.z)) < minDistance) return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static void removeChunk(Level level, TeamId team, ChunkPos pos) {
