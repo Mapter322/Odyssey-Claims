@@ -30,6 +30,7 @@ import earth.terrarium.olympus.client.constants.MinecraftColors;
 import earth.terrarium.olympus.client.ui.OverlayAlignment;
 import earth.terrarium.olympus.client.ui.UIConstants;
 import earth.terrarium.olympus.client.ui.UIIcons;
+import earth.terrarium.olympus.client.ui.context.ContextMenu;
 import earth.terrarium.olympus.client.ui.modals.DeleteConfirmModal;
 import earth.terrarium.olympus.client.utils.State;
 import it.unimi.dsi.fastutil.Pair;
@@ -65,12 +66,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private final ClientLevel level = player.clientLevel;
 
     private final State<MapRenderer> mapState = State.empty();
-    private final ContextMenu contextMenu = new ContextMenu();
+    private final ClaimContextMenu contextMenu = new ClaimContextMenu();
 
     private MapWidget mapWidget;
     private Button settingsButton;
     private final Map<TeamId, TeamData> teams = new HashMap<>();
     private List<UUID> availableTowns = List.of();
+    private TeamId fallbackTeam;
     public static final DropdownState<UUID> selected = DropdownState.of(null);
 
     private float chunkScale;
@@ -104,6 +106,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
                 State.empty()
             ));
         });
+        this.fallbackTeam = this.teams.keySet().stream().findFirst().orElse(null);
         this.availableTowns = CadmusClient.TOWNS.values().stream()
             .filter(town -> teams.containsKey(town.team()))
             .map(CadmusClient.ClientTown::id)
@@ -191,30 +194,47 @@ public class ClaimMapScreen extends BaseCursorScreen {
             }
         );
 
-        frame.addChild(
-            Widgets.dropdown(
-                selected,
-                availableTowns,
-                townId -> Optional.ofNullable(CadmusClient.TOWNS.get(townId)).map(CadmusClient.ClientTown::name).orElse(ConstantComponents.NO_TOWNS.copy()),
-                button -> {
-                    button.withSize(MAP_SIZE / 2, BUTTON_HEIGHT);
-                    if (availableTowns.size() <= 1) {
-                        button.asDisabled();
-                    }
-                },
-                dropdown -> dropdown.withAlignment(OverlayAlignment.TOP_RIGHT)
-            ),
-            (settings) -> {
-                settings.padding(PADDING);
-                settings.alignHorizontallyLeft();
-                settings.alignVerticallyBottom();
-            }
-        );
+        Button townButton = Widgets.button()
+            .withRenderer(selected.withRenderer((value, open) -> value == null
+                ? WidgetRenderers.ellpsisWithChevron(open)
+                : WidgetRenderers.textWithChevron(townName(value), open)).withPadding(4, 6))
+            .withSize(MAP_SIZE / 2, BUTTON_HEIGHT)
+            .withCallback(this::openTownMenu);
+        selected.setButton(townButton);
+        frame.addChild(townButton, (settings) -> {
+            settings.padding(PADDING);
+            settings.alignHorizontallyLeft();
+            settings.alignVerticallyBottom();
+        });
 
         settingsButton.active = selectedTeam() != null && getData().settings().isEmpty();
 
         frame.arrangeElements();
         frame.visitWidgets(this::addRenderableWidget);
+    }
+
+    private void openTownMenu() {
+        List<UUID> towns = List.copyOf(this.availableTowns);
+        selected.setOpened(true);
+        ContextMenu.open(ctx -> {
+            ctx.withBounds(MAP_SIZE / 2, 150)
+                .withAlignment(OverlayAlignment.TOP_RIGHT, selected)
+                .withTexture(UIConstants.LIST_BG)
+                .withCloseCallback(() -> selected.setOpened(false));
+            for (UUID town : towns) {
+                ctx.add(() -> Widgets.button()
+                    .withTexture(UIConstants.LIST_ENTRY)
+                    .withRenderer(WidgetRenderers.text(townName(town)).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                    .withSize(MAP_SIZE / 2, 20)
+                    .withCallback(() -> selected.set(town)));
+            }
+        });
+    }
+
+    private Component townName(UUID townId) {
+        return Optional.ofNullable(CadmusClient.TOWNS.get(townId))
+            .map(CadmusClient.ClientTown::name)
+            .orElse(ConstantComponents.NO_TOWNS.copy());
     }
 
     @Override
@@ -258,7 +278,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     TeamId selectedTeam() {
         return Optional.ofNullable(CadmusClient.TOWNS.get(selected.get()))
             .map(CadmusClient.ClientTown::team)
-            .orElse(null);
+            .orElse(this.fallbackTeam);
     }
 
     @Override
@@ -368,7 +388,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
         boolean canClaim = hasUnclaimedChunk(startPos, endPos);
         boolean canUnclaim = hasOwnedClaim(startPos, endPos);
         boolean allFree = allUnclaimed(startPos, endPos);
-        boolean hasTeam = selectedTeam() != null;
+        boolean hasTeam = selected.get() != null;
         contextMenu.addItem(ConstantComponents.CLAIM, () -> {
             CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             clearSelection();
@@ -394,8 +414,9 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     private boolean hasOwnedClaim(ChunkPos startPos, ChunkPos endPos) {
-        if (selected.get() == null) return false;
-        UUID teamId = selectedTeam().id();
+        TeamId team = selectedTeam();
+        if (team == null) return false;
+        UUID teamId = team.id();
         for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
             for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
                 ClaimTile claim = claims.get(new ChunkPos(x, z));
@@ -705,7 +726,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
         public static final TeamData EMPTY = new TeamData("empty", 0, 0,0, 0, new HashMap<>(), State.of(Color.DEFAULT), State.of(false));
     }
 
-    private static final class ContextMenu {
+    private static final class ClaimContextMenu {
         private static final int BACKGROUND = 0xF0111111;
         private static final int BORDER = 0xFF555555;
         private static final int HOVER = 0x55FFFFFF;
