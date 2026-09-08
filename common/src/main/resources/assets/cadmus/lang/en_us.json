@@ -55,6 +55,14 @@
   "command.cadmus.exception.team_does_not_exist": "This team does not exist.",
   "command.cadmus.exception.protection_does_not_exist": "This protection setting does not exist.",
 
+  "command.cadmus.exception.town.no_permission": "You do not have permission to manage this town.",
+  "command.cadmus.exception.town.max_towns": "You have reached the maximum amount of towns",
+  "command.cadmus.exception.town.chunk_claimed": "This chunk is already claimed",
+  "command.cadmus.exception.town.claim_limit": "You don't have enough claims available",
+  "command.cadmus.exception.town.too_close": "Too close to another town",
+  "command.cadmus.exception.town.not_adjacent": "This chunk doesn't match the selected town",
+  "command.cadmus.exception.town.not_found": "This town does not exist.",
+
   "command.cadmus.exception.admin_team_already_exists": "This admin team already exists.",
   "command.cadmus.exception.admin_team_does_not_exist": "This admin team does not exist.",
   "command.cadmus.exception.admin_team_has_no_flags": "This admin team has no flags.",
@@ -118,8 +126,9 @@
   "gui.cadmus.claim_map.settings": "Settings",
   "gui.cadmus.claim_map.claim": "Claim",
   "gui.cadmus.claim_map.unclaim": "Unclaim",
-  "gui.cadmus.claim_map.no_towns": "No towns",
+"gui.cadmus.claim_map.no_towns": "No towns",
   "gui.cadmus.claim_map.create_town": "Create town",
+  "gui.cadmus.claim_map.no_town_selected": "Create a town first",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",
 

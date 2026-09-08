@@ -9,6 +9,7 @@ import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTownsPacket;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
@@ -19,6 +20,14 @@ import java.util.stream.Collectors;
 
 public final class TownManager {
     public static final int MAX_TOWNS_PER_TEAM = 3;
+
+    public static final String ERR_NO_PERMISSION = "command.cadmus.exception.town.no_permission";
+    public static final String ERR_MAX_TOWNS = "command.cadmus.exception.town.max_towns";
+    public static final String ERR_CHUNK_CLAIMED = "command.cadmus.exception.town.chunk_claimed";
+    public static final String ERR_CLAIM_LIMIT = "command.cadmus.exception.town.claim_limit";
+    public static final String ERR_TOO_CLOSE = "command.cadmus.exception.town.too_close";
+    public static final String ERR_NOT_ADJACENT = "command.cadmus.exception.town.not_adjacent";
+    public static final String ERR_TOWN_NOT_FOUND = "command.cadmus.exception.town.not_found";
 
     private TownManager() {}
 
@@ -32,16 +41,16 @@ public final class TownManager {
         return Optional.ofNullable(CadmusSaveData.read(server).towns().get(id));
     }
 
-    public static boolean create(ServerPlayer player, ChunkPos start, ChunkPos end) {
+    public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end) {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
-        if (team == null || !TeamApi.API.canModifySettings(player, team)) return false;
-        if (getTowns(player.server, team).size() >= MAX_TOWNS_PER_TEAM) return false;
+        if (team == null || !TeamApi.API.canModifySettings(player, team)) return Component.translatable(ERR_NO_PERMISSION);
+        if (getTowns(player.server, team).size() >= MAX_TOWNS_PER_TEAM) return Component.translatable(ERR_MAX_TOWNS);
 
         Set<ChunkPos> positions = positions(start, end);
-        if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return false;
+        if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return Component.translatable(ERR_CHUNK_CLAIMED);
         int current = ClaimApi.API.getOwnedClaims(player.level(), team).map(Map::size).orElse(0);
-        if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return false;
-        if (isTooCloseToOtherTowns(player.server, positions, null)) return false;
+        if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return Component.translatable(ERR_CLAIM_LIMIT);
+        if (isTooCloseToOtherTowns(player.server, positions, null)) return Component.translatable(ERR_TOO_CLOSE);
 
         Town town = new Town(UUID.randomUUID(), team);
         town.chunks().addAll(positions);
@@ -53,24 +62,24 @@ public final class TownManager {
         positions.forEach(pos -> claims.put(pos, false));
         ClaimApi.API.claim(player.level(), team, claims);
         sync(player.server);
-        return true;
+        return null;
     }
 
-    public static boolean add(ServerPlayer player, UUID townId, ChunkPos start, ChunkPos end) {
+    public static Component add(ServerPlayer player, UUID townId, ChunkPos start, ChunkPos end) {
         Town town = getTown(player.server, townId).orElse(null);
-        if (town == null || !TeamApi.API.canModifySettings(player, town.team())) return false;
+        if (town == null || !TeamApi.API.canModifySettings(player, town.team())) return Component.translatable(town == null ? ERR_TOWN_NOT_FOUND : ERR_NO_PERMISSION);
         Set<ChunkPos> positions = positions(start, end);
-        if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return false;
+        if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return Component.translatable(ERR_CHUNK_CLAIMED);
         Set<ChunkPos> reachable = new HashSet<>(town.chunks());
         boolean changed;
         do {
             changed = positions.stream().anyMatch(pos -> !reachable.contains(pos) && reachable.stream().anyMatch(existing ->
                 Math.abs(existing.x - pos.x) + Math.abs(existing.z - pos.z) == 1) && reachable.add(pos));
         } while (changed);
-        if (!reachable.containsAll(positions)) return false;
+        if (!reachable.containsAll(positions)) return Component.translatable(ERR_NOT_ADJACENT);
         int current = ClaimApi.API.getOwnedClaims(player.level(), town.team()).map(Map::size).orElse(0);
-        if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(town.team())) return false;
-        if (isTooCloseToOtherTowns(player.server, positions, townId)) return false;
+        if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(town.team())) return Component.translatable(ERR_CLAIM_LIMIT);
+        if (isTooCloseToOtherTowns(player.server, positions, townId)) return Component.translatable(ERR_TOO_CLOSE);
 
         town.chunks().addAll(positions);
         CadmusSaveData.read(player.server).setDirty();
@@ -78,7 +87,7 @@ public final class TownManager {
         positions.forEach(pos -> claims.put(pos, false));
         ClaimApi.API.claim(player.level(), town.team(), claims);
         sync(player.server);
-        return true;
+        return null;
     }
 
     private static Set<ChunkPos> positions(ChunkPos start, ChunkPos end) {

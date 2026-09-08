@@ -20,6 +20,7 @@ import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.protections.SettingsData;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
+import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.buttons.Button;
 import earth.terrarium.olympus.client.components.dropdown.DropdownState;
@@ -60,7 +61,11 @@ public class ClaimMapScreen extends BaseCursorScreen {
     public static final int WIDTH = MAP_SIZE + PADDING * 2 + 2;
     public static final int HEIGHT = MAP_SIZE + PADDING * 4 + 2 + BANNER_HEIGHT + BUTTON_HEIGHT;
 
+    private static final long NOTIFICATION_DURATION = 4000;
+    private static final int MAX_NOTIFICATIONS = 4;
+
     private final Map<ChunkPos, ClaimTile> claims = new HashMap<>();
+    private final List<Notification> notifications = new ArrayList<>();
 
     private final LocalPlayer player = Objects.requireNonNull(Minecraft.getInstance().player);
     private final ClientLevel level = player.clientLevel;
@@ -252,6 +257,38 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
         renderPlayerAvatar(graphics);
         contextMenu.render(graphics, mouseX, mouseY);
+        renderNotifications(graphics);
+    }
+
+    public void showNotification(Component message) {
+        notifications.removeIf(notification -> System.currentTimeMillis() > notification.expireAt());
+        notifications.removeIf(notification -> notification.message().getString().equals(message.getString()));
+        if (notifications.size() >= MAX_NOTIFICATIONS) {
+            notifications.removeFirst();
+        }
+        notifications.add(new Notification(message, System.currentTimeMillis() + NOTIFICATION_DURATION));
+    }
+
+    private void renderNotifications(GuiGraphics graphics) {
+        notifications.removeIf(notification -> System.currentTimeMillis() > notification.expireAt());
+        if (notifications.isEmpty()) return;
+
+        int width = notifications.stream()
+            .mapToInt(notification -> font.width(notification.message()))
+            .max().orElse(0) + ClaimContextMenu.PADDING * 2;
+        int itemHeight = font.lineHeight + 4;
+        int x = mapWidget.getX() + (mapWidget.getWidth() - width) / 2;
+        int y = mapWidget.getY() + PADDING;
+
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, 0, 100);
+        graphics.fill(x - 1, y - 1, x + width + 1, y + notifications.size() * itemHeight + 1, ClaimContextMenu.BORDER);
+        graphics.fill(x, y, x + width, y + notifications.size() * itemHeight, ClaimContextMenu.BACKGROUND);
+        for (int i = 0; i < notifications.size(); i++) {
+            Component message = notifications.get(i).message();
+            graphics.drawString(font, message, x + ClaimContextMenu.PADDING, y + i * itemHeight + 2, 0xFFFF5555, false);
+        }
+        graphics.pose().popPose();
     }
 
     private void drawClaimLabels(GuiGraphics graphics) {
@@ -444,7 +481,11 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     private void paintChunk(ChunkPos pos, int button) {
         if (button == 0) {
-            if (!this.claims.containsKey(pos) && selected.get() != null) {
+            if (selected.get() == null) {
+                showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
+            } else if (this.claims.containsKey(pos)) {
+                showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
+            } else {
                 CadmusClient.sendTownAdd(selected.get(), pos, pos);
             }
         } else if (button == 2) {
@@ -595,16 +636,20 @@ public class ClaimMapScreen extends BaseCursorScreen {
         if (startX == 0 && startZ == 0) return;
         ChunkPos startPos = new ChunkPos(startX, startZ);
         ChunkPos endPos = new ChunkPos(endX, endZ);
-        if (startPos.equals(endPos)) {
-            if (button == 0 && !this.claims.containsKey(startPos) && selected.get() != null) {
-                CadmusClient.sendTownAdd(selected.get(), startPos, startPos);
-            } else if (button == 2 && this.claims.containsKey(startPos) && selectedTeam() != null && this.claims.get(startPos).id().equals(selectedTeam().id())) {
-                unclaim(startPos);
-            }
-        } else {
-            if (button == 0 && selected.get() != null) {
+        if (button == 0) {
+            if (selected.get() == null) {
+                showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
+            } else if (startPos.equals(endPos) && this.claims.containsKey(startPos)) {
+                showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
+            } else {
                 CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
-            } else if (button == 2) {
+            }
+        } else if (button == 2) {
+            if (startPos.equals(endPos)) {
+                if (this.claims.containsKey(startPos) && selectedTeam() != null && this.claims.get(startPos).id().equals(selectedTeam().id())) {
+                    unclaim(startPos);
+                }
+            } else {
                 unclaimArea(startPos, endPos);
             }
         }
@@ -721,6 +766,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
         boolean northEast, boolean southEast,
         boolean southWest, boolean northWest
     ) {}
+
+    private record Notification(Component message, long expireAt) {}
 
     private record TeamData(String name, int claimed, int maxClaims, int loaded, int maxLoaded, Map<String, TriState> settings, State<Color> color, State<Boolean> modifyColor) {
         public static final TeamData EMPTY = new TeamData("empty", 0, 0,0, 0, new HashMap<>(), State.of(Color.DEFAULT), State.of(false));

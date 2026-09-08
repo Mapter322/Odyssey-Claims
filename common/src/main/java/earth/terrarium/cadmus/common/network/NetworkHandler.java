@@ -25,12 +25,14 @@ public class NetworkHandler {
         CHANNEL.register(SyncMaxClaimsPacket.TYPE);
         CHANNEL.register(SyncTeamInfo.TYPE);
         CHANNEL.register(SyncTownsPacket.TYPE);
+        CHANNEL.register(ClaimMapNotificationPacket.TYPE);
 
         CHANNEL.register(BulkClaimSettingsPacket.TYPE);
         CHANNEL.register(ChatClaimPacket.TYPE);
         CHANNEL.register(ClaimColorPacket.TYPE);
         CHANNEL.register(ClaimSettingsPacket.TYPE);
         CHANNEL.register(RequestClaimSettingsPacket.TYPE);
+        CHANNEL.register(TownActionPacket.TYPE);
     }
 
     /**

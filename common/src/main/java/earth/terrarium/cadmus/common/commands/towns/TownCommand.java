@@ -41,8 +41,9 @@ public final class TownCommand {
 
     private static int create(CommandSourceStack source, ChunkPos start, ChunkPos end) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        if (!TownManager.create(player, start, end)) {
-            throw new SimpleCommandExceptionType(Component.literal("Unable to create town")).create();
+        Component error = TownManager.create(player, start, end);
+        if (error != null) {
+            throw new SimpleCommandExceptionType(error).create();
         }
         source.sendSuccess(() -> Component.literal("Town created"), false);
         return 1;
@@ -50,8 +51,9 @@ public final class TownCommand {
 
     private static int add(CommandSourceStack source, java.util.UUID town, ChunkPos start, ChunkPos end) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        if (!TownManager.add(player, town, start, end)) {
-            throw new SimpleCommandExceptionType(Component.literal("Unable to expand town")).create();
+        Component error = TownManager.add(player, town, start, end);
+        if (error != null) {
+            throw new SimpleCommandExceptionType(error).create();
         }
         source.sendSuccess(() -> Component.literal("Town expanded"), false);
         return 1;

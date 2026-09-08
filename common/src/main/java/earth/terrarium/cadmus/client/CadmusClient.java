@@ -9,6 +9,7 @@ import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
 import earth.terrarium.cadmus.common.protections.SettingsData;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import net.minecraft.resources.ResourceLocation;
@@ -87,17 +88,19 @@ public class CadmusClient {
     }
 
     public static void sendTownCreate(ChunkPos start, ChunkPos end) {
-        NetworkHandler.CHANNEL.sendToServer(new ChatClaimPacket(
-            ClaimCommandType.TOWN_CREATE,
-            "%s %s %s %s".formatted(start.getMinBlockX(), start.getMinBlockZ(), end.getMaxBlockX(), end.getMaxBlockZ())
-        ));
+        NetworkHandler.CHANNEL.sendToServer(new TownActionPacket(ClaimCommandType.TOWN_CREATE, "", start, end));
     }
 
     public static void sendTownAdd(UUID town, ChunkPos start, ChunkPos end) {
-        NetworkHandler.CHANNEL.sendToServer(new ChatClaimPacket(
-            ClaimCommandType.TOWN_ADD,
-            "%s %s %s %s %s".formatted(town, start.getMinBlockX(), start.getMinBlockZ(), end.getMaxBlockX(), end.getMaxBlockZ())
-        ));
+        NetworkHandler.CHANNEL.sendToServer(new TownActionPacket(ClaimCommandType.TOWN_ADD, town.toString(), start, end));
+    }
+
+    public static void showNotification(Component message) {
+        if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {
+            screen.showNotification(message);
+        } else if (player() != null) {
+            player().displayClientMessage(message, true);
+        }
     }
 
     public static void updateTowns(String encoded) {
