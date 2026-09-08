@@ -81,6 +81,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private int selectionStartZ;
     private int selectionEndX;
     private int selectionEndZ;
+    private ChunkPos lastPaintedChunk;
 
     public ClaimMapScreen() {
         super(CommonComponents.EMPTY);
@@ -274,6 +275,12 @@ public class ClaimMapScreen extends BaseCursorScreen {
             return super.mouseClicked(mouseX, mouseY, button);
         }
 
+        if (button == 0 || button == 2) {
+            paintChunk(hoveredChunk, button);
+            this.lastPaintedChunk = hoveredChunk;
+            return true;
+        }
+
         this.selectionStartX = hoveredChunk.x;
         this.selectionStartZ = hoveredChunk.z;
         this.selectionEndX = hoveredChunk.x;
@@ -283,6 +290,15 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (button == 0 || button == 2) {
+            ChunkPos hoveredChunk = getChunkAt(mouseX, mouseY);
+            if (hoveredChunk != null && !hoveredChunk.equals(this.lastPaintedChunk)) {
+                paintChunk(hoveredChunk, button);
+                this.lastPaintedChunk = hoveredChunk;
+            }
+            return true;
+        }
+
         for (int i = 0; i < chunkScale; i++) {
             for (int j = 0; j < chunkScale; j++) {
                 float x = mapWidget.getX() + (i * pixelScale);
@@ -301,6 +317,10 @@ public class ClaimMapScreen extends BaseCursorScreen {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         setFocused(null);
+        if (button == 0 || button == 2) {
+            this.lastPaintedChunk = null;
+            return super.mouseReleased(mouseX, mouseY, button);
+        }
         if (button == 1) {
             if (this.selectionStartX != 0 || this.selectionStartZ != 0) {
                 openContextMenu(
@@ -370,6 +390,14 @@ public class ClaimMapScreen extends BaseCursorScreen {
         this.selectionStartZ = 0;
         this.selectionEndX = 0;
         this.selectionEndZ = 0;
+    }
+
+    private void paintChunk(ChunkPos pos, int button) {
+        if (button == 0) {
+            if (!this.claims.containsKey(pos)) claim(pos, hasShiftDown());
+        } else if (this.claims.get(pos) != null && selected.get() != null && this.claims.get(pos).id().equals(selected.get().id())) {
+            unclaim(pos);
+        }
     }
 
     private void drawClaims(GuiGraphics graphics, int mouseX, int mouseY) {
