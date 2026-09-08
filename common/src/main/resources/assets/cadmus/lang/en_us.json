@@ -116,6 +116,8 @@
   "gui.cadmus.claim_map.max_chunk_loaded_claims": "Chunks Loaded",
   "gui.cadmus.claim_map.loading": "Loading...",
   "gui.cadmus.claim_map.settings": "Settings",
+  "gui.cadmus.claim_map.claim": "Claim",
+  "gui.cadmus.claim_map.unclaim": "Unclaim",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",
 

@@ -65,6 +65,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private final ClientLevel level = player.clientLevel;
 
     private final State<MapRenderer> mapState = State.empty();
+    private final ContextMenu contextMenu = new ContextMenu();
 
     private MapWidget mapWidget;
     private Button settingsButton;
@@ -221,6 +222,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
         }
 
         renderPlayerAvatar(graphics);
+        contextMenu.render(graphics, mouseX, mouseY);
     }
 
     private void drawClaimLabels(GuiGraphics graphics) {
@@ -261,20 +263,21 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        for (int i = 0; i < chunkScale; i++) {
-            for (int j = 0; j < chunkScale; j++) {
-                float x = mapWidget.getX() + (i * pixelScale);
-                float y = mapWidget.getY() + (j * pixelScale);
-
-                if (isHovering(mouseX, mouseY, x, y)) {
-                    this.selectionStartX = playerChunkX + i;
-                    this.selectionStartZ = playerChunkZ + j;
-                    this.selectionEndX = playerChunkX + i;
-                    this.selectionEndZ = playerChunkZ + j;
-                }
-            }
+        if (contextMenu.isVisible()) {
+            boolean handled = contextMenu.mouseClicked(mouseX, mouseY, button);
+            if (!contextMenu.isVisible()) clearSelection();
+            return handled;
         }
 
+        ChunkPos hoveredChunk = getChunkAt(mouseX, mouseY);
+        if (hoveredChunk == null) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        this.selectionStartX = hoveredChunk.x;
+        this.selectionStartZ = hoveredChunk.z;
+        this.selectionEndX = hoveredChunk.x;
+        this.selectionEndZ = hoveredChunk.z;
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -298,8 +301,75 @@ public class ClaimMapScreen extends BaseCursorScreen {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         setFocused(null);
+        if (button == 1) {
+            if (this.selectionStartX != 0 || this.selectionStartZ != 0) {
+                openContextMenu(
+                    new ChunkPos(this.selectionStartX, this.selectionStartZ),
+                    new ChunkPos(this.selectionEndX, this.selectionEndZ),
+                    (int) mouseX,
+                    (int) mouseY
+                );
+            }
+            return super.mouseReleased(mouseX, mouseY, button);
+        }
         doAction(this.selectionStartX, this.selectionEndX, this.selectionStartZ, this.selectionEndZ, button);
         return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private ChunkPos getChunkAt(double mouseX, double mouseY) {
+        for (int i = 0; i < chunkScale; i++) {
+            for (int j = 0; j < chunkScale; j++) {
+                float x = mapWidget.getX() + (i * pixelScale);
+                float y = mapWidget.getY() + (j * pixelScale);
+                if (isHovering(mouseX, mouseY, x, y)) {
+                    return new ChunkPos(playerChunkX + i, playerChunkZ + j);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void openContextMenu(ChunkPos startPos, ChunkPos endPos, int mouseX, int mouseY) {
+        contextMenu.clearItems();
+        boolean canClaim = hasUnclaimedChunk(startPos, endPos);
+        boolean canUnclaim = hasOwnedClaim(startPos, endPos);
+        contextMenu.addItem(ConstantComponents.CLAIM, () -> {
+            claimArea(startPos, endPos, false);
+            clearSelection();
+        }, canClaim);
+        contextMenu.addItem(ConstantComponents.UNCLAIM, () -> {
+            unclaimArea(startPos, endPos);
+            clearSelection();
+        }, canUnclaim);
+        contextMenu.open(mouseX, mouseY);
+    }
+
+    private boolean hasUnclaimedChunk(ChunkPos startPos, ChunkPos endPos) {
+        for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
+            for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
+                if (!claims.containsKey(new ChunkPos(x, z))) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasOwnedClaim(ChunkPos startPos, ChunkPos endPos) {
+        if (selected.get() == null) return false;
+        UUID teamId = selected.get().id();
+        for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
+            for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
+                ClaimTile claim = claims.get(new ChunkPos(x, z));
+                if (claim != null && claim.id().equals(teamId)) return true;
+            }
+        }
+        return false;
+    }
+
+    private void clearSelection() {
+        this.selectionStartX = 0;
+        this.selectionStartZ = 0;
+        this.selectionEndX = 0;
+        this.selectionEndZ = 0;
     }
 
     private void drawClaims(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -446,13 +516,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
         if (startPos.equals(endPos)) {
             if (button == 0 && !this.claims.containsKey(startPos)) {
                 claim(startPos, hasShiftDown());
-            } else if (button == 1 && this.claims.containsKey(startPos) && selected.get() != null && this.claims.get(startPos).id().equals(selected.get().id())) {
+            } else if (button == 2 && this.claims.containsKey(startPos) && selected.get() != null && this.claims.get(startPos).id().equals(selected.get().id())) {
                 unclaim(startPos);
             }
         } else {
             if (button == 0) {
                 claimArea(startPos, endPos, hasShiftDown());
-            } else if (button == 1) {
+            } else if (button == 2) {
                 unclaimArea(startPos, endPos);
             }
         }
@@ -568,6 +638,77 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     private record TeamData(String name, int claimed, int maxClaims, int loaded, int maxLoaded, Map<String, TriState> settings, State<Color> color, State<Boolean> modifyColor) {
         public static final TeamData EMPTY = new TeamData("empty", 0, 0,0, 0, new HashMap<>(), State.of(Color.DEFAULT), State.of(false));
+    }
+
+    private static final class ContextMenu {
+        private static final int BACKGROUND = 0xF0111111;
+        private static final int BORDER = 0xFF555555;
+        private static final int HOVER = 0x55FFFFFF;
+        private static final int TEXT = 0xFFDDDDDD;
+        private static final int DISABLED = 0xFF777777;
+        private static final int PADDING = 5;
+        private static final int ITEM_HEIGHT = 16;
+
+        private final List<MenuItem> items = new ArrayList<>();
+        private boolean visible;
+        private int x;
+        private int y;
+        private int width;
+        private int height;
+
+        private void addItem(Component label, Runnable action, boolean enabled) {
+            items.add(new MenuItem(label, action, enabled));
+        }
+
+        private void clearItems() {
+            items.clear();
+        }
+
+        private void open(int x, int y) {
+            this.width = items.stream().mapToInt(item -> Minecraft.getInstance().font.width(item.label)).max().orElse(0) + PADDING * 2;
+            this.height = PADDING * 2 + items.size() * ITEM_HEIGHT;
+            this.x = Math.min(x, Minecraft.getInstance().screen.width - width - 2);
+            this.y = Math.min(y, Minecraft.getInstance().screen.height - height - 2);
+            this.x = Math.max(2, this.x);
+            this.y = Math.max(2, this.y);
+            this.visible = true;
+        }
+
+        private boolean isVisible() {
+            return visible;
+        }
+
+        private void render(GuiGraphics graphics, int mouseX, int mouseY) {
+            if (!visible) return;
+            graphics.pose().pushPose();
+            graphics.pose().translate(0, 0, 100);
+            graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, BORDER);
+            graphics.fill(x, y, x + width, y + height, BACKGROUND);
+            for (int i = 0; i < items.size(); i++) {
+                MenuItem item = items.get(i);
+                int itemY = y + PADDING + i * ITEM_HEIGHT;
+                boolean hovered = item.enabled && mouseX >= x && mouseX < x + width && mouseY >= itemY && mouseY < itemY + ITEM_HEIGHT;
+                if (hovered) graphics.fill(x, itemY, x + width, itemY + ITEM_HEIGHT, HOVER);
+                graphics.drawString(Minecraft.getInstance().font, item.label, x + PADDING, itemY + 4, item.enabled ? TEXT : DISABLED, false);
+            }
+            graphics.pose().popPose();
+        }
+
+        private boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (!visible) return false;
+            if (button != 0 || mouseX < x || mouseX >= x + width || mouseY < y || mouseY >= y + height) {
+                visible = false;
+                return true;
+            }
+            int index = ((int) mouseY - y - PADDING) / ITEM_HEIGHT;
+            if (index >= 0 && index < items.size() && items.get(index).enabled) {
+                items.get(index).action.run();
+            }
+            visible = false;
+            return true;
+        }
+
+        private record MenuItem(Component label, Runnable action, boolean enabled) {}
     }
 
     static {
