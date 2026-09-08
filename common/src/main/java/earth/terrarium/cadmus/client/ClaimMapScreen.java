@@ -70,7 +70,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private MapWidget mapWidget;
     private Button settingsButton;
     private final Map<TeamId, TeamData> teams = new HashMap<>();
-    public static final DropdownState<TeamId> selected = DropdownState.of(null);
+    private List<UUID> availableTowns = List.of();
+    public static final DropdownState<UUID> selected = DropdownState.of(null);
 
     private float chunkScale;
     private float pixelScale;
@@ -90,8 +91,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
     public void refresh() {
         teams.clear();
         TeamApi.API.getTeamsList(this.player).forEach(teamId -> {
-            if (selected.get() == null) selected.set(teamId);
             TeamInfo info = CadmusClient.TEAM_INFO.get(teamId);
+            if (info == null) return;
             teams.put(teamId, new TeamData(
                 info.name(),
                 ClaimCommand.getClaimsCount(level, teamId, false),
@@ -103,6 +104,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
                 State.empty()
             ));
         });
+        this.availableTowns = CadmusClient.TOWNS.values().stream()
+            .filter(town -> teams.containsKey(town.team()))
+            .map(CadmusClient.ClientTown::id)
+            .toList();
+        if (selected.get() == null || !this.availableTowns.contains(selected.get())) {
+            selected.set(this.availableTowns.isEmpty() ? null : this.availableTowns.get(0));
+        }
 
         int renderDistanceScale = this.getScaledRenderDistance();
         this.chunkScale = renderDistanceScale / 16f;
@@ -186,11 +194,11 @@ public class ClaimMapScreen extends BaseCursorScreen {
         frame.addChild(
             Widgets.dropdown(
                 selected,
-                teams.keySet().stream().toList(),
-                teamId -> Optional.ofNullable(teams.get(teamId)).map(team -> Component.literal(team.name)).orElse(ConstantComponents.UNKNOWN.copy()),
+                availableTowns,
+                townId -> Optional.ofNullable(CadmusClient.TOWNS.get(townId)).map(CadmusClient.ClientTown::name).orElse(ConstantComponents.NO_TOWNS.copy()),
                 button -> {
                     button.withSize(MAP_SIZE / 2, BUTTON_HEIGHT);
-                    if (teams.size() <= 1) {
+                    if (availableTowns.size() <= 1) {
                         button.asDisabled();
                     }
                 },
@@ -203,7 +211,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             }
         );
 
-        settingsButton.active = getData().settings().isEmpty();
+        settingsButton.active = selectedTeam() != null && getData().settings().isEmpty();
 
         frame.arrangeElements();
         frame.visitWidgets(this::addRenderableWidget);
@@ -243,8 +251,14 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     private TeamData getData() {
-        TeamData teamData = teams.get(selected.get());
+        TeamData teamData = teams.get(selectedTeam());
         return teamData == null ? TeamData.EMPTY : teamData;
+    }
+
+    TeamId selectedTeam() {
+        return Optional.ofNullable(CadmusClient.TOWNS.get(selected.get()))
+            .map(CadmusClient.ClientTown::team)
+            .orElse(null);
     }
 
     @Override
@@ -353,14 +367,20 @@ public class ClaimMapScreen extends BaseCursorScreen {
         contextMenu.clearItems();
         boolean canClaim = hasUnclaimedChunk(startPos, endPos);
         boolean canUnclaim = hasOwnedClaim(startPos, endPos);
+        boolean allFree = allUnclaimed(startPos, endPos);
+        boolean hasTeam = selectedTeam() != null;
         contextMenu.addItem(ConstantComponents.CLAIM, () -> {
-            claimArea(startPos, endPos, false);
+            CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             clearSelection();
-        }, canClaim);
+        }, canClaim && hasTeam);
         contextMenu.addItem(ConstantComponents.UNCLAIM, () -> {
             unclaimArea(startPos, endPos);
             clearSelection();
         }, canUnclaim);
+        contextMenu.addItem(ConstantComponents.CREATE_TOWN, () -> {
+            CadmusClient.sendTownCreate(startPos, endPos);
+            clearSelection();
+        }, allFree);
         contextMenu.open(mouseX, mouseY);
     }
 
@@ -375,7 +395,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     private boolean hasOwnedClaim(ChunkPos startPos, ChunkPos endPos) {
         if (selected.get() == null) return false;
-        UUID teamId = selected.get().id();
+        UUID teamId = selectedTeam().id();
         for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
             for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
                 ClaimTile claim = claims.get(new ChunkPos(x, z));
@@ -383,6 +403,15 @@ public class ClaimMapScreen extends BaseCursorScreen {
             }
         }
         return false;
+    }
+
+    private boolean allUnclaimed(ChunkPos startPos, ChunkPos endPos) {
+        for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
+            for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
+                if (claims.containsKey(new ChunkPos(x, z))) return false;
+            }
+        }
+        return true;
     }
 
     private void clearSelection() {
@@ -394,9 +423,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     private void paintChunk(ChunkPos pos, int button) {
         if (button == 0) {
-            if (!this.claims.containsKey(pos)) claim(pos, hasShiftDown());
-        } else if (this.claims.get(pos) != null && selected.get() != null && this.claims.get(pos).id().equals(selected.get().id())) {
-            unclaim(pos);
+            if (!this.claims.containsKey(pos) && selected.get() != null) {
+                CadmusClient.sendTownAdd(selected.get(), pos, pos);
+            }
+        } else if (button == 2) {
+            if (this.claims.get(pos) != null && selectedTeam() != null && this.claims.get(pos).id().equals(selectedTeam().id())) {
+                unclaim(pos);
+            }
         }
     }
 
@@ -457,7 +490,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
                 if (claim.isEmpty()) continue;
                 TeamId id = claim.get().team();
 
-                Component name = getName(id, claim.get().isChunkLoaded());
+                Component name = getName(id, pos, claim.get().isChunkLoaded());
                 int color = color(CadmusClient.TEAM_INFO.getOrDefault(id, new TeamInfo("", Color.DEFAULT)).color(), 127);
 
                 boolean north = checkSide(i, j, 0, -1);
@@ -542,14 +575,14 @@ public class ClaimMapScreen extends BaseCursorScreen {
         ChunkPos startPos = new ChunkPos(startX, startZ);
         ChunkPos endPos = new ChunkPos(endX, endZ);
         if (startPos.equals(endPos)) {
-            if (button == 0 && !this.claims.containsKey(startPos)) {
-                claim(startPos, hasShiftDown());
-            } else if (button == 2 && this.claims.containsKey(startPos) && selected.get() != null && this.claims.get(startPos).id().equals(selected.get().id())) {
+            if (button == 0 && !this.claims.containsKey(startPos) && selected.get() != null) {
+                CadmusClient.sendTownAdd(selected.get(), startPos, startPos);
+            } else if (button == 2 && this.claims.containsKey(startPos) && selectedTeam() != null && this.claims.get(startPos).id().equals(selectedTeam().id())) {
                 unclaim(startPos);
             }
         } else {
-            if (button == 0) {
-                claimArea(startPos, endPos, hasShiftDown());
+            if (button == 0 && selected.get() != null) {
+                CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             } else if (button == 2) {
                 unclaimArea(startPos, endPos);
             }
@@ -573,8 +606,12 @@ public class ClaimMapScreen extends BaseCursorScreen {
         return (color & 0x00FFFFFF) | (alpha << 24);
     }
 
-    private Component getName(TeamId id, boolean chunkLoad) {
-        return Component.translatable("text.cadmus.claimed_by", TeamApi.API.getName(level, id)).withStyle(ChatFormatting.GRAY)
+    private Component getName(TeamId id, ChunkPos pos, boolean chunkLoad) {
+        String townName = CadmusClient.TOWNS.values().stream()
+            .filter(town -> town.chunks().contains(pos))
+            .map(town -> town.name().getString())
+            .findFirst().orElse(TeamApi.API.getName(level, id).getString());
+        return Component.literal(townName).withStyle(ChatFormatting.GRAY)
             .append(CommonComponents.SPACE)
             .append(chunkLoad ?
                 Component.translatable("text.cadmus.chunk_loaded").withStyle(ChatFormatting.GOLD) :
@@ -594,8 +631,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
 
     private void claim(ChunkPos pos, boolean chunkLoad) {
-        if (selected.get() == null) return;
-        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM, selected.get(), "%s %s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ(), chunkLoad));
+        if (selectedTeam() == null) return;
+        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM, selectedTeam(), "%s %s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ(), chunkLoad));
     }
 
     private void unclaim(ChunkPos pos) {
@@ -603,8 +640,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     private void claimArea(ChunkPos startPos, ChunkPos endPos, boolean chunkLoad) {
-        if (selected.get() == null) return;
-        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM_AREA, selected.get(), "%s %s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ(), chunkLoad));
+        if (selectedTeam() == null) return;
+        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM_AREA, selectedTeam(), "%s %s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ(), chunkLoad));
     }
 
     private void unclaimArea(ChunkPos startPos, ChunkPos endPos) {
@@ -612,8 +649,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     private void unclaimAll() {
-        if (selected.get() == null) return;
-        DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, selected.get(), selected.get().asArg()));
+        if (selectedTeam() == null) return;
+        DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, selectedTeam(), selectedTeam().asArg()));
     }
 
     private static void update() {
@@ -634,8 +671,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     public void updateColor(Color color) {
-        if (selected.get() == null) return;
-        CadmusClient.TEAM_INFO.put(selected.get(), new TeamInfo(CadmusClient.TEAM_INFO.get(selected.get()).name(), color));
+        if (selectedTeam() == null) return;
+        CadmusClient.TEAM_INFO.put(selectedTeam(), new TeamInfo(CadmusClient.TEAM_INFO.get(selectedTeam()).name(), color));
     }
 
     public Map<String, TriState> getSettings() {
@@ -643,8 +680,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     public Color getColor() {
-        if (selected.get() == null) return Color.DEFAULT;
-        TeamInfo info = CadmusClient.TEAM_INFO.get(selected.get());
+        if (selectedTeam() == null) return Color.DEFAULT;
+        TeamInfo info = CadmusClient.TEAM_INFO.get(selectedTeam());
         return info == null ? Color.DEFAULT : info.color();
     }
 

@@ -6,6 +6,8 @@ public enum ClaimCommandType {
     UNCLAIM("cadmus unclaim"),
     UNCLAIM_AREA("cadmus unclaim area"),
     UNCLAIM_ALL("cadmus unclaim all"),
+    TOWN_CREATE("cadmus town create"),
+    TOWN_ADD("cadmus town add"),
     ;
 
     private final String command;

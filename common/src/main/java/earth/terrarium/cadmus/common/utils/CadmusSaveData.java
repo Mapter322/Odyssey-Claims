@@ -4,17 +4,21 @@ import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.SaveHandler;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.towns.Town;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.ChunkPos;
 
 import java.util.*;
 
@@ -26,6 +30,7 @@ public class CadmusSaveData extends SaveHandler {
     private final Set<UUID> bypassPlayers = new HashSet<>();
     private final Map<TeamId, Color> teamColors = new HashMap<>();
     private final Set<UUID> uniquePlayers = new HashSet<>();
+    private final Map<UUID, Town> towns = new HashMap<>();
 
     @Override
     public void loadData(CompoundTag tag) {
@@ -70,6 +75,19 @@ public class CadmusSaveData extends SaveHandler {
 
         ListTag uniquePlayersTag = tag.getList("uniquePlayers", Tag.TAG_STRING);
         uniquePlayersTag.forEach(uuid -> uniquePlayers.add(UUID.fromString(uuid.getAsString())));
+
+        CompoundTag townsTag = tag.getCompound("towns");
+        townsTag.getAllKeys().forEach(idString -> {
+            CompoundTag townTag = townsTag.getCompound(idString);
+            TeamId team = new TeamId(ResourceLocation.parse(townTag.getString("provider")), UUID.fromString(townTag.getString("team")));
+            Set<ChunkPos> chunks = new HashSet<>();
+            townTag.getList("chunks", Tag.TAG_LONG).forEach(chunk -> {
+                long value = ((LongTag) chunk).getAsLong();
+                chunks.add(new ChunkPos(BlockPos.getX(value), BlockPos.getZ(value)));
+            });
+            UUID id = UUID.fromString(idString);
+            towns.put(id, new Town(id, team, chunks));
+        });
     }
 
     @Override
@@ -105,6 +123,18 @@ public class CadmusSaveData extends SaveHandler {
         ListTag uniquePlayersTag = new ListTag();
         uniquePlayers.forEach(uuid -> uniquePlayersTag.add(StringTag.valueOf(uuid.toString())));
         tag.put("uniquePlayers", uniquePlayersTag);
+
+        CompoundTag townsTag = new CompoundTag();
+        towns.forEach((id, town) -> {
+            CompoundTag townTag = new CompoundTag();
+            townTag.putString("provider", town.team().provider().toString());
+            townTag.putString("team", town.team().id().toString());
+            ListTag chunks = new ListTag();
+            town.chunks().forEach(pos -> chunks.add(LongTag.valueOf(BlockPos.asLong(pos.x, 0, pos.z))));
+            townTag.put("chunks", chunks);
+            townsTag.put(id.toString(), townTag);
+        });
+        tag.put("towns", townsTag);
     }
 
     public static CadmusSaveData read(MinecraftServer server) {
@@ -213,5 +243,9 @@ public class CadmusSaveData extends SaveHandler {
 
     public static Set<UUID> getUniquePlayers(MinecraftServer server) {
         return read(server).uniquePlayers;
+    }
+
+    public Map<UUID, Town> towns() {
+        return towns;
     }
 }

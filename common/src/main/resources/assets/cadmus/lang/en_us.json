@@ -118,6 +118,8 @@
   "gui.cadmus.claim_map.settings": "Settings",
   "gui.cadmus.claim_map.claim": "Claim",
   "gui.cadmus.claim_map.unclaim": "Unclaim",
+  "gui.cadmus.claim_map.no_towns": "No towns",
+  "gui.cadmus.claim_map.create_town": "Create town",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",
 

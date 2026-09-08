@@ -15,6 +15,7 @@ import earth.terrarium.cadmus.common.network.packets.clientbound.SyncAllTeamInfo
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTeamInfo;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.utils.ModUtils;
+import earth.terrarium.cadmus.common.towns.TownManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -128,6 +129,7 @@ public class TeamApiImpl implements TeamApi {
     @Override
     public void removeTeam(MinecraftServer server, TeamId id) {
         server.getAllLevels().forEach(level -> ClaimApi.API.clear(level, id));
+        TownManager.removeTeam(server, id);
         CadmusSaveData.removeTeam(server, id);
     }
 

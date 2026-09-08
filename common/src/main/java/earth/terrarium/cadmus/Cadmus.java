@@ -19,6 +19,7 @@ import earth.terrarium.cadmus.common.teams.VanillaTeamProvider;
 import earth.terrarium.cadmus.common.utils.AdminUtils;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.ModUtils;
+import earth.terrarium.cadmus.common.towns.TownManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -62,6 +63,7 @@ public class Cadmus {
     public static void onPlayerJoin(ServerPlayer player) {
         ModUtils.sendJoinPackets(player);
         TeamApi.API.syncAllTeamInfo(player);
+        TownManager.sync(player.server);
         TeamApi.API.displayTeamName(player);
         TeamApi.API.getTeamsList(player).forEach(team -> ClaimLimitApiImpl.API.calculate(player.server, team, true));
     }

@@ -24,6 +24,7 @@ public class NetworkHandler {
         CHANNEL.register(SyncClaimsPacket.TYPE);
         CHANNEL.register(SyncMaxClaimsPacket.TYPE);
         CHANNEL.register(SyncTeamInfo.TYPE);
+        CHANNEL.register(SyncTownsPacket.TYPE);
 
         CHANNEL.register(BulkClaimSettingsPacket.TYPE);
         CHANNEL.register(ChatClaimPacket.TYPE);

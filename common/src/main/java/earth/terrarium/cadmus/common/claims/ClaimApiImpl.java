@@ -11,6 +11,7 @@ import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.*;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
+import earth.terrarium.cadmus.common.towns.TownManager;
 import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -94,6 +95,7 @@ public class ClaimApiImpl implements ClaimApi {
             TeamApi.API.syncTeamInfo(serverLevel.getServer(), id, false);
         }
         CadmusEvents.RemoveClaimsEvent.fire(level, id, Set.of(pos));
+        TownManager.removeChunk(level, id, pos);
     }
 
     @Override
@@ -118,6 +120,7 @@ public class ClaimApiImpl implements ClaimApi {
             TeamApi.API.syncTeamInfo(serverLevel.getServer(), id, false);
         }
         CadmusEvents.RemoveClaimsEvent.fire(level, id, positions);
+        positions.forEach(pos -> TownManager.removeChunk(level, id, pos));
     }
 
     @Override

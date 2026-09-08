@@ -33,7 +33,7 @@ public class ClaimConfigModal extends BaseModal {
             case FALSE -> 2;
         })));
 
-        this.selectedTeam = background.selected.get();
+        this.selectedTeam = background.selectedTeam();
     }
 
     @Override
