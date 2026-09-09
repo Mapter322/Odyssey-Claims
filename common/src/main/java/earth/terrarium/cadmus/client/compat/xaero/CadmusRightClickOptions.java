@@ -2,7 +2,10 @@ package earth.terrarium.cadmus.client.compat.xaero;
 
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.client.CadmusClient;
+import earth.terrarium.cadmus.client.CadmusModals;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
+import earth.terrarium.cadmus.common.constants.ConstantComponents;
+import earth.terrarium.cadmus.common.towns.TownManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
@@ -46,7 +49,7 @@ public class CadmusRightClickOptions {
 
     private static void addClaimOptions(GuiMap screen, List<RightClickOption> options, ChunkPos pos) {
         options.add(new BetterRightClickOption("gui.cadmus.claim_map.create_town", options.size(), screen, () ->
-            CadmusClient.sendTownCreate(pos, pos)));
+            openCreateTownModal(pos, pos)));
     }
 
     private static void addUnclaimAreaOptions(GuiMap screen, List<RightClickOption> options, ChunkPos startPos, ChunkPos endPos) {
@@ -56,7 +59,19 @@ public class CadmusRightClickOptions {
 
     private static void addClaimAreaOptions(GuiMap screen, List<RightClickOption> options, ChunkPos startPos, ChunkPos endPos) {
         options.add(new BetterRightClickOption("gui.cadmus.claim_map.create_town", options.size(), screen, () ->
-            CadmusClient.sendTownCreate(startPos, endPos)));
+            openCreateTownModal(startPos, endPos)));
+    }
+
+    private static void openCreateTownModal(ChunkPos startPos, ChunkPos endPos) {
+        CadmusModals.input(
+            ConstantComponents.CREATE_TOWN_MODAL_TITLE,
+            ConstantComponents.CREATE_TOWN_MODAL_DESCRIPTION,
+            ConstantComponents.CREATE_TOWN_MODAL_PLACEHOLDER,
+            TownManager.MAX_TOWN_NAME_LENGTH,
+            ConstantComponents.CREATE_TOWN_MODAL_CONFIRM,
+            TownManager::isValidTownName,
+            name -> CadmusClient.sendTownCreate(name, startPos, endPos)
+        );
     }
 
     private static class BetterRightClickOption extends RightClickOption {

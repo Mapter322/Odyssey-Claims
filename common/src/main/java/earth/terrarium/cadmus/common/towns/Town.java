@@ -7,8 +7,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public record Town(UUID id, TeamId team, Set<ChunkPos> chunks) {
+public record Town(UUID id, TeamId team, String name, Set<ChunkPos> chunks) {
     public Town(UUID id, TeamId team) {
-        this(id, team, new HashSet<>());
+        this(id, team, "", new HashSet<>());
+    }
+
+    public Town(UUID id, TeamId team, String name) {
+        this(id, team, name, new HashSet<>());
     }
 }

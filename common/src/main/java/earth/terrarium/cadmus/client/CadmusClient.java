@@ -87,8 +87,8 @@ public class CadmusClient {
         NetworkHandler.CHANNEL.sendToServer(new ChatClaimPacket(type, command));
     }
 
-    public static void sendTownCreate(ChunkPos start, ChunkPos end) {
-        NetworkHandler.CHANNEL.sendToServer(new TownActionPacket(ClaimCommandType.TOWN_CREATE, "", start, end));
+    public static void sendTownCreate(String name, ChunkPos start, ChunkPos end) {
+        NetworkHandler.CHANNEL.sendToServer(new TownActionPacket(ClaimCommandType.TOWN_CREATE, name, start, end));
     }
 
     public static void sendTownAdd(UUID town, ChunkPos start, ChunkPos end) {
@@ -107,19 +107,19 @@ public class CadmusClient {
         TOWNS.clear();
         if (encoded.isBlank()) return;
         for (String townValue : encoded.split("/")) {
-            String[] fields = townValue.split("\\|", 4);
-            if (fields.length != 4) continue;
+            String[] fields = townValue.split("\\|", 5);
+            if (fields.length != 5) continue;
             try {
                 UUID townId = UUID.fromString(fields[0]);
                 TeamId team = new TeamId(ResourceLocation.parse(fields[1]), UUID.fromString(fields[2]));
                 Set<ChunkPos> chunks = new HashSet<>();
-                if (!fields[3].isBlank()) {
-                    for (String chunk : fields[3].split(";")) {
+                if (!fields[4].isBlank()) {
+                    for (String chunk : fields[4].split(";")) {
                         String[] position = chunk.split(",", 2);
                         chunks.add(new ChunkPos(Integer.parseInt(position[0]), Integer.parseInt(position[1])));
                     }
                 }
-                TOWNS.put(townId, new ClientTown(townId, team, chunks));
+                TOWNS.put(townId, new ClientTown(townId, team, fields[3], chunks));
             } catch (RuntimeException ignored) {
                 // Ignore malformed data from an incompatible server.
             }
@@ -127,9 +127,9 @@ public class CadmusClient {
         if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) screen.refresh();
     }
 
-    public record ClientTown(UUID id, TeamId team, Set<ChunkPos> chunks) {
-        public Component name() {
-            return Component.literal("Town " + id);
+    public record ClientTown(UUID id, TeamId team, String name, Set<ChunkPos> chunks) {
+        public Component displayName() {
+            return Component.literal(name.isBlank() ? "Town " + id : name);
         }
     }
 }

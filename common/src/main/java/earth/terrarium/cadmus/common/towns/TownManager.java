@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 public final class TownManager {
     public static final int MAX_TOWNS_PER_TEAM = 3;
+    public static final int MAX_TOWN_NAME_LENGTH = 32;
 
     public static final String ERR_NO_PERMISSION = "command.cadmus.exception.town.no_permission";
     public static final String ERR_MAX_TOWNS = "command.cadmus.exception.town.max_towns";
@@ -28,6 +29,7 @@ public final class TownManager {
     public static final String ERR_TOO_CLOSE = "command.cadmus.exception.town.too_close";
     public static final String ERR_NOT_ADJACENT = "command.cadmus.exception.town.not_adjacent";
     public static final String ERR_TOWN_NOT_FOUND = "command.cadmus.exception.town.not_found";
+    public static final String ERR_TOWN_NAME = "command.cadmus.exception.town.invalid_name";
 
     private TownManager() {}
 
@@ -41,9 +43,16 @@ public final class TownManager {
         return Optional.ofNullable(CadmusSaveData.read(server).towns().get(id));
     }
 
-    public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end) {
+    public static boolean isValidTownName(String name) {
+        if (name == null || name.isBlank() || name.length() > MAX_TOWN_NAME_LENGTH) return false;
+        return name.indexOf('|') < 0 && name.indexOf('/') < 0;
+    }
+
+    public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end, String name) {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
         if (team == null || !TeamApi.API.canModifySettings(player, team)) return Component.translatable(ERR_NO_PERMISSION);
+        name = name == null ? "" : name.strip();
+        if (!isValidTownName(name)) return Component.translatable(ERR_TOWN_NAME);
         if (getTowns(player.server, team).size() >= MAX_TOWNS_PER_TEAM) return Component.translatable(ERR_MAX_TOWNS);
 
         Set<ChunkPos> positions = positions(start, end);
@@ -52,7 +61,7 @@ public final class TownManager {
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return Component.translatable(ERR_CLAIM_LIMIT);
         if (isTooCloseToOtherTowns(player.server, positions, null)) return Component.translatable(ERR_TOO_CLOSE);
 
-        Town town = new Town(UUID.randomUUID(), team);
+        Town town = new Town(UUID.randomUUID(), team, name);
         town.chunks().addAll(positions);
         CadmusSaveData data = CadmusSaveData.read(player.server);
         data.towns().put(town.id(), town);
@@ -134,7 +143,7 @@ public final class TownManager {
 
     public static String encode(MinecraftServer server) {
         return CadmusSaveData.read(server).towns().values().stream()
-            .map(town -> town.id() + "|" + town.team().provider() + "|" + town.team().id() + "|" +
+            .map(town -> town.id() + "|" + town.team().provider() + "|" + town.team().id() + "|" + town.name() + "|" +
                 town.chunks().stream().map(pos -> pos.x + "," + pos.z).collect(Collectors.joining(";")))
             .collect(Collectors.joining("/"));
     }

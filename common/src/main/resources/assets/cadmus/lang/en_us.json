@@ -62,6 +62,7 @@
   "command.cadmus.exception.town.too_close": "Too close to another town",
   "command.cadmus.exception.town.not_adjacent": "This chunk doesn't match the selected town",
   "command.cadmus.exception.town.not_found": "This town does not exist.",
+  "command.cadmus.exception.town.invalid_name": "Invalid town name. Use 1-32 characters without '|' or '/'.",
 
   "command.cadmus.exception.admin_team_already_exists": "This admin team already exists.",
   "command.cadmus.exception.admin_team_does_not_exist": "This admin team does not exist.",
@@ -135,6 +136,15 @@
   "gui.cadmus.unclaim_modal.title": "Unclaim Chunks?",
   "gui.cadmus.unclaim_modal.description": "Are you sure you want to unclaim all your chunks? This action is irreversible.",
   "gui.cadmus.unclaim_modal.confirm": "Unclaim",
+
+  "gui.cadmus.modal.create_town.title": "Create Town",
+  "gui.cadmus.modal.create_town.description": "Enter a name for the new town.",
+  "gui.cadmus.modal.create_town.placeholder": "Town name",
+  "gui.cadmus.modal.create_town.confirm": "Create",
+
+  "gui.cadmus.modal.delete_town.title": "Delete Town?",
+  "gui.cadmus.modal.delete_town.description": "You are about to remove the last chunk of %s. The town will be deleted!",
+  "gui.cadmus.modal.delete_town.confirm": "Delete",
 
   "rei.sections.project_odyssey": "Project Odyssey",
   "rei.cadmus.cadmus.tooltip": "Open Claim Map"

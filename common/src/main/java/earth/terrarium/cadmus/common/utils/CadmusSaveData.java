@@ -86,7 +86,7 @@ public class CadmusSaveData extends SaveHandler {
                 chunks.add(new ChunkPos(BlockPos.getX(value), BlockPos.getZ(value)));
             });
             UUID id = UUID.fromString(idString);
-            towns.put(id, new Town(id, team, chunks));
+            towns.put(id, new Town(id, team, townTag.getString("name"), chunks));
         });
     }
 
@@ -129,6 +129,7 @@ public class CadmusSaveData extends SaveHandler {
             CompoundTag townTag = new CompoundTag();
             townTag.putString("provider", town.team().provider().toString());
             townTag.putString("team", town.team().id().toString());
+            townTag.putString("name", town.name());
             ListTag chunks = new ListTag();
             town.chunks().forEach(pos -> chunks.add(LongTag.valueOf(BlockPos.asLong(pos.x, 0, pos.z))));
             townTag.put("chunks", chunks);

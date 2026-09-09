@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.common.commands.towns;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import earth.terrarium.cadmus.common.towns.TownManager;
@@ -17,14 +18,17 @@ public final class TownCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         var create = Commands.literal("create")
-            .then(Commands.argument("start", ColumnPosArgument.columnPos())
-                .then(Commands.argument("end", ColumnPosArgument.columnPos())
-                    .executes(context -> create(context.getSource(),
-                        ColumnPosArgument.getColumnPos(context, "start").toChunkPos(),
-                        ColumnPosArgument.getColumnPos(context, "end").toChunkPos()))))
-            .executes(context -> create(context.getSource(),
-                context.getSource().getPlayerOrException().chunkPosition(),
-                context.getSource().getPlayerOrException().chunkPosition()));
+            .then(Commands.argument("name", StringArgumentType.string())
+                .executes(context -> create(context.getSource(),
+                    StringArgumentType.getString(context, "name"),
+                    context.getSource().getPlayerOrException().chunkPosition(),
+                    context.getSource().getPlayerOrException().chunkPosition()))
+                .then(Commands.argument("start", ColumnPosArgument.columnPos())
+                    .then(Commands.argument("end", ColumnPosArgument.columnPos())
+                        .executes(context -> create(context.getSource(),
+                            StringArgumentType.getString(context, "name"),
+                            ColumnPosArgument.getColumnPos(context, "start").toChunkPos(),
+                            ColumnPosArgument.getColumnPos(context, "end").toChunkPos())))));
 
         var add = Commands.literal("add")
             .then(Commands.argument("town", UuidArgument.uuid())
@@ -39,13 +43,13 @@ public final class TownCommand {
             .then(Commands.literal("town").then(create).then(add)));
     }
 
-    private static int create(CommandSourceStack source, ChunkPos start, ChunkPos end) throws CommandSyntaxException {
+    private static int create(CommandSourceStack source, String name, ChunkPos start, ChunkPos end) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        Component error = TownManager.create(player, start, end);
+        Component error = TownManager.create(player, start, end, name);
         if (error != null) {
             throw new SimpleCommandExceptionType(error).create();
         }
-        source.sendSuccess(() -> Component.literal("Town created"), false);
+        source.sendSuccess(() -> Component.literal("Town created: " + name), false);
         return 1;
     }
 

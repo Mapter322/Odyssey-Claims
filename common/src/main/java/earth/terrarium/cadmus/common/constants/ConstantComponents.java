@@ -48,4 +48,16 @@ public class ConstantComponents {
     public static final Component UNCLAIM_MODAL_TITLE = Component.translatable("gui.cadmus.unclaim_modal.title");
     public static final Component UNCLAIM_MODAL_DESCRIPTION = Component.translatable("gui.cadmus.unclaim_modal.description");
     public static final Component UNCLAIM_MODAL_CONFIRM = Component.translatable("gui.cadmus.unclaim_modal.confirm");
+
+    public static final Component CREATE_TOWN_MODAL_TITLE = Component.translatable("gui.cadmus.modal.create_town.title");
+    public static final Component CREATE_TOWN_MODAL_DESCRIPTION = Component.translatable("gui.cadmus.modal.create_town.description");
+    public static final Component CREATE_TOWN_MODAL_PLACEHOLDER = Component.translatable("gui.cadmus.modal.create_town.placeholder");
+    public static final Component CREATE_TOWN_MODAL_CONFIRM = Component.translatable("gui.cadmus.modal.create_town.confirm");
+
+    public static final Component DELETE_TOWN_MODAL_TITLE = Component.translatable("gui.cadmus.modal.delete_town.title");
+    public static final Component DELETE_TOWN_MODAL_CONFIRM = Component.translatable("gui.cadmus.modal.delete_town.confirm");
+
+    public static Component deleteTownModalDescription(Object townName) {
+        return Component.translatable("gui.cadmus.modal.delete_town.description", townName);
+    }
 }

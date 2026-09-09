@@ -41,7 +41,7 @@ public record TownActionPacket(
             if (packet.action() != ClaimCommandType.TOWN_CREATE && packet.action() != ClaimCommandType.TOWN_ADD) return;
             Component error;
             if (packet.action() == ClaimCommandType.TOWN_CREATE) {
-                error = TownManager.create(serverPlayer, packet.start(), packet.end());
+                error = TownManager.create(serverPlayer, packet.start(), packet.end(), packet.town());
             } else {
                 UUID townId;
                 try {
