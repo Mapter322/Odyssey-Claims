@@ -23,6 +23,7 @@ import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.world.level.ChunkPos;
@@ -57,8 +58,10 @@ public class AdminClaimCommands {
                     }))
                 .then(Commands.literal("settings")
                     .executes(context -> openSettings(context.getSource())))
-                .then(Commands.literal("adminmode")
-                    .executes(context -> toggleAdminMode(context.getSource())))
+.then(Commands.literal("adminmode")
+                    .executes(context -> toggleAdminMode(context.getSource()))
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .executes(context -> toggleAdminMode(context.getSource(), EntityArgument.getPlayer(context, "player")))))
             )
         );
     }
@@ -95,9 +98,13 @@ public class AdminClaimCommands {
         if (!source.hasPermission(2)) throw new SimpleCommandExceptionType(ConstantComponents.NO_PERMISSION_ROLE).create();
     }
 
-    private static int toggleAdminMode(CommandSourceStack source) throws CommandSyntaxException {
+private static int toggleAdminMode(CommandSourceStack source) throws CommandSyntaxException {
         requireAdmin(source);
-        ServerPlayer player = source.getPlayerOrException();
+        return toggleAdminMode(source, source.getPlayerOrException());
+    }
+
+    private static int toggleAdminMode(CommandSourceStack source, ServerPlayer player) throws CommandSyntaxException {
+        requireAdmin(source);
         CadmusSaveData.toggleBypass(source.getServer(), player.getUUID());
         boolean enabled = CadmusSaveData.canBypass(source.getServer(), player.getUUID());
         source.sendSuccess(() -> ModUtils.translatableWithStyle(

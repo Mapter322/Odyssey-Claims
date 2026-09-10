@@ -31,6 +31,7 @@
 
   "command.cadmus.setting.get": "§b%s§7 is set to §b%s",
   "command.cadmus.setting.set": "§7Set %s§7 to §b%s",
+  "command.cadmus.setting.reset": "§7Reset §b%s§7 to its default value",
   "command.cadmus.setting.add_allowed_block": "§7Added §b%s§7 to allowed blocks",
   "command.cadmus.setting.remove_allowed_block": "§7Removed §b%s§7 from allowed blocks",
   "command.cadmus.setting.list_allowed_blocks": "§b%s",

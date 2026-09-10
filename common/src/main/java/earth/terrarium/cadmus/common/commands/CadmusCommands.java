@@ -19,6 +19,7 @@ public class CadmusCommands {
 
         AdminCommands.register(dispatcher);
         DefaultSettingsCommand.register(dispatcher);
+        AdminSettingsCommand.register(dispatcher);
         BypassCommand.register(dispatcher);
         FlagCommands.register(dispatcher);
         AdminClaimCommands.register(dispatcher);

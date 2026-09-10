@@ -208,10 +208,14 @@ public class CadmusSaveData extends SaveHandler {
 
     @SuppressWarnings("unchecked")
     public static <T> SettingValue<T> getSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition) {
-        return read(server).settingValues
+        var data = read(server);
+        SettingValue<?> defaultValue = data.settingDefaults
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(definition.id(), definition.defaultValue());
+        return data.settingValues
             .getOrDefault(definition.scope(), Map.of())
             .getOrDefault(id, Map.of())
-            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
+            .getOrDefault(definition.id(), defaultValue) instanceof SettingValue<?> value
             ? (SettingValue<T>) value
             : definition.defaultValue();
     }

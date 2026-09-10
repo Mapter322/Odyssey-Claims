@@ -25,43 +25,41 @@ public class ClaimAllowedBlocksCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext) {
         dispatcher.register(Commands.literal("cadmus")
             .then(Commands.literal("claim")
-                .then(Commands.literal("settings")
+                .then(Commands.literal("allowedblocks")
                     .then(Commands.argument("provider", ResourceLocationArgument.id()).suggests(TeamId.TEAM_PROVIDER_SUGGESTION_PROVIDER)
                         .then(Commands.argument("id", UuidArgument.uuid()).suggests(TeamId.TEAM_UUID_SUGGESTION_PROVIDER)
-                            .then(Commands.literal("allowedBlocks")
-                                .then(Commands.literal("add")
-                                    .then(Commands.argument("value", BlockStateArgument.block(buildContext))
-                                        .executes(context -> {
-                                            BlockState block = BlockStateArgument.getBlock(context, "value").getState();
-                                            TeamId id = TeamId.fromCommand(context);
-                                            addBlock(context.getSource(), block, id);
-                                            return 1;
-                                        })
-                                    )
-                                )
-                                .then(Commands.literal("remove")
-                                    .then(Commands.argument("value", BlockStateArgument.block(buildContext))
-                                        .executes(context -> {
-                                            BlockState block = BlockStateArgument.getBlock(context, "value").getState();
-                                            TeamId id = TeamId.fromCommand(context);
-                                            removeBlock(context.getSource(), block, id);
-                                            return 1;
-                                        })
-                                    )
-                                )
-                                .then(Commands.literal("list")
+                            .then(Commands.literal("add")
+                                .then(Commands.argument("value", BlockStateArgument.block(buildContext))
                                     .executes(context -> {
+                                        BlockState block = BlockStateArgument.getBlock(context, "value").getState();
                                         TeamId id = TeamId.fromCommand(context);
-                                        listBlocks(context.getSource(), id);
+                                        addBlock(context.getSource(), block, id);
                                         return 1;
                                     })
                                 )
+                            )
+                            .then(Commands.literal("remove")
+                                .then(Commands.argument("value", BlockStateArgument.block(buildContext))
+                                    .executes(context -> {
+                                        BlockState block = BlockStateArgument.getBlock(context, "value").getState();
+                                        TeamId id = TeamId.fromCommand(context);
+                                        removeBlock(context.getSource(), block, id);
+                                        return 1;
+                                    })
+                                )
+                            )
+                            .then(Commands.literal("list")
                                 .executes(context -> {
                                     TeamId id = TeamId.fromCommand(context);
                                     listBlocks(context.getSource(), id);
                                     return 1;
                                 })
                             )
+                            .executes(context -> {
+                                TeamId id = TeamId.fromCommand(context);
+                                listBlocks(context.getSource(), id);
+                                return 1;
+                            })
                         )
                     )
                 )));
