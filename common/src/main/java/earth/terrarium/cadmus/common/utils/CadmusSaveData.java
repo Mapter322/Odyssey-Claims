@@ -4,6 +4,13 @@ import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.SaveHandler;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingValue;
+import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
+import earth.terrarium.cadmus.api.settings.types.ColorSetting;
+import earth.terrarium.cadmus.api.settings.types.FloatSetting;
+import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import earth.terrarium.cadmus.common.towns.Town;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
@@ -12,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -26,6 +34,8 @@ public class CadmusSaveData extends SaveHandler {
 
     private final Map<TeamId, Map<String, TriState>> settings = new HashMap<>();
     private final Object2BooleanMap<String> defaultSettings = new Object2BooleanArrayMap<>();
+    private final Map<SettingScope, Map<TeamId, Map<String, SettingValue<?>>>> settingValues = new EnumMap<>(SettingScope.class);
+    private final Map<SettingScope, Map<String, SettingValue<?>>> settingDefaults = new EnumMap<>(SettingScope.class);
     private final Map<TeamId, Set<ResourceLocation>> allowedBlocks = new HashMap<>();
     private final Set<UUID> bypassPlayers = new HashSet<>();
     private final Map<TeamId, Color> teamColors = new HashMap<>();
@@ -88,6 +98,9 @@ public class CadmusSaveData extends SaveHandler {
             UUID id = UUID.fromString(idString);
             towns.put(id, new Town(id, team, townTag.getString("name"), chunks));
         });
+
+        loadSettingValues(tag.getCompound("settingValues"));
+        loadSettingDefaults(tag.getCompound("settingDefaults"));
     }
 
     @Override
@@ -136,6 +149,9 @@ public class CadmusSaveData extends SaveHandler {
             townsTag.put(id.toString(), townTag);
         });
         tag.put("towns", townsTag);
+
+        tag.put("settingValues", saveSettingValues());
+        tag.put("settingDefaults", saveSettingDefaults());
     }
 
     public static CadmusSaveData read(MinecraftServer server) {
@@ -187,6 +203,61 @@ public class CadmusSaveData extends SaveHandler {
         } else {
             data.bypassPlayers.add(player);
         }
+        data.setDirty();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> SettingValue<T> getSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition) {
+        return read(server).settingValues
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(id, Map.of())
+            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
+            ? (SettingValue<T>) value
+            : definition.defaultValue();
+    }
+
+    public static <T> void setSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition, SettingValue<T> value) {
+        var data = read(server);
+        data.settingValues
+            .computeIfAbsent(definition.scope(), ignored -> new HashMap<>())
+            .computeIfAbsent(id, ignored -> new HashMap<>())
+            .put(definition.id(), value);
+        data.setDirty();
+    }
+
+    public static void resetSettingValue(MinecraftServer server, TeamId id, SettingDefinition<?> definition) {
+        var data = read(server);
+        Map<TeamId, Map<String, SettingValue<?>>> scopeValues = data.settingValues.get(definition.scope());
+        if (scopeValues != null) {
+            scopeValues.computeIfPresent(id, (ignored, values) -> {
+                values.remove(definition.id());
+                return values.isEmpty() ? null : values;
+            });
+        }
+        data.setDirty();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> SettingValue<T> getDefaultSettingValue(MinecraftServer server, SettingDefinition<T> definition) {
+        return read(server).settingDefaults
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
+            ? (SettingValue<T>) value
+            : definition.defaultValue();
+    }
+
+    public static <T> void setDefaultSettingValue(MinecraftServer server, SettingDefinition<T> definition, SettingValue<T> value) {
+        var data = read(server);
+        data.settingDefaults
+            .computeIfAbsent(definition.scope(), ignored -> new HashMap<>())
+            .put(definition.id(), value);
+        data.setDirty();
+    }
+
+    public static void resetDefaultSettingValue(MinecraftServer server, SettingDefinition<?> definition) {
+        var data = read(server);
+        Map<String, SettingValue<?>> scopeDefaults = data.settingDefaults.get(definition.scope());
+        if (scopeDefaults != null) scopeDefaults.remove(definition.id());
         data.setDirty();
     }
 
@@ -249,5 +320,101 @@ public class CadmusSaveData extends SaveHandler {
 
     public Map<UUID, Town> towns() {
         return towns;
+    }
+
+    private void loadSettingValues(CompoundTag root) {
+        root.getAllKeys().forEach(scopeName -> {
+            SettingScope scope = SettingScope.valueOf(scopeName);
+            CompoundTag scopeTag = root.getCompound(scopeName);
+            scopeTag.getAllKeys().forEach(teamName -> {
+                CompoundTag teamTag = scopeTag.getCompound(teamName);
+                TeamId team = parseTeamId(teamName);
+                teamTag.getAllKeys().forEach(id -> {
+                    SettingValue<?> value = readSettingValue(teamTag.getCompound(id));
+                    if (value != null) {
+                        settingValues.computeIfAbsent(scope, ignored -> new HashMap<>())
+                            .computeIfAbsent(team, ignored -> new HashMap<>())
+                            .put(id, value);
+                    }
+                });
+            });
+        });
+    }
+
+    private void loadSettingDefaults(CompoundTag root) {
+        root.getAllKeys().forEach(scopeName -> {
+            SettingScope scope = SettingScope.valueOf(scopeName);
+            CompoundTag scopeTag = root.getCompound(scopeName);
+            scopeTag.getAllKeys().forEach(id -> {
+                SettingValue<?> value = readSettingValue(scopeTag.getCompound(id));
+                if (value != null) settingDefaults.computeIfAbsent(scope, ignored -> new HashMap<>()).put(id, value);
+            });
+        });
+    }
+
+    private CompoundTag saveSettingValues() {
+        CompoundTag root = new CompoundTag();
+        settingValues.forEach((scope, teams) -> {
+            CompoundTag scopeTag = new CompoundTag();
+            teams.forEach((team, values) -> {
+                CompoundTag teamTag = new CompoundTag();
+                values.forEach((id, value) -> teamTag.put(id, writeSettingValue(value)));
+                scopeTag.put(teamKey(team), teamTag);
+            });
+            root.put(scope.name(), scopeTag);
+        });
+        return root;
+    }
+
+    private CompoundTag saveSettingDefaults() {
+        CompoundTag root = new CompoundTag();
+        settingDefaults.forEach((scope, values) -> {
+            CompoundTag scopeTag = new CompoundTag();
+            values.forEach((id, value) -> scopeTag.put(id, writeSettingValue(value)));
+            root.put(scope.name(), scopeTag);
+        });
+        return root;
+    }
+
+    private static CompoundTag writeSettingValue(SettingValue<?> value) {
+        CompoundTag tag = new CompoundTag();
+        if (value instanceof BooleanSetting setting) {
+            tag.putString("type", "boolean");
+            tag.putBoolean("value", setting.value());
+        } else if (value instanceof StringSetting setting) {
+            tag.putString("type", "string");
+            tag.putString("value", setting.value());
+        } else if (value instanceof FloatSetting setting) {
+            tag.putString("type", "float");
+            tag.putFloat("value", setting.value());
+        } else if (value instanceof ColorSetting setting) {
+            tag.putString("type", "color");
+            Color.CODEC.encodeStart(NbtOps.INSTANCE, setting.value()).result()
+                .ifPresent(encoded -> tag.put("value", encoded));
+        } else {
+            throw new IllegalArgumentException("Unsupported setting value: " + value.getClass().getName());
+        }
+        return tag;
+    }
+
+    private static SettingValue<?> readSettingValue(CompoundTag tag) {
+        return switch (tag.getString("type")) {
+            case "boolean" -> new BooleanSetting(tag.getBoolean("value"));
+            case "string" -> new StringSetting(tag.getString("value"));
+            case "float" -> new FloatSetting(tag.getFloat("value"));
+            case "color" -> Color.CODEC.parse(NbtOps.INSTANCE, tag.get("value"))
+                .result().map(ColorSetting::new).orElse(null);
+            default -> null;
+        };
+    }
+
+    private static TeamId parseTeamId(String value) {
+        int separator = value.indexOf('|');
+        if (separator < 0) throw new IllegalArgumentException("Invalid team id: " + value);
+        return new TeamId(ResourceLocation.parse(value.substring(0, separator)), UUID.fromString(value.substring(separator + 1)));
+    }
+
+    private static String teamKey(TeamId team) {
+        return team.provider() + "|" + team.id();
     }
 }
