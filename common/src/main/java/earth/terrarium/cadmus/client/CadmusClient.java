@@ -2,7 +2,6 @@ package earth.terrarium.cadmus.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.teamresourceful.resourcefullib.common.color.Color;
-import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
@@ -10,9 +9,8 @@ import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
-import earth.terrarium.cadmus.common.network.packets.serverbound.UpdateAdminClaimInfoPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
-import earth.terrarium.cadmus.common.protections.SettingsData;
+import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
@@ -59,9 +57,13 @@ public class CadmusClient {
         Minecraft.getInstance().setScreen(new ClaimMapScreen());
     }
 
-    public static void updateClaimMapSettings(Map<TeamId, SettingsData> settings) {
-        if(Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {
-            screen.updateSettings(settings);
+public static void openClaimSettings(SyncClaimSettingsPacket packet) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!(minecraft.screen instanceof ClaimMapScreen)) {
+            minecraft.setScreen(new ClaimMapScreen());
+        }
+        if (minecraft.screen instanceof ClaimMapScreen screen) {
+            minecraft.setScreen(new ClaimConfigModal(screen, packet.id(), packet.settings()));
         }
     }
 

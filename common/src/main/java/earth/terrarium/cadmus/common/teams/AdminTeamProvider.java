@@ -4,8 +4,11 @@ import com.mojang.authlib.GameProfile;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.flags.FlagApi;
+import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import earth.terrarium.cadmus.api.teams.TeamProvider;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -24,8 +27,9 @@ public class AdminTeamProvider implements TeamProvider {
         if (!FlagApi.API.isAdminTeam(server, ADMIN_ID)) {
             FlagApi.API.createAdminTeam(server, "admin");
         }
-        if (FlagApi.API.<String>getFlag(server, ADMIN_ID, Flags.DISPLAY_NAME.id()).value().isBlank()) {
-            FlagApi.API.setFlag(server, ADMIN_ID, Flags.DISPLAY_NAME.id(), new earth.terrarium.cadmus.api.flags.types.StringFlag(Flags.DISPLAY_NAME.id(), "Admin Claim"));
+        TeamId id = TeamId.ofAdmin(ADMIN_ID);
+        if (CadmusSaveData.getSettingValue(server, id, SettingDefinitions.DISPLAY_NAME).value().isBlank()) {
+            CadmusSaveData.setSettingValue(server, id, SettingDefinitions.DISPLAY_NAME, new StringSetting("Admin Claim"));
         }
     }
 
@@ -36,12 +40,14 @@ public class AdminTeamProvider implements TeamProvider {
 
     @Override
     public Optional<Component> getName(Level level, UUID id) {
-        return Optional.ofNullable(level.getServer()).map(server -> Component.literal(FlagApi.API.<String>getFlag(server, id, Flags.DISPLAY_NAME.id()).value()));
+        return Optional.ofNullable(level.getServer())
+            .map(server -> Component.literal(CadmusSaveData.getSettingValue(server, TeamId.ofAdmin(id), SettingDefinitions.DISPLAY_NAME).value()));
     }
 
     @Override
     public Optional<Color> getColor(Level level, UUID id) {
-        return Optional.ofNullable(level.getServer()).map(server -> FlagApi.API.<Color>getFlag(server, id, Flags.COLOR.id()).value());
+        return Optional.ofNullable(level.getServer())
+            .map(server -> CadmusSaveData.getSettingValue(server, TeamId.ofAdmin(id), SettingDefinitions.COLOR).value());
     }
 
     @Override

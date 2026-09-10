@@ -5,7 +5,6 @@ import com.teamresourceful.resourcefullib.client.CloseablePoseStack;
 import com.teamresourceful.resourcefullib.client.screens.BaseCursorScreen;
 import com.teamresourceful.resourcefullib.client.utils.ScreenUtils;
 import com.teamresourceful.resourcefullib.common.color.Color;
-import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
@@ -20,7 +19,6 @@ import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.AdminClaimActionPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestAdminClaimSettingsPacket;
-import earth.terrarium.cadmus.common.protections.SettingsData;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.towns.TownManager;
@@ -110,9 +108,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
                 ClaimLimitApi.API.getMaxClaims(teamId),
                 ClaimCommand.getClaimsCount(level, teamId, true),
                 ClaimLimitApi.API.getMaxChunkLoadedClaims(teamId),
-                new HashMap<>(),
-                State.of(info.color()),
-                State.empty()
+                State.of(info.color())
             ));
         });
         this.fallbackTeam = this.teams.keySet().stream().findFirst().orElse(null);
@@ -131,7 +127,6 @@ public class ClaimMapScreen extends BaseCursorScreen {
         this.playerChunkZ = Math.round(player.chunkPosition().z - chunkScale / 2);
 
         this.calculateClaims();
-        NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket());
     }
 
     public void refreshMap() {
@@ -193,11 +188,11 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
         settingsButton = frame.addChild(
             Widgets.button()
-                .withCallback(() -> {
+.withCallback(() -> {
                     if (isAdminSelected()) {
                         NetworkHandler.CHANNEL.sendToServer(new RequestAdminClaimSettingsPacket());
-                    } else {
-                        minecraft.setScreen(new ClaimConfigModal(this));
+                    } else if (selectedTeam() != null) {
+                        NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(selectedTeam()));
                     }
                 })
                 .withSize(MAP_SIZE / 2, BUTTON_HEIGHT)
@@ -222,7 +217,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             settings.alignVerticallyBottom();
         });
 
-        settingsButton.active = selectedTeam() != null && (isAdminSelected() || getData().settings().isEmpty());
+settingsButton.active = selectedTeam() != null;
 
         frame.arrangeElements();
         frame.visitWidgets(this::addRenderableWidget);
@@ -329,8 +324,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
         if (isAdminSelected()) {
             TeamId admin = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
             TeamInfo info = CadmusClient.TEAM_INFO.getOrDefault(admin, new TeamInfo("Admin Claim", Color.DEFAULT));
-            return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false), 0,
-                ClaimCommand.getClaimsCount(level, admin, true), 0, new HashMap<>(), State.of(info.color()), State.of(false));
+return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false), 0,
+                ClaimCommand.getClaimsCount(level, admin, true), 0, State.of(info.color()));
         }
         TeamData teamData = teams.get(selectedTeam());
         return teamData == null ? TeamData.EMPTY : teamData;
@@ -817,40 +812,17 @@ public class ClaimMapScreen extends BaseCursorScreen {
         DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, selectedTeam(), selectedTeam().asArg()));
     }
 
-    private static void update() {
+private static void update() {
         if (!Minecraft.getInstance().isSameThread()) return;
         if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {
             screen.refresh();
         }
     }
 
-    public void updateSettings(Map<TeamId, SettingsData> settings) {
-        settings.forEach((teamId, settingsData) -> {
-            var team = teams.get(teamId);
-            if (team != null) {
-                team.settings.putAll(settingsData.settings());
-                team.modifyColor.set(settingsData.canModifyColor());
-            }
-        });
-    }
-
-    public void updateColor(Color color) {
-        if (selectedTeam() == null) return;
-        CadmusClient.TEAM_INFO.put(selectedTeam(), new TeamInfo(CadmusClient.TEAM_INFO.get(selectedTeam()).name(), color));
-    }
-
-    public Map<String, TriState> getSettings() {
-        return getData().settings;
-    }
-
     public Color getColor() {
         if (selectedTeam() == null) return Color.DEFAULT;
         TeamInfo info = CadmusClient.TEAM_INFO.get(selectedTeam());
         return info == null ? Color.DEFAULT : info.color();
-    }
-
-    public boolean canModifyColor() {
-        return getData().modifyColor.get();
     }
 
     private boolean isAdminSelected() {
@@ -864,7 +836,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private void select(UUID value) {
         selected.set(value);
         if (settingsButton != null) {
-            settingsButton.active = selectedTeam() != null && (isAdminSelected() || getData().settings().isEmpty());
+            settingsButton.active = selectedTeam() != null;
         }
     }
 
@@ -882,8 +854,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     private record Notification(Component message, long expireAt) {}
 
-    private record TeamData(String name, int claimed, int maxClaims, int loaded, int maxLoaded, Map<String, TriState> settings, State<Color> color, State<Boolean> modifyColor) {
-        public static final TeamData EMPTY = new TeamData("empty", 0, 0,0, 0, new HashMap<>(), State.of(Color.DEFAULT), State.of(false));
+    private record TeamData(String name, int claimed, int maxClaims, int loaded, int maxLoaded, State<Color> color) {
+        public static final TeamData EMPTY = new TeamData("empty", 0, 0, 0, 0, State.of(Color.DEFAULT));
     }
 
     private static final class ClaimContextMenu {

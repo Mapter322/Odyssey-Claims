@@ -5,17 +5,15 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.flags.FlagApi;
-import earth.terrarium.cadmus.api.flags.types.ColorFlag;
-import earth.terrarium.cadmus.api.flags.types.StringFlag;
-import earth.terrarium.cadmus.api.protections.ProtectionApi;
+import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
+import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
@@ -80,16 +78,17 @@ public class AdminClaimCommands {
         return 1;
     }
 
-    public static void sendSettings(ServerPlayer player) {
+public static void sendSettings(ServerPlayer player) {
         AdminTeamProvider.ensureAdminTeam(player.getServer());
         TeamId id = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
-        var settings = new java.util.HashMap<String, com.teamresourceful.resourcefullib.common.utils.TriState>();
-        ProtectionApi.API.getSettings().forEach(setting -> settings.put(setting, CadmusSaveData.getClaimSetting(player.getServer(), id, setting)));
+        var settings = new java.util.HashMap<String, String>();
+        SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((setting, definition) ->
+            settings.put(setting, SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, definition))));
         NetworkHandler.CHANNEL.sendToPlayer(new OpenAdminClaimSettingsPacket(
             id,
-            FlagApi.API.<String>getFlag(player.getServer(), AdminTeamProvider.ADMIN_ID, Flags.DISPLAY_NAME.id()).value(),
-            FlagApi.API.<Color>getFlag(player.getServer(), AdminTeamProvider.ADMIN_ID, Flags.COLOR.id()).value(),
-            FlagApi.API.<String>getFlag(player.getServer(), AdminTeamProvider.ADMIN_ID, Flags.MOTD.id()).value(),
+            SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, SettingDefinitions.DISPLAY_NAME)),
+            CadmusSaveData.getSettingValue(player.getServer(), id, SettingDefinitions.COLOR).value(),
+            SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, SettingDefinitions.MOTD)),
             settings
         ), player);
     }

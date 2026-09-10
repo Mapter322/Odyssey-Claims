@@ -1,6 +1,5 @@
 package earth.terrarium.cadmus.common.utils;
 
-import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.ChatFormatting;
@@ -18,7 +17,7 @@ public class AdminUtils {
             return;
         }
 
-        String message = Flags.ENTRY_DENY_MESSAGE.get(player.level(), player.chunkPosition());
+        String message = Settings.getAt(player.level(), player.chunkPosition(), SettingDefinitions.ENTRY_DENY_MESSAGE);
         if (!message.isBlank()) {
             player.displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), false);
         }
@@ -42,7 +41,7 @@ public class AdminUtils {
             return;
         }
 
-        String message = Flags.EXIT_DENY_MESSAGE.get(player.level(), lastChunkPos);
+        String message = Settings.getAt(player.level(), lastChunkPos, SettingDefinitions.EXIT_DENY_MESSAGE);
         if (!message.isBlank()) {
             player.displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), false);
         }

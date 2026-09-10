@@ -8,13 +8,13 @@ import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.cadmus.api.flags.FlagApi;
-import earth.terrarium.cadmus.api.flags.types.ColorFlag;
-import earth.terrarium.cadmus.api.flags.types.StringFlag;
+import earth.terrarium.cadmus.api.settings.types.ColorSetting;
+import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import earth.terrarium.cadmus.api.teams.TeamApi;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import com.teamresourceful.bytecodecs.base.ByteCodec;
 
 public record UpdateAdminClaimInfoPacket(TeamId id, String name, Color color, String motd) implements Packet<UpdateAdminClaimInfoPacket> {
@@ -32,9 +32,9 @@ public record UpdateAdminClaimInfoPacket(TeamId id, String name, Color color, St
             String name = packet.name().strip();
             String motd = packet.motd().strip();
             if (name.isBlank() || name.length() > 32 || motd.length() > 64) return;
-            FlagApi.API.setFlag(player.getServer(), AdminTeamProvider.ADMIN_ID, Flags.DISPLAY_NAME.id(), new StringFlag(Flags.DISPLAY_NAME.id(), name));
-            FlagApi.API.setFlag(player.getServer(), AdminTeamProvider.ADMIN_ID, Flags.COLOR.id(), new ColorFlag(Flags.COLOR.id(), packet.color()));
-            FlagApi.API.setFlag(player.getServer(), AdminTeamProvider.ADMIN_ID, Flags.MOTD.id(), new StringFlag(Flags.MOTD.id(), motd));
+            CadmusSaveData.setSettingValue(player.getServer(), packet.id(), SettingDefinitions.DISPLAY_NAME, new StringSetting(name));
+            CadmusSaveData.setSettingValue(player.getServer(), packet.id(), SettingDefinitions.COLOR, new ColorSetting(packet.color()));
+            CadmusSaveData.setSettingValue(player.getServer(), packet.id(), SettingDefinitions.MOTD, new StringSetting(motd));
             TeamApi.API.syncTeamInfo(player.getServer(), TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID), true);
         })
     );

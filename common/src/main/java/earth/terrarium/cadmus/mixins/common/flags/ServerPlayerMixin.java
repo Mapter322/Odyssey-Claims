@@ -1,7 +1,6 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.ChatFormatting;
@@ -50,7 +49,7 @@ public abstract class ServerPlayerMixin extends Player {
     @Inject(method = "teleportTo(DDD)V", at = @At("HEAD"), cancellable = true)
     private void cadmus$teleportTo(double x, double y, double z, CallbackInfo ci) {
         if (!Settings.isEnabledAt(this.level(), new ChunkPos(BlockPos.containing(x, y, z)), SettingDefinitions.ALLOW_ENTRY)) {
-            String message = Flags.ENTRY_DENY_MESSAGE.get(level(), chunkPosition());
+            String message = Settings.getAt(this.level(), chunkPosition(), SettingDefinitions.ENTRY_DENY_MESSAGE);
             if (!message.isBlank()) {
                 displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), false);
             }

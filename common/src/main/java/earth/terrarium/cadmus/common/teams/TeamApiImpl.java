@@ -7,9 +7,10 @@ import earth.terrarium.cadmus.api.flags.FlagApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.api.teams.TeamProvider;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
-import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncAllTeamInfoPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTeamInfo;
@@ -65,7 +66,7 @@ public class TeamApiImpl implements TeamApi {
                 if (server == null) return ConstantComponents.UNKNOWN;
 
                 if (FlagApi.API.isAdminTeam(server, id.id())) {
-                    return Component.literal(Flags.DISPLAY_NAME.get(server, id.id()));
+                    return Component.literal(CadmusSaveData.getSettingValue(server, id, SettingDefinitions.DISPLAY_NAME).value());
                 }
 
                 GameProfileCache cache = server.getProfileCache();
@@ -172,12 +173,12 @@ public class TeamApiImpl implements TeamApi {
     public void displayTeamName(ServerPlayer player, ChunkPos pos) {
         if (player == null) return;
         Component message = ClaimApi.API.getClaim(player.level(), player.chunkPosition()).map(claim -> {
-            String greeting = Flags.GREETING.get(player.serverLevel(), player.chunkPosition());
+            String greeting = Settings.getAt(player.serverLevel(), player.chunkPosition(), SettingDefinitions.GREETING);
             return greeting.isBlank() ?
                 getName(player.level(), claim.team()) :
                 Component.literal(greeting).withStyle(ChatFormatting.GOLD);
         }).orElseGet(() -> {
-            String farewell = Flags.FAREWELL.get(player.serverLevel(), pos);
+            String farewell = Settings.getAt(player.serverLevel(), pos, SettingDefinitions.FAREWELL);
             return farewell.isBlank() ?
                 ConstantComponents.WILDERNESS :
                 Component.literal(farewell).withStyle(ChatFormatting.GOLD);
