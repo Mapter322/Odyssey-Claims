@@ -5,7 +5,6 @@ import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
-import earth.terrarium.cadmus.api.flags.FlagApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
@@ -153,7 +152,6 @@ public class ClaimApiImpl implements ClaimApi {
     @Override
     public void clearAll(MinecraftServer server) {
         CadmusSaveData.clearAll(server);
-        FlagApi.API.clearAll(server);
         server.getAllLevels().forEach(level -> {
             getAllClaimsByOwner(level).forEach((id, claims) -> {
                 claims.forEach((pos, chunkLoad) -> {

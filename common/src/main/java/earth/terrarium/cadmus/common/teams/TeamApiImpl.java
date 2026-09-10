@@ -3,7 +3,6 @@ package earth.terrarium.cadmus.common.teams;
 import com.mojang.authlib.GameProfile;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.api.flags.FlagApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.api.teams.TeamProvider;
@@ -65,7 +64,7 @@ public class TeamApiImpl implements TeamApi {
                 MinecraftServer server = level.getServer();
                 if (server == null) return ConstantComponents.UNKNOWN;
 
-                if (FlagApi.API.isAdminTeam(server, id.id())) {
+                if (CadmusSaveData.isAdminClaim(server, id.id())) {
                     return Component.literal(CadmusSaveData.getSettingValue(server, id, SettingDefinitions.DISPLAY_NAME).value());
                 }
 

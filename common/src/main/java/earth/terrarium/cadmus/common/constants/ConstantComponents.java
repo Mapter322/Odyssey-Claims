@@ -17,18 +17,12 @@ public class ConstantComponents {
     public static final Component NOT_CLAIMED = CommonUtils.serverTranslatable("command.cadmus.exception.not_claimed").copy().withStyle(ChatFormatting.RED);
     public static final Component NOT_OWNER = CommonUtils.serverTranslatable("command.cadmus.exception.not_owner").copy().withStyle(ChatFormatting.RED);
 
-    public static final Component INVALID_STATE = CommonUtils.serverTranslatable("command.cadmus.exception.invalid_state");
     public static final Component BLOCK_NOT_ADDED = CommonUtils.serverTranslatable("command.cadmus.exception.block_not_added");
 
     public static final Component NO_PERMISSION_TEAM = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_team");
     public static final Component NO_PERMISSION_ROLE = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_role");
 
     public static final Component TEAM_DOES_NOT_EXIST = CommonUtils.serverTranslatable("command.cadmus.exception.team_does_not_exist");
-    public static final Component PROTECTION_DOES_NOT_EXIST = CommonUtils.serverTranslatable("command.cadmus.exception.protection_does_not_exist");
-
-    public static final Component ADMIN_TEAM_ALREADY_EXISTS = CommonUtils.serverTranslatable("command.cadmus.exception.admin_team_already_exists");
-    public static final Component ADMIN_TEAM_DOES_NOT_EXIST = CommonUtils.serverTranslatable("command.cadmus.exception.admin_team_does_not_exist");
-    public static final Component ADMIN_TEAM_HAS_NO_FLAGS = CommonUtils.serverTranslatable("command.cadmus.exception.admin_team_has_no_flags");
 
     public static final Component WILDERNESS = CommonUtils.serverTranslatable("message.cadmus.wilderness").copy().withStyle(ChatFormatting.GREEN);
 

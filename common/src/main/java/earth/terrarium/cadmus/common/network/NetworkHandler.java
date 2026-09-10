@@ -30,8 +30,6 @@ public class NetworkHandler {
 
         CHANNEL.register(BulkClaimSettingsPacket.TYPE);
         CHANNEL.register(ChatClaimPacket.TYPE);
-        CHANNEL.register(ClaimColorPacket.TYPE);
-        CHANNEL.register(ClaimSettingsPacket.TYPE);
         CHANNEL.register(RequestClaimSettingsPacket.TYPE);
         CHANNEL.register(RequestAdminClaimSettingsPacket.TYPE);
         CHANNEL.register(TownActionPacket.TYPE);

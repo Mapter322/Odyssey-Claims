@@ -6,7 +6,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.api.flags.FlagApi;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
@@ -32,11 +31,8 @@ import java.util.UUID;
 
 public class AdminClaimCommands {
 
-    private static final SimpleCommandExceptionType ADMIN_TEAM_ALREADY_EXISTS = new SimpleCommandExceptionType(ConstantComponents.ADMIN_TEAM_ALREADY_EXISTS);
-    public static final SimpleCommandExceptionType ADMIN_TEAM_DOES_NOT_EXIST = new SimpleCommandExceptionType(ConstantComponents.ADMIN_TEAM_DOES_NOT_EXIST);
-
     public static final SuggestionProvider<CommandSourceStack> ADMIN_TEAM_SUGGESTION_PROVIDER = (context, builder) -> {
-        Collection<String> names = FlagApi.API.getAllAdminTeamNames(context.getSource().getServer());
+        Collection<String> names = CadmusSaveData.getAllAdminTeamNames(context.getSource().getServer());
         return SharedSuggestionProvider.suggest(names, builder);
     };
 

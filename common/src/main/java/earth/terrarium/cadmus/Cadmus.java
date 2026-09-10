@@ -8,9 +8,7 @@ import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
 import earth.terrarium.cadmus.common.claims.limit.VanillaClaimLimiter;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
-import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
 import earth.terrarium.cadmus.common.protections.Protections;
 import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
@@ -43,8 +41,6 @@ public class Cadmus {
         NetworkHandler.init();
         CadmusGameRules.init();
         Protections.init();
-        ClaimSettings.init();
-        Flags.init();
         if (!ModInfoUtils.isModLoaded("argonauts")) {
             TeamApi.API.register(IndividualTeamProvider.ID, new IndividualTeamProvider());
             TeamApi.API.register(VanillaTeamProvider.ID, new VanillaTeamProvider());

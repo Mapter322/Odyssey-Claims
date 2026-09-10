@@ -3,7 +3,6 @@ package earth.terrarium.cadmus.common.teams;
 import com.mojang.authlib.GameProfile;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.cadmus.api.flags.FlagApi;
 import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import earth.terrarium.cadmus.api.teams.TeamProvider;
 import earth.terrarium.cadmus.api.teams.TeamId;
@@ -24,8 +23,8 @@ public class AdminTeamProvider implements TeamProvider {
     public static final UUID ADMIN_ID = UUID.nameUUIDFromBytes("admin".getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
     public static void ensureAdminTeam(MinecraftServer server) {
-        if (!FlagApi.API.isAdminTeam(server, ADMIN_ID)) {
-            FlagApi.API.createAdminTeam(server, "admin");
+        if (!CadmusSaveData.isAdminClaim(server, ADMIN_ID)) {
+            CadmusSaveData.createAdminClaim(server, "admin");
         }
         TeamId id = TeamId.ofAdmin(ADMIN_ID);
         if (CadmusSaveData.getSettingValue(server, id, SettingDefinitions.DISPLAY_NAME).value().isBlank()) {

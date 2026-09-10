@@ -17,11 +17,9 @@ public class CadmusCommands {
         ClaimAllowedBlocksCommand.register(dispatcher, context);
         TownCommand.register(dispatcher);
 
-        AdminCommands.register(dispatcher);
+AdminCommands.register(dispatcher);
         DefaultSettingsCommand.register(dispatcher);
         AdminSettingsCommand.register(dispatcher);
-        BypassCommand.register(dispatcher);
-        FlagCommands.register(dispatcher);
         AdminClaimCommands.register(dispatcher);
     }
 }

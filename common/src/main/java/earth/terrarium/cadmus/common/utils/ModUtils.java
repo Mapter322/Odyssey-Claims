@@ -5,10 +5,7 @@ import com.teamresourceful.resourcefullib.common.exceptions.NotImplementedExcept
 import com.teamresourceful.resourcefullib.common.utils.CommonUtils;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.api.protections.ProtectionApi;
-import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimsPacket;
 import earth.terrarium.olympus.client.constants.MinecraftColors;
@@ -19,7 +16,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Contract;
 
@@ -82,33 +78,5 @@ public class ModUtils {
         }
 
         return Component.literal(CommonUtils.serverTranslatable(key, args).getString());
-    }
-
-    /**
-     * Checks if the player has permission to modify the setting. if not, returns the component with the error message.
-     *
-     * @param player  the player to check
-     * @param setting the setting to check
-     * @return null if the player has permission, otherwise the component with the error message.
-     */
-    public static Component canUsePermission(Player player, TeamId id, String setting) {
-        if (setting.equals("cadmus.color")) {
-            return canModifyColor(player, id);
-        }
-        var protection = ProtectionApi.API.getProtection(setting);
-        if (protection == null) {
-            return ConstantComponents.NO_PERMISSION_ROLE;
-        }
-        if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, id)) {
-            return ConstantComponents.NO_PERMISSION_TEAM;
-        }
-        return null;
-    }
-
-    public static Component canModifyColor(Player player, TeamId id) {
-        if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, id)) {
-            return ConstantComponents.NO_PERMISSION_TEAM;
-        }
-        return null;
     }
 }

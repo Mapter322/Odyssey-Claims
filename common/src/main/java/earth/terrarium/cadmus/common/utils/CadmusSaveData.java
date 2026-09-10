@@ -2,7 +2,6 @@ package earth.terrarium.cadmus.common.utils;
 
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.SaveHandler;
-import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
@@ -12,8 +11,6 @@ import earth.terrarium.cadmus.api.settings.types.ColorSetting;
 import earth.terrarium.cadmus.api.settings.types.FloatSetting;
 import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import earth.terrarium.cadmus.common.towns.Town;
-import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -28,14 +25,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.ChunkPos;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class CadmusSaveData extends SaveHandler {
 
-    private final Map<TeamId, Map<String, TriState>> settings = new HashMap<>();
-    private final Object2BooleanMap<String> defaultSettings = new Object2BooleanArrayMap<>();
     private final Map<SettingScope, Map<TeamId, Map<String, SettingValue<?>>>> settingValues = new EnumMap<>(SettingScope.class);
     private final Map<SettingScope, Map<String, SettingValue<?>>> settingDefaults = new EnumMap<>(SettingScope.class);
+    private final Map<UUID, String> adminTeams = new HashMap<>();
     private final Map<TeamId, Set<ResourceLocation>> allowedBlocks = new HashMap<>();
     private final Set<UUID> bypassPlayers = new HashSet<>();
     private final Map<TeamId, Color> teamColors = new HashMap<>();
@@ -44,22 +41,6 @@ public class CadmusSaveData extends SaveHandler {
 
     @Override
     public void loadData(CompoundTag tag) {
-        CompoundTag settingsTag = tag.getCompound("settings");
-        settingsTag.getAllKeys().forEach(provider -> {
-            CompoundTag providerMap = settingsTag.getCompound(provider);
-            providerMap.getAllKeys().forEach(id -> {
-                CompoundTag claimSettingsTag = providerMap.getCompound(id);
-                claimSettingsTag.getAllKeys().forEach(setting -> {
-                    TriState value = TriState.valueOf(claimSettingsTag.getString(setting));
-                    this.settings.computeIfAbsent(new TeamId(ResourceLocation.parse(provider), UUID.fromString(id)), ignored -> new HashMap<>()).put(setting, value);
-                });
-            });
-        });
-
-        CompoundTag defaultSettingsTag = tag.getCompound("defaultSettings");
-        defaultSettingsTag.getAllKeys().forEach(setting ->
-            defaultSettings.put(setting, defaultSettingsTag.getBoolean(setting)));
-
         CompoundTag allowedBlocksTag = tag.getCompound("allowedBlocks");
         allowedBlocksTag.getAllKeys().forEach(provider -> {
             CompoundTag providerMap = allowedBlocksTag.getCompound(provider);
@@ -95,9 +76,13 @@ public class CadmusSaveData extends SaveHandler {
                 long value = ((LongTag) chunk).getAsLong();
                 chunks.add(new ChunkPos(BlockPos.getX(value), BlockPos.getZ(value)));
             });
-            UUID id = UUID.fromString(idString);
+UUID id = UUID.fromString(idString);
             towns.put(id, new Town(id, team, townTag.getString("name"), chunks));
         });
+
+        CompoundTag adminTeamsTag = tag.getCompound("adminTeams");
+        adminTeamsTag.getAllKeys().forEach(name ->
+            adminTeams.put(UUID.fromString(adminTeamsTag.getString(name)), name));
 
         loadSettingValues(tag.getCompound("settingValues"));
         loadSettingDefaults(tag.getCompound("settingDefaults"));
@@ -105,18 +90,6 @@ public class CadmusSaveData extends SaveHandler {
 
     @Override
     public void saveData(CompoundTag tag) {
-        CompoundTag settingsTag = new CompoundTag();
-        this.settings.forEach((id, claimSettings) -> {
-            CompoundTag claimSettingsTag = new CompoundTag();
-            claimSettings.forEach((setting, value) -> claimSettingsTag.putString(setting, value.name()));
-            settingsTag.put(id.toString(), claimSettingsTag);
-        });
-        tag.put("settings", settingsTag);
-
-        CompoundTag defaultSettingsTag = new CompoundTag();
-        this.defaultSettings.forEach(defaultSettingsTag::putBoolean);
-        tag.put("defaultSettings", defaultSettingsTag);
-
         CompoundTag allowedBlocksTag = new CompoundTag();
         this.allowedBlocks.forEach((id, blocks) -> {
             ListTag blockTag = new ListTag();
@@ -148,45 +121,48 @@ public class CadmusSaveData extends SaveHandler {
             townTag.put("chunks", chunks);
             townsTag.put(id.toString(), townTag);
         });
-        tag.put("towns", townsTag);
+tag.put("towns", townsTag);
+
+        CompoundTag adminTeamsTag = new CompoundTag();
+        adminTeams.forEach((id, name) -> adminTeamsTag.putString(name, id.toString()));
+        tag.put("adminTeams", adminTeamsTag);
 
         tag.put("settingValues", saveSettingValues());
         tag.put("settingDefaults", saveSettingDefaults());
     }
 
-    public static CadmusSaveData read(MinecraftServer server) {
+public static CadmusSaveData read(MinecraftServer server) {
         return read(server.overworld().getDataStorage(), SaveHandler.HandlerType.create(CadmusSaveData::new), "cadmus_data");
     }
 
-    public static TriState getClaimSetting(MinecraftServer server, TeamId id, String setting) {
-        return read(server).settings
-            .computeIfAbsent(id, ignored -> new HashMap<>())
-            .getOrDefault(setting, TriState.UNDEFINED);
+    public static boolean isAdminClaim(MinecraftServer server, UUID id) {
+        return read(server).adminTeams.containsKey(id);
     }
 
-    public static void setClaimSetting(MinecraftServer server, TeamId id, String setting, TriState value) {
+    public static UUID createAdminClaim(MinecraftServer server, String name) {
         var data = read(server);
-        data.settings
-            .computeIfAbsent(id, ignored -> new HashMap<>())
-            .put(setting, value);
+        UUID id = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+        data.adminTeams.put(id, name);
+        data.setDirty();
+        return id;
+    }
+
+    public static void removeAdminClaim(MinecraftServer server, UUID id) {
+        var data = read(server);
+        data.adminTeams.remove(id);
         data.setDirty();
     }
 
-    public static boolean getClaimSettingOrDefault(MinecraftServer server, TeamId id, String setting) {
-        TriState value = getClaimSetting(server, id, setting);
-        return value.isUndefined() ? getDefaultClaimSetting(server, setting) : value.isTrue();
+    public static Optional<UUID> getIdFromName(MinecraftServer server, String name) {
+        return read(server).adminTeams.entrySet().stream()
+            .filter(entry -> entry.getValue().equals(name))
+            .map(Map.Entry::getKey)
+            .findFirst();
     }
 
-    public static boolean getDefaultClaimSetting(MinecraftServer server, String setting) {
-        return read(server).defaultSettings.getBoolean(setting);
+    public static Collection<String> getAllAdminTeamNames(MinecraftServer server) {
+        return read(server).adminTeams.values();
     }
-
-    public static void setDefaultClaimSetting(MinecraftServer server, String setting, boolean value) {
-        var data = read(server);
-        data.defaultSettings.put(setting, value);
-        data.setDirty();
-    }
-
 
     public static boolean canBypass(MinecraftServer server, UUID player) {
         return read(server).bypassPlayers.contains(player);
@@ -288,14 +264,15 @@ public class CadmusSaveData extends SaveHandler {
 
     public static void removeTeam(MinecraftServer server, TeamId id) {
         var data = read(server);
-        data.settings.remove(id);
+        data.settingValues.values().forEach(values -> values.remove(id));
         data.allowedBlocks.remove(id);
         data.setDirty();
     }
 
     public static void clearAll(MinecraftServer server) {
         var data = read(server);
-        data.settings.clear();
+        data.settingValues.clear();
+        data.adminTeams.clear();
         data.allowedBlocks.clear();
         data.setDirty();
     }

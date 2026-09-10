@@ -24,9 +24,7 @@
   "command.cadmus.info.unclaimed_all_admin": "§7Unclaimed §b%s§7 admin chunks",
   "command.cadmus.info.claimed_admin_chunks_area": "§7Claimed admin chunks from §b[%s, %s]§7 to §b[%s, %s]",
 
-  "command.cadmus.bypass.enable": "§7Enabled bypass for %s",
-  "command.cadmus.bypass.disable": "§7Disabled bypass for %s",
-  "command.cadmus.adminmode.enable": "§7Enabled admin mode for %s",
+"command.cadmus.adminmode.enable": "§7Enabled admin mode for %s",
   "command.cadmus.adminmode.disable": "§7Disabled admin mode for %s",
 
   "command.cadmus.setting.get": "§b%s§7 is set to §b%s",
@@ -36,12 +34,6 @@
   "command.cadmus.setting.remove_allowed_block": "§7Removed §b%s§7 from allowed blocks",
   "command.cadmus.setting.list_allowed_blocks": "§b%s",
 
-  "command.cadmus.admin.create": "§7Created admin team §b%s",
-  "command.cadmus.admin.remove": "§7Removed admin team §b%s",
-  "command.cadmus.admin.set_flag": "§7Set flag§b %s§7 from §6%s§7 to §6%s",
-  "command.cadmus.admin.remove_flag": "§7Removed flag §b%s",
-  "command.cadmus.admin.list_flags": "§b%s:§6 %s",
-
   "command.cadmus.exception.already_claimed": "This chunk is already claimed by %s",
   "command.cadmus.exception.maxed_out_claims": "You have reached the maximum amount of claims §6(%s/%s)",
   "command.cadmus.exception.not_enough_claims": "You don't have enough claims available §6(%s/%s)",
@@ -49,14 +41,12 @@
   "command.cadmus.exception.not_owner": "You do not own this claim",
   "command.cadmus.exception.area_too_large": "The area is too large §6(%s/%s)",
 
-  "command.cadmus.exception.invalid_state": "Invalid value. Valid values are: true, false, default.",
   "command.cadmus.exception.block_not_added": "This block is not in the allowed blocks list.",
 
   "command.cadmus.exception.no_permission_team": "You do not have permission on your team to manage this setting.",
   "command.cadmus.exception.no_permission_role": "Your role does not have permission to manage settings.",
 
   "command.cadmus.exception.team_does_not_exist": "This team does not exist.",
-  "command.cadmus.exception.protection_does_not_exist": "This protection setting does not exist.",
 
   "command.cadmus.exception.town.no_permission": "You do not have permission to manage this town.",
   "command.cadmus.exception.town.max_towns": "You have reached the maximum amount of towns",
@@ -67,11 +57,7 @@
   "command.cadmus.exception.town.not_found": "This town does not exist.",
   "command.cadmus.exception.town.invalid_name": "Invalid town name. Use 1-32 characters without '|' or '/'.",
 
-  "command.cadmus.exception.admin_team_already_exists": "This admin team already exists.",
-  "command.cadmus.exception.admin_team_does_not_exist": "This admin team does not exist.",
-  "command.cadmus.exception.admin_team_has_no_flags": "This admin team has no flags.",
-
-  "message.cadmus.wilderness": "Wilderness",
+"message.cadmus.wilderness": "Wilderness",
 
   "text.cadmus.chunkload_selected": "Chunkload Selected",
   "text.cadmus.claimed_by": "Claimed by %s",
