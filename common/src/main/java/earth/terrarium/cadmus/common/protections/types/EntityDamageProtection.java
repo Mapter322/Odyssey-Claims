@@ -54,10 +54,10 @@ public final class EntityDamageProtection implements Protection {
         if (entity instanceof Player) return Settings.getForTeam(server, team, SettingDefinitions.PVP);
 
         if (entity instanceof Enemy || entity.getType().is(ModEntityTypeTags.MONSTERS)) {
-            return Settings.getForTeam(server, team, SettingDefinitions.MONSTER_DAMAGE);
+            return Settings.getForTeam(server, team, SettingDefinitions.ADMIN_MONSTER_DAMAGE);
         } else {
             if (entity instanceof Mob || entity.getType().is(ModEntityTypeTags.CREATURES)) {
-                return Settings.getForTeam(server, team, SettingDefinitions.CREATURE_DAMAGE);
+                return Settings.getForTeam(server, team, SettingDefinitions.ADMIN_CREATURE_DAMAGE);
             }
 
             return Settings.getForTeam(server, team, SettingDefinitions.ENTITY_DAMAGE);

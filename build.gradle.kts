@@ -61,6 +61,7 @@ subprojects {
         val reiVersion: String by project
         val journeymapVersion: String by project
         val journeymapApiVersion: String by project
+        val argonautsVersion: String by project
 
         "minecraft"("::$minecraftVersion")
 
@@ -75,6 +76,10 @@ subprojects {
 
         "modApi"(group = "com.teamresourceful.resourcefullib", name = "resourcefullib-$modLoader-$minecraftVersion", version = "3.0.12")
         val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-$minecraftVersion", version = "1.0.19") {
+            isTransitive = false
+        }
+
+        "modCompileOnly"(group = "earth.terrarium.argonauts", name = "argonauts-$modLoader-$minecraftVersion", version = argonautsVersion) {
             isTransitive = false
         }
 

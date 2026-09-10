@@ -2,8 +2,9 @@ package earth.terrarium.cadmus.client;
 
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
-import earth.terrarium.cadmus.api.settings.SettingCategory;
+import earth.terrarium.argonauts.client.widget.LabelledEntry;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
@@ -21,8 +22,8 @@ import earth.terrarium.olympus.client.ui.OverlayAlignment;
 import earth.terrarium.olympus.client.ui.UIConstants;
 import earth.terrarium.olympus.client.ui.modals.BaseModal;
 import earth.terrarium.olympus.client.utils.State;
-import earth.terrarium.olympus.client.components.textbox.TextBox;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.network.chat.Component;
 
@@ -33,14 +34,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class AdminClaimConfigModal extends BaseModal {
-    private static final SettingCategory IDENTITY_CATEGORY = SettingCategory.IDENTITY;
+    private static final Set<String> IDENTITY_SETTINGS = Set.of("display-name", "motd", "color");
 
     private final OpenAdminClaimSettingsPacket packet;
     private final Map<String, RadioState<TriState>> booleanStates = new HashMap<>();
     private final Map<String, State<String>> textStates = new HashMap<>();
+    private final Map<SettingTarget, Boolean> expandedTargets = new HashMap<>();
     private final State<String> name;
     private final State<String> motd;
     private final State<Color> color;
+
+    private SettingsListWidget settingsList;
+    private Integer pendingScroll;
 
     public AdminClaimConfigModal(ClaimMapScreen background, OpenAdminClaimSettingsPacket packet) {
         super(Component.translatable("gui.cadmus.admin_claim.settings"), background);
@@ -50,7 +55,7 @@ public class AdminClaimConfigModal extends BaseModal {
         this.color = State.of(packet.color());
 
         SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
-            if (definition.category() == IDENTITY_CATEGORY) return;
+            if (IDENTITY_SETTINGS.contains(id)) return;
             String value = packet.settings().getOrDefault(id, SettingCommandSupport.valueToString(definition.defaultValue()));
             if (definition.defaultValue() instanceof BooleanSetting) {
                 TriState tri = Boolean.parseBoolean(value) ? TriState.TRUE : TriState.FALSE;
@@ -64,39 +69,61 @@ public class AdminClaimConfigModal extends BaseModal {
     @Override
     protected void init() {
         super.init();
-        ListWidget content = new ListWidget(modalContentWidth, modalContentHeight - 22) {{ this.gap = 4; }};
-        content.setPosition(modalContentLeft, modalContentTop - 4);
-        content.add(new BaseParentWidget(0, 0) {});
-        TextBox nameBox = Widgets.textInput(name).withMaxLength(32).withPlaceholder("Admin Claim");
-        TextBox motdBox = Widgets.textInput(motd).withMaxLength(64).withPlaceholder("MOTD");
-        content.add(Widgets.labelled(font, Component.translatable("gui.cadmus.admin_claim.name"), nameBox));
-        content.add(Widgets.labelled(font, Component.translatable("gui.cadmus.admin_claim.color"), Widgets.carousel(widget -> {
+        this.settingsList = new SettingsListWidget(modalContentWidth, modalContentHeight - 22);
+        this.settingsList.setPosition(modalContentLeft, modalContentTop - 4);
+        this.settingsList.add(new BaseParentWidget(0, 0) {});
+
+        AbstractWidget nameBox = Widgets.textInput(name).withMaxLength(32).withPlaceholder("Admin Claim").withSize(116, 16);
+        AbstractWidget motdBox = Widgets.textInput(motd).withMaxLength(64).withPlaceholder("MOTD").withSize(116, 16);
+        this.settingsList.add(new LabelledEntry(font, Component.translatable("gui.cadmus.admin_claim.name"), nameBox)
+            .setLockedWidth()
+            .setEntryYOffset(-2)
+            .setDrawDivider(true));
+        this.settingsList.add(new LabelledEntry(font, Component.translatable("gui.cadmus.admin_claim.color"), Widgets.carousel(widget -> {
             widget.withSize(100, 20);
             widget.withContents(layout -> {
                 layout.withChild(Widgets.colorInput(color, textBox -> textBox.withSize(80, 20)));
                 layout.withChild(Widgets.colorPicker(color, false, button -> button.withSize(20), overlay -> overlay.withAlignment(OverlayAlignment.BOTTOM_RIGHT)));
             });
-        })));
-        content.add(Widgets.labelled(font, Component.translatable("gui.cadmus.admin_claim.motd"), motdBox));
+        })).setLockedWidth().setDrawDivider(true));
+        this.settingsList.add(new LabelledEntry(font, Component.translatable("gui.cadmus.admin_claim.motd"), motdBox)
+            .setLockedWidth()
+            .setEntryYOffset(-2)
+            .setDrawDivider(true));
 
-        SettingCategory lastCategory = null;
-        for (var entry : SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).entrySet()) {
-            String id = entry.getKey();
-            var definition = entry.getValue();
-            if (definition.category() == IDENTITY_CATEGORY) continue;
-            if (definition.category() != lastCategory) {
-                lastCategory = definition.category();
-                content.add(Widgets.labelled(font, categoryLabel(lastCategory), new BaseParentWidget(0, 0) {}));
-            }
-            RadioState<TriState> state = booleanStates.get(id);
-            if (state != null) {
-                content.add(Widgets.labelled(font, Component.translatable("cadmus.setting." + id), Widgets.tristate(state)));
-            } else {
-                State<String> textState = textStates.get(id);
-                if (textState != null) {
-                    content.add(Widgets.labelled(font, Component.translatable("cadmus.setting." + id), Widgets.textInput(textState).withMaxLength(64)));
+        for (SettingTarget target : SettingTarget.values()) {
+            this.settingsList.add(new CategoryHeader(font, targetLabel(target),
+                () -> this.expandedTargets.getOrDefault(target, true),
+                () -> this.aggregateState(target),
+                () -> this.toggleTarget(target),
+                hasBooleanSettings(target) ? value -> this.applyTarget(target, value) : null));
+            if (!this.expandedTargets.getOrDefault(target, true)) continue;
+
+            SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
+                if (IDENTITY_SETTINGS.contains(id) || definition.target() != target) return;
+                RadioState<TriState> state = this.booleanStates.get(id);
+                if (state != null) {
+                    this.settingsList.add(new LabelledEntry(font, settingLabel(id), Widgets.tristate(state))
+                        .setLockedWidth()
+                        .setColor(MinecraftColors.GRAY.getValue())
+                        .setDrawDivider(true));
+                } else {
+                    State<String> textState = this.textStates.get(id);
+                    if (textState != null) {
+                        AbstractWidget input = Widgets.textInput(textState).withMaxLength(64).withSize(100, 16);
+                        this.settingsList.add(new LabelledEntry(font, settingLabel(id), input)
+                            .setLockedWidth()
+                            .setEntryYOffset(-2)
+                            .setColor(MinecraftColors.GRAY.getValue())
+                            .setDrawDivider(true));
+                    }
                 }
-            }
+            });
+        }
+
+        if (this.pendingScroll != null) {
+            this.settingsList.restoreScroll(this.pendingScroll);
+            this.pendingScroll = null;
         }
 
         FrameLayout footer = new FrameLayout(modalContentWidth, 20 + INNER_PADDING * 2);
@@ -125,14 +152,72 @@ public class AdminClaimConfigModal extends BaseModal {
             layout.alignVerticallyMiddle();
         });
 
-        addRenderableWidget(content);
-        content.visitWidgets(this::addWidget);
+        addRenderableWidget(this.settingsList);
+        this.settingsList.visitWidgets(this::addWidget);
         footer.arrangeElements();
         footer.visitWidgets(this::addRenderableWidget);
     }
 
-    private static Component categoryLabel(SettingCategory category) {
-        return Component.translatable("cadmus.setting.category." + category.name().toLowerCase(Locale.ROOT));
+    private boolean hasBooleanSettings(SettingTarget target) {
+        for (var entry : SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).entrySet()) {
+            if (IDENTITY_SETTINGS.contains(entry.getKey())) continue;
+            if (entry.getValue().target() == target && this.booleanStates.containsKey(entry.getKey())) return true;
+        }
+        return false;
+    }
+
+    private TriState aggregateState(SettingTarget target) {
+        boolean anyTrue = false;
+        boolean anyFalse = false;
+        for (var entry : SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).entrySet()) {
+            if (IDENTITY_SETTINGS.contains(entry.getKey()) || entry.getValue().target() != target) continue;
+            RadioState<TriState> state = this.booleanStates.get(entry.getKey());
+            if (state == null) continue;
+            if (state.get() == TriState.TRUE) anyTrue = true;
+            else if (state.get() == TriState.FALSE) anyFalse = true;
+        }
+        if (anyTrue && !anyFalse) return TriState.TRUE;
+        if (anyFalse && !anyTrue) return TriState.FALSE;
+        return TriState.UNDEFINED;
+    }
+
+    private void applyTarget(SettingTarget target, TriState value) {
+        SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
+            RadioState<TriState> state = this.booleanStates.get(id);
+            if (IDENTITY_SETTINGS.contains(id) || definition.target() != target || state == null) return;
+            state.set(value);
+            state.setIndex(switch (value) {
+                case TRUE -> 0;
+                case UNDEFINED -> 1;
+                case FALSE -> 2;
+            });
+        });
+    }
+
+    private void toggleTarget(SettingTarget target) {
+        this.pendingScroll = this.settingsList == null ? 0 : this.settingsList.getScroll();
+        this.expandedTargets.put(target, !this.expandedTargets.getOrDefault(target, true));
+        this.clearWidgets();
+        this.init();
+    }
+
+    private static Component settingLabel(String id) {
+        return Component.literal("   ").append(Component.translatable("cadmus.setting." + id));
+    }
+
+    private static Component targetLabel(SettingTarget target) {
+        return Component.translatable("cadmus.setting.target." + target.name().toLowerCase(Locale.ROOT));
+    }
+
+    private static class SettingsListWidget extends ListWidget {
+        SettingsListWidget(int width, int height) {
+            super(width, height);
+            this.gap = 4;
+        }
+
+        void restoreScroll(int scroll) {
+            this.scroll = Math.max(0, Math.min(scroll, Math.max(0, this.getContentHeight() - this.getHeight())));
+        }
     }
 
     @Override

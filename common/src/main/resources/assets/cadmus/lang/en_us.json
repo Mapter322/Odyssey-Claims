@@ -127,13 +127,8 @@
   "gui.cadmus.admin_claim.color": "Color",
   "gui.cadmus.admin_claim.motd": "MOTD",
 
-  "cadmus.setting.category.blocks": "Blocks",
-  "cadmus.setting.category.entities": "Entities",
-  "cadmus.setting.category.nature": "Nature",
-  "cadmus.setting.category.players": "Players",
-  "cadmus.setting.category.access": "Access",
-  "cadmus.setting.category.messages": "Messages",
-  "cadmus.setting.category.identity": "Identity",
+  "cadmus.setting.target.global": "Global rules",
+  "cadmus.setting.target.player": "Player actions",
 
   "cadmus.setting.block-break": "Break blocks",
   "cadmus.setting.block-place": "Place blocks",
