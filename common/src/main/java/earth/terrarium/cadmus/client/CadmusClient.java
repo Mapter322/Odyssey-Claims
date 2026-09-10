@@ -10,6 +10,8 @@ import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.UpdateAdminClaimInfoPacket;
+import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.protections.SettingsData;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import net.minecraft.resources.ResourceLocation;
@@ -85,6 +87,16 @@ public class CadmusClient {
 
     public static void sendTeamlessClaimCommand(ClaimCommandType type, String command) {
         NetworkHandler.CHANNEL.sendToServer(new ChatClaimPacket(type, command));
+    }
+
+    public static void openAdminClaimSettings(OpenAdminClaimSettingsPacket packet) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!(minecraft.screen instanceof ClaimMapScreen)) {
+            minecraft.setScreen(new ClaimMapScreen());
+        }
+        if (minecraft.screen instanceof ClaimMapScreen screen) {
+            minecraft.setScreen(new AdminClaimConfigModal(screen, packet));
+        }
     }
 
     public static void sendTownCreate(String name, ChunkPos start, ChunkPos end) {

@@ -97,13 +97,13 @@ public class FlagSaveData extends SaveHandler {
 
     public static void setFlag(MinecraftServer server, UUID id, String flagName, Flag<?> flag) {
         var data = read(server);
-        data.flags.get(id).put(flagName, flag);
+        data.flags.computeIfAbsent(id, ignored -> new HashMap<>()).put(flagName, flag);
         data.setDirty();
     }
 
     public static void removeFlag(MinecraftServer server, UUID id, String flagName) {
         var data = read(server);
-        data.flags.get(id).remove(flagName);
+        data.flags.computeIfAbsent(id, ignored -> new HashMap<>()).remove(flagName);
         data.setDirty();
     }
 

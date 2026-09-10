@@ -8,6 +8,7 @@ import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
+import com.teamresourceful.resourcefullib.common.utils.TriState;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -86,6 +87,9 @@ public interface Protection {
         if (CadmusSaveData.canBypass(level.getServer(), player.getId())) return true;
 
         if (id.provider().equals(AdminTeamProvider.ID)) {
+            TriState setting = CadmusSaveData.getClaimSetting(level.getServer(), id, setting());
+            if (setting == TriState.TRUE) return true;
+            if (setting == TriState.FALSE) return false;
             return flagEnabled(level.getServer(), id);
         }
 

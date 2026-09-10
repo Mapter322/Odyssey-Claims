@@ -187,6 +187,7 @@ public class CadmusSaveData extends SaveHandler {
         } else {
             data.bypassPlayers.add(player);
         }
+        data.setDirty();
     }
 
     public static void addAllowedBlock(MinecraftServer server, TeamId player, Block block) {

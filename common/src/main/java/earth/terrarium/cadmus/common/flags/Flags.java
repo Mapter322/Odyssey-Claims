@@ -11,6 +11,7 @@ public class Flags {
 
     public static final StringFlag DISPLAY_NAME = FlagApi.API.register(new StringFlag("display-name", ""));
     public static final ColorFlag COLOR = FlagApi.API.register(new ColorFlag("color", Color.DEFAULT));
+    public static final StringFlag MOTD = FlagApi.API.register(new StringFlag("motd", ""));
 
     public static final BooleanFlag BLOCK_BREAK = FlagApi.API.register(new BooleanFlag("block-break", true));
     public static final BooleanFlag BLOCK_PLACE = FlagApi.API.register(new BooleanFlag("block-place", true));

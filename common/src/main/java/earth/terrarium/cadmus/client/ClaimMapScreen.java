@@ -18,8 +18,11 @@ import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.AdminClaimActionPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.RequestAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.protections.SettingsData;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
+import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.buttons.Button;
@@ -79,6 +82,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private List<UUID> availableTowns = List.of();
     private TeamId fallbackTeam;
     public static final DropdownState<UUID> selected = DropdownState.of(null);
+    private static final UUID ADMIN_SELECTION = new UUID(0L, 0L);
 
     private float chunkScale;
     private float pixelScale;
@@ -116,7 +120,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             .filter(town -> teams.containsKey(town.team()))
             .map(CadmusClient.ClientTown::id)
             .toList();
-        if (selected.get() == null || !this.availableTowns.contains(selected.get())) {
+        if (selected.get() == null || (!isAdminSelected() && !this.availableTowns.contains(selected.get()))) {
             selected.set(this.availableTowns.isEmpty() ? null : this.availableTowns.get(0));
         }
 
@@ -189,7 +193,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
         settingsButton = frame.addChild(
             Widgets.button()
-                .withCallback(() -> minecraft.setScreen(new ClaimConfigModal(this)))
+                .withCallback(() -> {
+                    if (isAdminSelected()) {
+                        NetworkHandler.CHANNEL.sendToServer(new RequestAdminClaimSettingsPacket());
+                    } else {
+                        minecraft.setScreen(new ClaimConfigModal(this));
+                    }
+                })
                 .withSize(MAP_SIZE / 2, BUTTON_HEIGHT)
                 .withRenderer(WidgetRenderers.text(ConstantComponents.SETTINGS)),
             (settings) -> {
@@ -212,7 +222,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             settings.alignVerticallyBottom();
         });
 
-        settingsButton.active = selectedTeam() != null && getData().settings().isEmpty();
+        settingsButton.active = selectedTeam() != null && (isAdminSelected() || getData().settings().isEmpty());
 
         frame.arrangeElements();
         frame.visitWidgets(this::addRenderableWidget);
@@ -226,17 +236,25 @@ public class ClaimMapScreen extends BaseCursorScreen {
                 .withAlignment(OverlayAlignment.TOP_RIGHT, selected)
                 .withTexture(UIConstants.LIST_BG)
                 .withCloseCallback(() -> selected.setOpened(false));
+            if (player.hasPermissions(2)) {
+                ctx.add(() -> Widgets.button()
+                    .withTexture(UIConstants.LIST_ENTRY)
+                    .withRenderer(WidgetRenderers.text(Component.translatable("gui.cadmus.claim_map.admin_claim")).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                    .withSize(MAP_SIZE / 2, 20)
+                    .withCallback(() -> select(ADMIN_SELECTION)));
+            }
             for (UUID town : towns) {
                 ctx.add(() -> Widgets.button()
                     .withTexture(UIConstants.LIST_ENTRY)
                     .withRenderer(WidgetRenderers.text(townName(town)).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
                     .withSize(MAP_SIZE / 2, 20)
-                    .withCallback(() -> selected.set(town)));
+                    .withCallback(() -> select(town)));
             }
         });
     }
 
     private Component townName(UUID townId) {
+        if (ADMIN_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.admin_claim");
         return Optional.ofNullable(CadmusClient.TOWNS.get(townId))
             .map(CadmusClient.ClientTown::displayName)
             .orElse(ConstantComponents.NO_TOWNS.copy());
@@ -308,11 +326,18 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     private TeamData getData() {
+        if (isAdminSelected()) {
+            TeamId admin = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
+            TeamInfo info = CadmusClient.TEAM_INFO.getOrDefault(admin, new TeamInfo("Admin Claim", Color.DEFAULT));
+            return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false), 0,
+                ClaimCommand.getClaimsCount(level, admin, true), 0, new HashMap<>(), State.of(info.color()), State.of(false));
+        }
         TeamData teamData = teams.get(selectedTeam());
         return teamData == null ? TeamData.EMPTY : teamData;
     }
 
     TeamId selectedTeam() {
+        if (isAdminSelected()) return TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
         return Optional.ofNullable(CadmusClient.TOWNS.get(selected.get()))
             .map(CadmusClient.ClientTown::team)
             .orElse(this.fallbackTeam);
@@ -425,9 +450,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
         boolean canClaim = hasUnclaimedChunk(startPos, endPos);
         boolean canUnclaim = hasOwnedClaim(startPos, endPos);
         boolean allFree = allUnclaimed(startPos, endPos);
-        boolean hasTeam = selected.get() != null;
+        boolean hasTeam = selected.get() != null || isAdminSelected();
         contextMenu.addItem(ConstantComponents.CLAIM, () -> {
-            CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
+            if (isAdminSelected()) {
+                sendAdminAction(startPos, endPos, true);
+            } else {
+                CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
+            }
             clearSelection();
         }, canClaim && hasTeam);
         contextMenu.addItem(ConstantComponents.UNCLAIM, () -> {
@@ -437,7 +466,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
         contextMenu.addItem(ConstantComponents.CREATE_TOWN, () -> {
             openCreateTownModal(startPos, endPos);
             clearSelection();
-        }, allFree);
+        }, allFree && !isAdminSelected());
         contextMenu.open(mouseX, mouseY);
     }
 
@@ -469,6 +498,10 @@ public class ClaimMapScreen extends BaseCursorScreen {
     }
 
     private void doUnclaim(ChunkPos startPos, ChunkPos endPos) {
+        if (isAdminSelected()) {
+            sendAdminAction(startPos, endPos, false);
+            return;
+        }
         if (startPos.equals(endPos)) {
             unclaim(startPos);
         } else {
@@ -537,7 +570,10 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     private void paintChunk(ChunkPos pos, int button) {
         if (button == 0) {
-            if (selected.get() == null) {
+            if (isAdminSelected()) {
+                if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
+                else sendAdminAction(pos, pos, true);
+            } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
             } else if (this.claims.containsKey(pos)) {
                 showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
@@ -693,7 +729,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
         ChunkPos startPos = new ChunkPos(startX, startZ);
         ChunkPos endPos = new ChunkPos(endX, endZ);
         if (button == 0) {
-            if (selected.get() == null) {
+            if (isAdminSelected()) {
+                if (startPos.equals(endPos) && this.claims.containsKey(startPos)) {
+                    showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
+                } else {
+                    sendAdminAction(startPos, endPos, true);
+                }
+            } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
             } else if (startPos.equals(endPos) && this.claims.containsKey(startPos)) {
                 showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
@@ -809,6 +851,21 @@ public class ClaimMapScreen extends BaseCursorScreen {
 
     public boolean canModifyColor() {
         return getData().modifyColor.get();
+    }
+
+    private boolean isAdminSelected() {
+        return ADMIN_SELECTION.equals(selected.get()) && player.hasPermissions(2);
+    }
+
+    private void sendAdminAction(ChunkPos start, ChunkPos end, boolean claim) {
+        NetworkHandler.CHANNEL.sendToServer(new AdminClaimActionPacket(start, end, claim));
+    }
+
+    private void select(UUID value) {
+        selected.set(value);
+        if (settingsButton != null) {
+            settingsButton.active = selectedTeam() != null && (isAdminSelected() || getData().settings().isEmpty());
+        }
     }
 
     private record ClaimTile(

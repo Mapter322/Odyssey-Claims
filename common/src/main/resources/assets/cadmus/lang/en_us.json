@@ -26,6 +26,8 @@
 
   "command.cadmus.bypass.enable": "§7Enabled bypass for %s",
   "command.cadmus.bypass.disable": "§7Disabled bypass for %s",
+  "command.cadmus.adminmode.enable": "§7Enabled admin mode for %s",
+  "command.cadmus.adminmode.disable": "§7Disabled admin mode for %s",
 
   "command.cadmus.setting.get": "§b%s§7 is set to §b%s",
   "command.cadmus.setting.set": "§7Set %s§7 to §b%s",
@@ -129,9 +131,14 @@
   "gui.cadmus.claim_map.unclaim": "Unclaim",
 "gui.cadmus.claim_map.no_towns": "No towns",
   "gui.cadmus.claim_map.create_town": "Create town",
+  "gui.cadmus.claim_map.admin_claim": "Admin Claim",
   "gui.cadmus.claim_map.no_town_selected": "Create a town first",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",
+  "gui.cadmus.admin_claim.settings": "Admin Claim Settings",
+  "gui.cadmus.admin_claim.name": "Name",
+  "gui.cadmus.admin_claim.color": "Color",
+  "gui.cadmus.admin_claim.motd": "MOTD",
 
   "gui.cadmus.unclaim_modal.title": "Unclaim Chunks?",
   "gui.cadmus.unclaim_modal.description": "Are you sure you want to unclaim all your chunks? This action is irreversible.",

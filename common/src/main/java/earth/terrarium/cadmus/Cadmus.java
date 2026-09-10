@@ -61,6 +61,7 @@ public class Cadmus {
     }
 
     public static void onPlayerJoin(ServerPlayer player) {
+        AdminTeamProvider.ensureAdminTeam(player.server);
         ModUtils.sendJoinPackets(player);
         TeamApi.API.syncAllTeamInfo(player);
         TownManager.sync(player.server);
@@ -69,6 +70,7 @@ public class Cadmus {
     }
 
     public static void onServerStarted(MinecraftServer server) {
+        AdminTeamProvider.ensureAdminTeam(server);
         FORCE_LOADED_CHUNK_COUNT = 0;
         server.getAllLevels().forEach(level ->
             ClaimApi.API.getAllClaims(level).forEach((pos, claim) -> {

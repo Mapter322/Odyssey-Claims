@@ -27,7 +27,7 @@ public class FlagCommands {
 
         FlagApi.API.getAllDefaults().forEach((name, flag) ->
             dispatcher.register(command
-                .then(Commands.literal("adminclaims")
+                .then(Commands.literal("adminclaim")
                     .then(Commands.literal("flags")
                         .then(Commands.literal("set")
                             .then(Commands.argument("team", StringArgumentType.string())

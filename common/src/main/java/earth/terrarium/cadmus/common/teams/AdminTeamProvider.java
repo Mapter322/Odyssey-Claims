@@ -18,6 +18,16 @@ import java.util.UUID;
 
 public class AdminTeamProvider implements TeamProvider {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Cadmus.MOD_ID, "admin");
+    public static final UUID ADMIN_ID = UUID.nameUUIDFromBytes("admin".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+    public static void ensureAdminTeam(MinecraftServer server) {
+        if (!FlagApi.API.isAdminTeam(server, ADMIN_ID)) {
+            FlagApi.API.createAdminTeam(server, "admin");
+        }
+        if (FlagApi.API.<String>getFlag(server, ADMIN_ID, Flags.DISPLAY_NAME.id()).value().isBlank()) {
+            FlagApi.API.setFlag(server, ADMIN_ID, Flags.DISPLAY_NAME.id(), new earth.terrarium.cadmus.api.flags.types.StringFlag(Flags.DISPLAY_NAME.id(), "Admin Claim"));
+        }
+    }
 
     @Override
     public ResourceLocation id() {
@@ -46,17 +56,17 @@ public class AdminTeamProvider implements TeamProvider {
 
     @Override
     public Set<UUID> getTeams(Level level, GameProfile player) {
-        if (level.getServer() == null || level.getServer().getProfilePermissions(player) == 2) return Set.of();
-        return getAllTeams(level.getServer());
+        return Set.of();
     }
 
     @Override
     public boolean canModifySettings(Level level, UUID teamId, GameProfile player) {
-        return level.getServer() != null && level.getServer().getProfilePermissions(player) == 2;
+        return level.getServer() != null && level.getServer().getProfilePermissions(player) >= 2;
     }
 
     @Override
     public Set<UUID> getAllTeams(MinecraftServer server) {
-        return FlagApi.API.getAllAdminTeams(server).keySet();
+        ensureAdminTeam(server);
+        return Set.of(ADMIN_ID);
     }
 }
