@@ -1,10 +1,9 @@
 package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.tags.ModEntityTypeTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.world.entity.Entity;
@@ -17,8 +16,8 @@ import java.util.UUID;
 public final class EntityInteractProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_INTERACT_WITH_ENTITIES;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.ENTITY_INTERACTIONS;
     }
 
     @Override
@@ -29,11 +28,6 @@ public final class EntityInteractProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.entity_interactions";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.ENTITY_INTERACTIONS;
     }
 
     @Override

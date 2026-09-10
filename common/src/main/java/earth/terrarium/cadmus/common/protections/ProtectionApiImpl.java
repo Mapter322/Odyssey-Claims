@@ -15,11 +15,11 @@ public class ProtectionApiImpl implements ProtectionApi {
 
     @Override
     public void register(Protection protection) {
-        if (this.protections.containsKey(protection.setting())) {
+        if (this.protections.containsKey(protection.setting().id())) {
             throw new IllegalArgumentException("Protection already registered: " + protection.setting());
         }
-        this.protections.put(protection.setting(), protection);
-        registerSetting(protection.setting());
+        this.protections.put(protection.setting().id(), protection);
+        registerSetting(protection.setting().id());
     }
 
     @Override

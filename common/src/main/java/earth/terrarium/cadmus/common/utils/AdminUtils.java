@@ -1,6 +1,8 @@
 package earth.terrarium.cadmus.common.utils;
 
 import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -12,7 +14,7 @@ public class AdminUtils {
     public static void preventAdminChunkEntry(ServerPlayer player, ChunkPos lastChunkPos) {
         if (lastChunkPos == null) return;
         if (CadmusSaveData.canBypass(player)) return;
-        if (player.isSpectator() || Flags.ALLOW_ENTRY.get(player.serverLevel(), player.chunkPosition())) {
+        if (player.isSpectator() || Settings.isEnabledAt(player.serverLevel(), player.chunkPosition(), SettingDefinitions.ALLOW_ENTRY)) {
             return;
         }
 
@@ -36,7 +38,7 @@ public class AdminUtils {
     public static void preventAdminChunkExit(ServerPlayer player, ChunkPos lastChunkPos) {
         if (lastChunkPos == null) return;
         if (CadmusSaveData.canBypass(player)) return;
-        if (player.isSpectator() || Flags.ALLOW_EXIT.get(player.serverLevel(), lastChunkPos)) {
+        if (player.isSpectator() || Settings.isEnabledAt(player.serverLevel(), lastChunkPos, SettingDefinitions.ALLOW_EXIT)) {
             return;
         }
 

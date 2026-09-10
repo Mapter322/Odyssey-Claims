@@ -19,15 +19,16 @@ public final class SettingDefinitions {
 
     private static final Map<SettingScope, Map<String, SettingDefinition<?>>> DEFINITIONS = new EnumMap<>(SettingScope.class);
 
-    public static final SettingDefinition<Boolean> BLOCK_BREAK = townBoolean("block-break", SettingCategory.BLOCKS);
-    public static final SettingDefinition<Boolean> BLOCK_PLACE = townBoolean("block-place", SettingCategory.BLOCKS);
-    public static final SettingDefinition<Boolean> BLOCK_INTERACTIONS = townBoolean("block-interactions", SettingCategory.BLOCKS);
-    public static final SettingDefinition<Boolean> BLOCK_EXPLOSIONS = townBoolean("block-explosions", SettingCategory.BLOCKS);
-    public static final SettingDefinition<Boolean> ENTITY_EXPLOSIONS = townBoolean("entity-explosions", SettingCategory.ENTITIES);
-    public static final SettingDefinition<Boolean> ENTITY_INTERACTIONS = townBoolean("entity-interactions", SettingCategory.ENTITIES);
-    public static final SettingDefinition<Boolean> ENTITY_DAMAGE = townBoolean("entity-damage", SettingCategory.ENTITIES);
-    public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingCategory.ENTITIES);
-    public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> BLOCK_BREAK = townBoolean("block-break", SettingCategory.BLOCKS, false);
+    public static final SettingDefinition<Boolean> BLOCK_PLACE = townBoolean("block-place", SettingCategory.BLOCKS, false);
+    public static final SettingDefinition<Boolean> BLOCK_INTERACTIONS = townBoolean("block-interactions", SettingCategory.BLOCKS, false);
+    public static final SettingDefinition<Boolean> BLOCK_EXPLOSIONS = townBoolean("block-explosions", SettingCategory.BLOCKS, false);
+    public static final SettingDefinition<Boolean> ENTITY_EXPLOSIONS = townBoolean("entity-explosions", SettingCategory.ENTITIES, false);
+    public static final SettingDefinition<Boolean> ENTITY_INTERACTIONS = townBoolean("entity-interactions", SettingCategory.ENTITIES, false);
+    public static final SettingDefinition<Boolean> ENTITY_DAMAGE = townBoolean("entity-damage", SettingCategory.ENTITIES, false);
+    public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingCategory.ENTITIES, false);
+    public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingCategory.ENTITIES, false);
+    public static final SettingDefinition<Boolean> NON_PLAYERS_PLACE = townBoolean("non-players-place", SettingCategory.BLOCKS, false);
     public static final SettingDefinition<Boolean> FIRE_SPREAD = townBoolean("fire-spread", SettingCategory.NATURE);
     public static final SettingDefinition<Boolean> PVP = townBoolean("pvp", SettingCategory.PLAYERS);
     public static final SettingDefinition<Boolean> MONSTER_DAMAGE = townBoolean("monster-damage", SettingCategory.ENTITIES);
@@ -39,6 +40,28 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> USE_DOORS = townBoolean("use-doors", SettingCategory.BLOCKS);
     public static final SettingDefinition<Boolean> USE_REDSTONE = townBoolean("use-redstone", SettingCategory.BLOCKS);
     public static final SettingDefinition<Boolean> USE_VEHICLES = townBoolean("use-vehicles", SettingCategory.BLOCKS);
+
+    public static final SettingDefinition<Boolean> ADMIN_BLOCK_BREAK = adminBoolean("block-break", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_BLOCK_PLACE = adminBoolean("block-place", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_BLOCK_INTERACTIONS = adminBoolean("block-interactions", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_BLOCK_EXPLOSIONS = adminBoolean("block-explosions", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_ENTITY_EXPLOSIONS = adminBoolean("entity-explosions", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_ENTITY_INTERACTIONS = adminBoolean("entity-interactions", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_ENTITY_DAMAGE = adminBoolean("entity-damage", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_MOB_GRIEFING = adminBoolean("mob-griefing", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_ITEM_PICKUP = adminBoolean("item-pickup", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_NON_PLAYERS_PLACE = adminBoolean("non-players-place", SettingCategory.BLOCKS, false);
+    public static final SettingDefinition<Boolean> ADMIN_PVP = adminBoolean("pvp", SettingCategory.PLAYERS);
+    public static final SettingDefinition<Boolean> ADMIN_MONSTER_DAMAGE = adminBoolean("monster-damage", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_CREATURE_DAMAGE = adminBoolean("creature-damage", SettingCategory.ENTITIES);
+    public static final SettingDefinition<Boolean> ADMIN_FIRE_SPREAD = adminBoolean("fire-spread", SettingCategory.NATURE);
+    public static final SettingDefinition<Boolean> ADMIN_ALLOW_ENTRY = adminBoolean("allow-entry", SettingCategory.ACCESS);
+    public static final SettingDefinition<Boolean> ADMIN_ALLOW_EXIT = adminBoolean("allow-exit", SettingCategory.ACCESS);
+    public static final SettingDefinition<Boolean> ADMIN_USE = adminBoolean("use", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_USE_CHESTS = adminBoolean("use-chests", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_USE_DOORS = adminBoolean("use-doors", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_USE_REDSTONE = adminBoolean("use-redstone", SettingCategory.BLOCKS);
+    public static final SettingDefinition<Boolean> ADMIN_USE_VEHICLES = adminBoolean("use-vehicles", SettingCategory.BLOCKS);
 
     public static final SettingDefinition<Boolean> SNOW_FALL = adminBoolean("snow-fall", SettingCategory.NATURE);
     public static final SettingDefinition<Boolean> SNOW_MELT = adminBoolean("snow-melt", SettingCategory.NATURE);
@@ -73,7 +96,11 @@ public final class SettingDefinitions {
     }
 
     private static SettingDefinition<Boolean> townBoolean(String id, SettingCategory category) {
-        return register(new SettingDefinition<>(id, SettingScope.TOWN, category, SettingAccess.PLAYER, new BooleanSetting(true)));
+        return townBoolean(id, category, true);
+    }
+
+    private static SettingDefinition<Boolean> townBoolean(String id, SettingCategory category, boolean value) {
+        return register(new SettingDefinition<>(id, SettingScope.TOWN, category, SettingAccess.PLAYER, new BooleanSetting(value)));
     }
 
     private static SettingDefinition<Boolean> adminBoolean(String id, SettingCategory category) {

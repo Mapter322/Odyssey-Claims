@@ -1,9 +1,8 @@
 package earth.terrarium.cadmus.common.protections.types;
 
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.tags.ModEntityTypeTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.core.BlockPos;
@@ -14,8 +13,8 @@ import net.minecraft.world.level.GameRules;
 public final class MobGriefingProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_MOBS_GRIEF;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.MOB_GRIEFING;
     }
 
     @Override
@@ -26,11 +25,6 @@ public final class MobGriefingProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.mob_griefing";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.MOB_GRIEFING;
     }
 
     @Override

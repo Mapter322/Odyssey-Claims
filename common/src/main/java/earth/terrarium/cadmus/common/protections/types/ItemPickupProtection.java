@@ -1,10 +1,9 @@
 package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.tags.ModItemTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.mixins.common.ItemEntityAccessor;
@@ -18,8 +17,8 @@ import java.util.Objects;
 public final class ItemPickupProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_PICKUP_ITEMS;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.ITEM_PICKUP;
     }
 
     @Override
@@ -30,11 +29,6 @@ public final class ItemPickupProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.item_pickup";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.ITEM_PICKUP;
     }
 
     @Override

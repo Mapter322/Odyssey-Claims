@@ -3,11 +3,12 @@ package earth.terrarium.cadmus.fabric;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.common.commands.CadmusCommands;
-import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.protections.types.fabric.BlockBreakProtectionImpl;
 import earth.terrarium.cadmus.common.protections.types.fabric.BlockInteractProtectionImpl;
 import earth.terrarium.cadmus.common.protections.types.fabric.EntityDamageProtectionImpl;
 import earth.terrarium.cadmus.common.protections.types.fabric.EntityInteractProtectionImpl;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -33,7 +34,7 @@ public class CadmusFabric implements ModInitializer {
             if (!level.isClientSide()) {
                 var claim = ClaimApi.API.getClaim(level, player.chunkPosition());
                 if (claim.isPresent()) {
-                    if (!Flags.USE.get(level.getServer(), claim.get().team().id())) {
+                    if (!Settings.getForTeam(level.getServer(), claim.get().team(), SettingDefinitions.USE)) {
                         return InteractionResultHolder.fail(stack);
                     }
                 }

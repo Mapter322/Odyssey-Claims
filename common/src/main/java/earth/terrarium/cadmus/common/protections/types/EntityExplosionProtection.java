@@ -1,9 +1,8 @@
 package earth.terrarium.cadmus.common.protections.types;
 
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -13,8 +12,8 @@ import net.minecraft.world.level.GameRules;
 public final class EntityExplosionProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_EXPLODE_ENTITIES;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.ENTITY_EXPLOSIONS;
     }
 
     @Override
@@ -25,11 +24,6 @@ public final class EntityExplosionProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.entity_explosions";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.ENTITY_EXPLOSIONS;
     }
 
     @Override

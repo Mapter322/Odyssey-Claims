@@ -1,11 +1,11 @@
 package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.api.flags.FlagApi;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModEntityTypeTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.server.MinecraftServer;
@@ -16,13 +16,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 
-import java.util.UUID;
-
 public final class EntityDamageProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_DAMAGE_ENTITIES;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.ENTITY_DAMAGE;
     }
 
     @Override
@@ -33,11 +31,6 @@ public final class EntityDamageProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.entity_damage";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.ENTITY_DAMAGE;
     }
 
     @Override
@@ -52,22 +45,22 @@ public final class EntityDamageProtection implements Protection {
     public boolean canDamageEntity(Level level, GameProfile player, Entity entity) {
         if (entity.getType().is(ModEntityTypeTags.ALLOWS_CLAIM_DAMAGE_ENTITIES)) return true;
         return level.isClientSide() || getId(level, entity.chunkPosition()).map(team ->
-            checkFlags(level.getServer(), entity, team.id()) && isPlayerAllowed(level, player, team)).orElse(true);
+            checkFlags(level.getServer(), entity, team) && isPlayerAllowed(level, player, team)).orElse(true);
     }
 
-    private boolean checkFlags(MinecraftServer server, Entity entity, UUID teamId) {
-        if (!FlagApi.API.isAdminTeam(server, teamId)) return true;
+    private boolean checkFlags(MinecraftServer server, Entity entity, TeamId team) {
+        if (!team.isAdmin()) return true;
 
-        if (entity instanceof Player) return Flags.PVP.get(server, teamId);
+        if (entity instanceof Player) return Settings.getForTeam(server, team, SettingDefinitions.PVP);
 
         if (entity instanceof Enemy || entity.getType().is(ModEntityTypeTags.MONSTERS)) {
-            return Flags.MONSTER_DAMAGE.get(server, teamId);
+            return Settings.getForTeam(server, team, SettingDefinitions.MONSTER_DAMAGE);
         } else {
             if (entity instanceof Mob || entity.getType().is(ModEntityTypeTags.CREATURES)) {
-                return Flags.CREATURE_DAMAGE.get(server, teamId);
+                return Settings.getForTeam(server, team, SettingDefinitions.CREATURE_DAMAGE);
             }
 
-            return Flags.ENTITY_DAMAGE.get(server, teamId);
+            return Settings.getForTeam(server, team, SettingDefinitions.ENTITY_DAMAGE);
         }
     }
 }

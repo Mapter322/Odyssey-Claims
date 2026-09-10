@@ -1,7 +1,8 @@
 package earth.terrarium.cadmus.mixins.common.protections;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
@@ -24,7 +25,7 @@ public abstract class LavaFluidMixin {
         cancellable = true
     )
     private void cadmus$randomTick(Level level, BlockPos pos, FluidState state, RandomSource random, CallbackInfo ci) {
-        if (!Flags.FIRE_SPREAD.get(level, new ChunkPos(pos))) {
+        if (!Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.FIRE_SPREAD)) {
             ci.cancel();
         }
     }

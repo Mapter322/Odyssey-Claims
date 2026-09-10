@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MobCategory;
@@ -20,9 +21,9 @@ public abstract class NaturalSpawnerMixin {
         cancellable = true
     )
     private static void cadmus$spawnCategoryForPosition(MobCategory category, ServerLevel level, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci) {
-        if (category == MobCategory.MONSTER && !Flags.MONSTER_SPAWNING.get(level, chunk.getPos())) {
+        if (category == MobCategory.MONSTER && !Settings.isEnabledAt(level, chunk.getPos(), SettingDefinitions.MONSTER_SPAWNING)) {
             ci.cancel();
-        } else if (!Flags.CREATURE_SPAWNING.get(level, chunk.getPos())) {
+        } else if (!Settings.isEnabledAt(level, chunk.getPos(), SettingDefinitions.CREATURE_SPAWNING)) {
             ci.cancel();
         }
     }

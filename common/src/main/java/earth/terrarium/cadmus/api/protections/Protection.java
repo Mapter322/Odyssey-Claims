@@ -3,15 +3,12 @@ package earth.terrarium.cadmus.api.protections;
 import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
-import com.teamresourceful.resourcefullib.common.utils.TriState;
-import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
@@ -28,7 +25,7 @@ public interface Protection {
      *
      * @return the setting name
      */
-    String setting();
+    SettingDefinition<Boolean> setting();
 
     /**
      * The permission name, used to enable or disable the protection.
@@ -45,13 +42,6 @@ public interface Protection {
     String personalPermission();
 
     /**
-     * The name of this protection's admin claim flag.
-     *
-     * @return the flag name
-     */
-    BooleanFlag flag();
-
-    /**
      * The game rule key. Used to enable or disable the protection.
      *
      * @return the game rule key
@@ -60,15 +50,6 @@ public interface Protection {
 
     private boolean gameRuleEnabled(Level level) {
         return level.getGameRules().getBoolean(gameRule());
-    }
-
-    private boolean settingEnabled(MinecraftServer server, TeamId id) {
-        return CadmusSaveData.getClaimSettingOrDefault(server, id, setting());
-    }
-
-    private boolean flagEnabled(MinecraftServer server, TeamId id) {
-        return id.provider().equals(AdminTeamProvider.ID) &&
-            flag().get(server, id.id());
     }
 
     default Optional<TeamId> getId(Level level, BlockPos pos) {
@@ -86,23 +67,18 @@ public interface Protection {
     default boolean isPlayerAllowed(Level level, GameProfile player, TeamId id) {
         if (CadmusSaveData.canBypass(level.getServer(), player.getId())) return true;
 
-        if (id.provider().equals(AdminTeamProvider.ID)) {
-            TriState setting = CadmusSaveData.getClaimSetting(level.getServer(), id, setting());
-            if (setting == TriState.TRUE) return true;
-            if (setting == TriState.FALSE) return false;
-            return flagEnabled(level.getServer(), id);
-        }
+        if (id.isAdmin()) return Settings.getForTeam(level.getServer(), id, setting());
 
         if (gameRuleEnabled(level)) return true;
 
-        if (settingEnabled(level.getServer(), id)) return true;
+        if (Settings.getForTeam(level.getServer(), id, setting())) return true;
         return TeamApi.API.isMember(level, player, id);
     }
 
     default boolean isEntityAllowed(Entity entity, TeamId id) {
-        if (flagEnabled(entity.getServer(), id)) return false;
+        if (id.isAdmin()) return Settings.getForTeam(entity.getServer(), id, setting());
         if (gameRuleEnabled(entity.level())) return true;
-        return settingEnabled(entity.getServer(), id);
+        return Settings.getForTeam(entity.getServer(), id, setting());
     }
 
     default boolean isBlockAllowed(Level level, TeamId id, BlockPos pos) {

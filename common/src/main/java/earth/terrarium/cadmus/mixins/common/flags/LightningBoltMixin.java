@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -25,7 +26,7 @@ public abstract class LightningBoltMixin extends Entity {
     )
     private void cadmus$spawnFire(int extraIgnitions, CallbackInfo ci) {
         if (this.level() instanceof ServerLevel level &&
-            !Flags.FIRE_SPREAD.get(level, chunkPosition())) {
+            !Settings.isEnabledAt(level, chunkPosition(), SettingDefinitions.FIRE_SPREAD)) {
             ci.cancel();
         }
     }

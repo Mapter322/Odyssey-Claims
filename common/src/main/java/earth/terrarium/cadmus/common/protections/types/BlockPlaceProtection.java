@@ -1,11 +1,11 @@
 package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
@@ -22,8 +22,8 @@ import java.util.UUID;
 public final class BlockPlaceProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_PLACE_BLOCKS;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.BLOCK_PLACE;
     }
 
     @Override
@@ -34,11 +34,6 @@ public final class BlockPlaceProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.block_placing";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.BLOCK_PLACE;
     }
 
     @Override
@@ -71,6 +66,6 @@ public final class BlockPlaceProtection implements Protection {
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
         if (isBlockAllowed(level, id, state)) return true;
-        return CadmusSaveData.getClaimSettingOrDefault(level.getServer(), id, ClaimSettings.CAN_NON_PLAYERS_PLACE_BLOCKS);
+        return Settings.getForTeam(level.getServer(), id, SettingDefinitions.NON_PLAYERS_PLACE);
     }
 }

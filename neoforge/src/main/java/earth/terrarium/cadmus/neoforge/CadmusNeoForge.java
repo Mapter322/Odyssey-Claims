@@ -4,7 +4,8 @@ import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.client.neoforge.CadmusClientNeoForge;
 import earth.terrarium.cadmus.common.commands.CadmusCommands;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.common.Mod;
@@ -50,7 +51,7 @@ public class CadmusNeoForge {
     private void onRightClick(PlayerInteractEvent.RightClickItem event) {
         if (!event.getLevel().isClientSide()) {
             ClaimApi.API.getClaim(event.getLevel(), event.getEntity().chunkPosition()).ifPresent(claim -> {
-                if (!Flags.USE.get(event.getLevel().getServer(), claim.team().id())) {
+                if (!Settings.getForTeam(event.getLevel().getServer(), claim.team(), SettingDefinitions.USE)) {
                     event.setCanceled(true);
                 }
             });

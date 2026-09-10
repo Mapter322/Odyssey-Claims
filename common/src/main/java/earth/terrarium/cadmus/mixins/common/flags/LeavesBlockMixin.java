@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -24,7 +25,7 @@ public abstract class LeavesBlockMixin {
         cancellable = true
     )
     private void cadmus$randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random, CallbackInfo ci) {
-        if (!Flags.LEAF_DECAY.get(level, new ChunkPos(pos))) {
+        if (!Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.LEAF_DECAY)) {
             ci.cancel();
         }
     }

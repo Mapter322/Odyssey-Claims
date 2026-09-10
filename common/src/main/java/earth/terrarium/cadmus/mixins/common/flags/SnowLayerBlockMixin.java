@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -23,7 +24,7 @@ public abstract class SnowLayerBlockMixin {
         ),
         cancellable = true)
     private void cadmus$randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random, CallbackInfo ci) {
-        if (!Flags.SNOW_MELT.get(level, new ChunkPos(pos))) {
+        if (!Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.SNOW_MELT)) {
             ci.cancel();
         }
     }

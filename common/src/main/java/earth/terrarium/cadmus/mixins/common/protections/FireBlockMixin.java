@@ -1,7 +1,8 @@
 package earth.terrarium.cadmus.mixins.common.protections;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -25,7 +26,7 @@ public abstract class FireBlockMixin {
         cancellable = true
     )
     private void cadmus$tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random, CallbackInfo ci) {
-        if (!Flags.FIRE_SPREAD.get(level, new ChunkPos(pos))) {
+        if (!Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.FIRE_SPREAD)) {
             ci.cancel();
         }
     }

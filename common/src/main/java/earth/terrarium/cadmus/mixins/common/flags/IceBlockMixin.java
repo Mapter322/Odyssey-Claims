@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -16,7 +17,7 @@ public abstract class IceBlockMixin {
 
     @Inject(method = "melt", at = @At(value = "HEAD"), cancellable = true)
     private void cadmus$melt(BlockState state, Level level, BlockPos pos, CallbackInfo ci) {
-        if (!Flags.ICE_MELT.get(level, new ChunkPos(pos))) {
+        if (!Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.ICE_MELT)) {
             ci.cancel();
         }
     }

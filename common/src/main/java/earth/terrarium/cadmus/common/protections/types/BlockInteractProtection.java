@@ -1,11 +1,11 @@
 package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
@@ -22,8 +22,8 @@ import java.util.UUID;
 public final class BlockInteractProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_INTERACT_WITH_BLOCKS;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.BLOCK_INTERACTIONS;
     }
 
     @Override
@@ -34,11 +34,6 @@ public final class BlockInteractProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.block_interactions";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.BLOCK_INTERACTIONS;
     }
 
     @Override
@@ -61,9 +56,9 @@ public final class BlockInteractProtection implements Protection {
         if (!id.isAdmin()) return true;
 
         BlockState state = level.getBlockState(pos);
-        if (state.is(ModBlockTags.DOOR_LIKE)) return Flags.USE_DOORS.get(server, id.id());
-        if (state.is(ModBlockTags.INTERACTABLE_STORAGE)) return Flags.USE_CHESTS.get(server, id.id());
-        if (state.is(ModBlockTags.REDSTONE)) return Flags.USE_REDSTONE.get(server, id.id());
+        if (state.is(ModBlockTags.DOOR_LIKE)) return Settings.getForTeam(server, id, SettingDefinitions.USE_DOORS);
+        if (state.is(ModBlockTags.INTERACTABLE_STORAGE)) return Settings.getForTeam(server, id, SettingDefinitions.USE_CHESTS);
+        if (state.is(ModBlockTags.REDSTONE)) return Settings.getForTeam(server, id, SettingDefinitions.USE_REDSTONE);
         return true;
     }
 }

@@ -1,7 +1,8 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -19,7 +20,7 @@ public abstract class ServerLevelMixin {
             target = "Lnet/minecraft/server/level/ServerLevel;setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z", ordinal = 2)
     )
     private boolean cadmus$tickChunk(ServerLevel level, BlockPos pos, BlockState state) {
-        return Flags.SNOW_FALL.get(level, new ChunkPos(pos));
+        return Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.SNOW_FALL);
     }
 
     @WrapWithCondition(
@@ -29,6 +30,6 @@ public abstract class ServerLevelMixin {
             target = "Lnet/minecraft/server/level/ServerLevel;setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z")
     )
     private boolean cadmus$tickChunkIce(ServerLevel level, BlockPos pos, BlockState state) {
-        return Flags.ICE_FORM.get(level, new ChunkPos(pos));
+        return Settings.isEnabledAt(level, new ChunkPos(pos), SettingDefinitions.ICE_FORM);
     }
 }

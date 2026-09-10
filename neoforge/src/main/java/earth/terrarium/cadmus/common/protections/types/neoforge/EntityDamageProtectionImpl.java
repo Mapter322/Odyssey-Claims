@@ -1,9 +1,8 @@
 package earth.terrarium.cadmus.common.protections.types.neoforge;
 
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.api.flags.FlagApi;
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
@@ -36,9 +35,7 @@ final class EntityDamageProtectionImpl {
         }
 
         event.setCanceled(!lightning.level().isClientSide() &&
-            ClaimApi.API.getClaim(lightning.level(), lightning.chunkPosition()).map(claim ->
-                claim.team().isAdmin() && !Flags.LIGHTNING.get(lightning.getServer(), claim.team().id())
-            ).orElse(false));
+            !Settings.isEnabledAt(lightning.level(), lightning.chunkPosition(), SettingDefinitions.LIGHTNING));
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

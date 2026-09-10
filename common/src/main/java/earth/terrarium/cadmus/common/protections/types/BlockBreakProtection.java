@@ -1,10 +1,9 @@
 package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
-import earth.terrarium.cadmus.api.flags.types.BooleanFlag;
 import earth.terrarium.cadmus.api.protections.Protection;
-import earth.terrarium.cadmus.common.flags.Flags;
-import earth.terrarium.cadmus.common.protections.ClaimSettings;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -16,8 +15,8 @@ import java.util.UUID;
 public final class BlockBreakProtection implements Protection {
 
     @Override
-    public String setting() {
-        return ClaimSettings.CAN_BREAK_BLOCKS;
+    public SettingDefinition<Boolean> setting() {
+        return SettingDefinitions.BLOCK_BREAK;
     }
 
     @Override
@@ -28,11 +27,6 @@ public final class BlockBreakProtection implements Protection {
     @Override
     public String personalPermission() {
         return "cadmus.personal.block_breaking";
-    }
-
-    @Override
-    public BooleanFlag flag() {
-        return Flags.BLOCK_BREAK;
     }
 
     @Override

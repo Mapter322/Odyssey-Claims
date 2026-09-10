@@ -2,8 +2,9 @@ package earth.terrarium.cadmus.mixins.common.protections;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.protections.Protections;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -25,7 +26,7 @@ public abstract class EntityMixin {
     private boolean cadmus$canRide(boolean original, Entity vehicle) {
         return original && !vehicle.level().isClientSide() ?
             ClaimApi.API.getClaim(vehicle.level(), vehicle.chunkPosition())
-                .map(claim -> Flags.USE_VEHICLES.get(vehicle.getServer(), claim.team().id()))
+                .map(claim -> Settings.getForTeam(vehicle.getServer(), claim.team(), SettingDefinitions.USE_VEHICLES))
                 .orElse(true) :
             original;
     }

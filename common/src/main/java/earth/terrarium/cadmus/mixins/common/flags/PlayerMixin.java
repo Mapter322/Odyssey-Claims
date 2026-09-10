@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.mixins.common.flags;
 
-import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +20,7 @@ public abstract class PlayerMixin extends LivingEntity {
 
     @Inject(method = "dropEquipment", at = @At("HEAD"), cancellable = true)
     protected void cadmus$dropEquipment(CallbackInfo ci) {
-        if (Flags.KEEP_INVENTORY.get(this.level(), this.chunkPosition())) {
+        if (Settings.isEnabledAt(this.level(), this.chunkPosition(), SettingDefinitions.KEEP_INVENTORY)) {
             ci.cancel();
         }
     }
