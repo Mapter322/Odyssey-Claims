@@ -71,8 +71,7 @@ public interface Protection {
 
         if (gameRuleEnabled(level)) return true;
 
-        if (Settings.getForTeam(level.getServer(), id, setting())) return true;
-        return TeamApi.API.isMember(level, player, id);
+        return Settings.isPlayerAllowed(level, player.getId(), id, setting());
     }
 
     default boolean isEntityAllowed(Entity entity, TeamId id) {

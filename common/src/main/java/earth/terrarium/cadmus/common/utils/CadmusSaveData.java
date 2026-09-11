@@ -6,6 +6,7 @@ import earth.terrarium.argonauts.api.util.ModUtils;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingOverride;
 import earth.terrarium.cadmus.api.settings.SettingValue;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.api.settings.types.ColorSetting;
@@ -32,6 +33,7 @@ import java.util.*;
 public class CadmusSaveData extends SaveHandler {
 
     private final Map<SettingScope, Map<TeamId, Map<String, SettingValue<?>>>> settingValues = new EnumMap<>(SettingScope.class);
+    private final Map<SettingScope, Map<TeamId, Map<UUID, Map<String, SettingOverride>>>> playerSettingOverrides = new EnumMap<>(SettingScope.class);
     private final Map<SettingScope, Map<String, SettingValue<?>>> settingDefaults = new EnumMap<>(SettingScope.class);
     private final Map<UUID, String> adminTeams = new HashMap<>();
     private final Map<TeamId, Set<ResourceLocation>> allowedBlocks = new HashMap<>();
@@ -86,6 +88,7 @@ UUID id = UUID.fromString(idString);
             adminTeams.put(UUID.fromString(adminTeamsTag.getString(name)), name));
 
         loadSettingValues(tag.getCompound("settingValues"));
+        loadPlayerSettingOverrides(tag.getCompound("playerSettingOverrides"));
         loadSettingDefaults(tag.getCompound("settingDefaults"));
     }
 
@@ -129,6 +132,7 @@ tag.put("towns", townsTag);
         tag.put("adminTeams", adminTeamsTag);
 
         tag.put("settingValues", saveSettingValues());
+        tag.put("playerSettingOverrides", savePlayerSettingOverrides());
         tag.put("settingDefaults", saveSettingDefaults());
     }
 
@@ -218,6 +222,27 @@ public static CadmusSaveData read(MinecraftServer server) {
         data.setDirty();
     }
 
+    public static SettingOverride getPlayerSettingOverride(MinecraftServer server, TeamId team, UUID player, SettingDefinition<?> definition) {
+        return read(server).playerSettingOverrides
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(team, Map.of())
+            .getOrDefault(player, Map.of())
+            .getOrDefault(definition.id(), SettingOverride.INHERIT);
+    }
+
+    public static void setPlayerSettingOverride(MinecraftServer server, TeamId team, UUID player, SettingDefinition<?> definition, SettingOverride override) {
+        var data = read(server);
+        var values = data.playerSettingOverrides
+            .computeIfAbsent(definition.scope(), ignored -> new HashMap<>())
+            .computeIfAbsent(team, ignored -> new HashMap<>())
+            .computeIfAbsent(player, ignored -> new HashMap<>());
+        if (override == SettingOverride.INHERIT) values.remove(definition.id());
+        else values.put(definition.id(), override);
+        if (values.isEmpty()) data.playerSettingOverrides.get(definition.scope()).get(team).remove(player);
+        if (data.playerSettingOverrides.get(definition.scope()).get(team).isEmpty()) data.playerSettingOverrides.get(definition.scope()).remove(team);
+        data.setDirty();
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> SettingValue<T> getDefaultSettingValue(MinecraftServer server, SettingDefinition<T> definition) {
         return read(server).settingDefaults
@@ -266,6 +291,7 @@ public static CadmusSaveData read(MinecraftServer server) {
     public static void removeTeam(MinecraftServer server, TeamId id) {
         var data = read(server);
         data.settingValues.values().forEach(values -> values.remove(id));
+        data.playerSettingOverrides.values().forEach(values -> values.remove(id));
         data.allowedBlocks.remove(id);
         data.setDirty();
     }
@@ -273,6 +299,7 @@ public static CadmusSaveData read(MinecraftServer server) {
     public static void clearAll(MinecraftServer server) {
         var data = read(server);
         data.settingValues.clear();
+        data.playerSettingOverrides.clear();
         data.adminTeams.clear();
         data.allowedBlocks.clear();
         data.setDirty();
@@ -334,6 +361,30 @@ public static CadmusSaveData read(MinecraftServer server) {
         });
     }
 
+    private void loadPlayerSettingOverrides(CompoundTag root) {
+        root.getAllKeys().forEach(scopeName -> {
+            SettingScope scope = SettingScope.valueOf(scopeName);
+            CompoundTag scopeTag = root.getCompound(scopeName);
+            scopeTag.getAllKeys().forEach(teamName -> {
+                TeamId team = parseTeamId(teamName);
+                CompoundTag teamTag = scopeTag.getCompound(teamName);
+                teamTag.getAllKeys().forEach(playerName -> {
+                    UUID player = UUID.fromString(playerName);
+                    CompoundTag playerTag = teamTag.getCompound(playerName);
+                    playerTag.getAllKeys().forEach(id -> {
+                        try {
+                            playerSettingOverrides.computeIfAbsent(scope, ignored -> new HashMap<>())
+                                .computeIfAbsent(team, ignored -> new HashMap<>())
+                                .computeIfAbsent(player, ignored -> new HashMap<>())
+                                .put(id, SettingOverride.valueOf(playerTag.getString(id)));
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    });
+                });
+            });
+        });
+    }
+
     private CompoundTag saveSettingValues() {
         CompoundTag root = new CompoundTag();
         settingValues.forEach((scope, teams) -> {
@@ -353,6 +404,24 @@ public static CadmusSaveData read(MinecraftServer server) {
         settingDefaults.forEach((scope, values) -> {
             CompoundTag scopeTag = new CompoundTag();
             values.forEach((id, value) -> scopeTag.put(id, writeSettingValue(value)));
+            root.put(scope.name(), scopeTag);
+        });
+        return root;
+    }
+
+    private CompoundTag savePlayerSettingOverrides() {
+        CompoundTag root = new CompoundTag();
+        playerSettingOverrides.forEach((scope, teams) -> {
+            CompoundTag scopeTag = new CompoundTag();
+            teams.forEach((team, players) -> {
+                CompoundTag teamTag = new CompoundTag();
+                players.forEach((player, values) -> {
+                    CompoundTag playerTag = new CompoundTag();
+                    values.forEach((id, value) -> playerTag.putString(id, value.name()));
+                    teamTag.put(player.toString(), playerTag);
+                });
+                scopeTag.put(teamKey(team), teamTag);
+            });
             root.put(scope.name(), scopeTag);
         });
         return root;

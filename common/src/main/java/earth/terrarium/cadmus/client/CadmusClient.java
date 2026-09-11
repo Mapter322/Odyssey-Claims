@@ -11,8 +11,10 @@ import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
+import earth.terrarium.cadmus.common.network.packets.clientbound.SyncMemberSettingsPacket;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import earth.terrarium.argonauts.client.NotificationManager;
+import earth.terrarium.argonauts.client.screens.members.MembersScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
@@ -35,6 +37,7 @@ public class CadmusClient {
 
     public static final Map<TeamId, TeamInfo> TEAM_INFO = new HashMap<>();
     public static final Map<UUID, ClientTown> TOWNS = new HashMap<>();
+    public static final Map<MemberSettingKey, Map<String, String>> MEMBER_SETTINGS = new HashMap<>();
 
     public static final KeyMapping KEY_OPEN_CLAIM_MAP = new KeyMapping(
         ConstantComponents.OPEN_CLAIM_MAP_KEY.getString(),
@@ -53,6 +56,7 @@ public class CadmusClient {
         ClaimSaveData.clearClientClaims();
         TEAM_INFO.clear();
         TOWNS.clear();
+        MEMBER_SETTINGS.clear();
     }
 
     public static void openClaimMap() {
@@ -72,6 +76,13 @@ public static void openClaimSettings(SyncClaimSettingsPacket packet) {
             minecraft.setScreen(new ClaimConfigModal(screen, packet.id(), packet.settings()));
         }
     }
+
+    public static void syncMemberSettings(SyncMemberSettingsPacket packet) {
+        MEMBER_SETTINGS.computeIfAbsent(new MemberSettingKey(packet.team(), packet.player()), ignored -> new HashMap<>()).putAll(packet.settings());
+        if (Minecraft.getInstance().screen instanceof MembersScreen screen) screen.refreshMemberSettings();
+    }
+
+    public record MemberSettingKey(TeamId team, UUID player) {}
 
     public static void onEnterSection() {
         if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {

@@ -18,6 +18,7 @@ import earth.terrarium.cadmus.common.utils.AdminUtils;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import earth.terrarium.cadmus.common.towns.TownManager;
+import earth.terrarium.cadmus.common.compat.argonauts.CadmusMemberSettings;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,6 +40,7 @@ public class Cadmus {
 
     public static void init() {
         NetworkHandler.init();
+        if (ModInfoUtils.isModLoaded("argonauts")) CadmusMemberSettings.register();
         CadmusGameRules.init();
         Protections.init();
         if (!ModInfoUtils.isModLoaded("argonauts")) {

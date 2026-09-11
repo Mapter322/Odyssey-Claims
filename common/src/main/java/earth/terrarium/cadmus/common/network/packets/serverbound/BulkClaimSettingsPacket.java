@@ -12,6 +12,7 @@ import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.settings.SettingAccess;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
@@ -40,7 +41,7 @@ public record BulkClaimSettingsPacket(TeamId id, Map<String, String> values, Set
 
     private static void apply(BulkClaimSettingsPacket packet, Player player, SettingScope scope, String setting, String value) {
         SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
-        if (definition == null || !canModify(player, definition, packet.id())) return;
+        if (definition == null || definition.target() != SettingTarget.GLOBAL || !canModify(player, definition, packet.id())) return;
         try {
             SettingCommandSupport.set(player.getServer(), packet.id(), definition, SettingCommandSupport.parse(definition, value));
         } catch (CommandSyntaxException ignored) {
@@ -49,7 +50,7 @@ public record BulkClaimSettingsPacket(TeamId id, Map<String, String> values, Set
 
     private static void reset(BulkClaimSettingsPacket packet, Player player, SettingScope scope, String setting) {
         SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
-        if (definition == null || !canModify(player, definition, packet.id())) return;
+        if (definition == null || definition.target() != SettingTarget.GLOBAL || !canModify(player, definition, packet.id())) return;
         CadmusSaveData.resetSettingValue(player.getServer(), packet.id(), definition);
     }
 

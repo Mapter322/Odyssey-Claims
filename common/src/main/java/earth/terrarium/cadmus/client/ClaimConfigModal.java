@@ -49,6 +49,7 @@ public class ClaimConfigModal extends BaseModal {
 
         SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
             String value = settings.getOrDefault(id, SettingCommandSupport.valueToString(definition.defaultValue()));
+            if (definition.target() != SettingTarget.GLOBAL) return;
             if (definition.defaultValue() instanceof BooleanSetting) {
                 TriState tri = Boolean.parseBoolean(value) ? TriState.TRUE : TriState.FALSE;
                 booleanStates.put(id, RadioState.of(tri, tri == TriState.TRUE ? 0 : 2));
@@ -78,7 +79,7 @@ public class ClaimConfigModal extends BaseModal {
         this.settingsList.setPosition(modalContentLeft, modalContentTop - 4);
         this.settingsList.add(new BaseParentWidget(0, 0) {});
 
-        for (SettingTarget target : SettingTarget.values()) {
+        for (SettingTarget target : new SettingTarget[]{SettingTarget.GLOBAL}) {
             this.settingsList.add(new CategoryHeader(font, targetLabel(target),
                 () -> this.expandedTargets.getOrDefault(target, true),
                 () -> this.aggregateState(target),

@@ -9,6 +9,7 @@ import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketTyp
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.settings.SettingAccess;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
@@ -32,6 +33,7 @@ public record RequestClaimSettingsPacket(TeamId id) implements Packet<RequestCla
             if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, packet.id())) return;
             Map<String, String> settings = new HashMap<>();
             SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
+                if (definition.target() != SettingTarget.GLOBAL) return;
                 if (definition.access() == SettingAccess.ADMIN && !player.hasPermissions(2)) return;
                 settings.put(id, SettingCommandSupport.valueToString(
                     CadmusSaveData.getSettingValue(player.getServer(), packet.id(), definition)));

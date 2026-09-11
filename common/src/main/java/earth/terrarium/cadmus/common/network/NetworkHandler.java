@@ -34,6 +34,9 @@ public class NetworkHandler {
         CHANNEL.register(TownActionPacket.TYPE);
         CHANNEL.register(AdminClaimActionPacket.TYPE);
         CHANNEL.register(UpdateAdminClaimInfoPacket.TYPE);
+        CHANNEL.register(SyncMemberSettingsPacket.TYPE);
+        CHANNEL.register(RequestMemberSettingsPacket.TYPE);
+        CHANNEL.register(UpdateMemberSettingPacket.TYPE);
     }
 
     /**
