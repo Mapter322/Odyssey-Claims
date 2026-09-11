@@ -12,6 +12,7 @@ import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacke
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
+import earth.terrarium.argonauts.client.NotificationManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.client.KeyMapping;
@@ -110,11 +111,7 @@ public static void openClaimSettings(SyncClaimSettingsPacket packet) {
     }
 
     public static void showNotification(Component message) {
-        if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {
-            screen.showNotification(message);
-        } else if (player() != null) {
-            player().displayClientMessage(message, true);
-        }
+        NotificationManager.show(message);
     }
 
     public static void updateTowns(String encoded) {

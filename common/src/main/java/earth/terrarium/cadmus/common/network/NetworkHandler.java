@@ -25,7 +25,6 @@ public class NetworkHandler {
         CHANNEL.register(SyncMaxClaimsPacket.TYPE);
         CHANNEL.register(SyncTeamInfo.TYPE);
         CHANNEL.register(SyncTownsPacket.TYPE);
-        CHANNEL.register(ClaimMapNotificationPacket.TYPE);
         CHANNEL.register(OpenAdminClaimSettingsPacket.TYPE);
 
         CHANNEL.register(BulkClaimSettingsPacket.TYPE);

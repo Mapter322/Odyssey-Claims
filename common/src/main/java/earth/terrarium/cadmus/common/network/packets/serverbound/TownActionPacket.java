@@ -9,9 +9,8 @@ import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
+import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
-import earth.terrarium.cadmus.common.network.NetworkHandler;
-import earth.terrarium.cadmus.common.network.packets.clientbound.ClaimMapNotificationPacket;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -54,9 +53,7 @@ public record TownActionPacket(
             if (error == null) return;
             String key = error.getContents() instanceof TranslatableContents contents ?
                 contents.getKey() : TownManager.ERR_NO_PERMISSION;
-            if (NetworkHandler.CHANNEL.canSendToPlayer(serverPlayer, ClaimMapNotificationPacket.TYPE)) {
-                NetworkHandler.CHANNEL.sendToPlayer(new ClaimMapNotificationPacket(key), serverPlayer);
-            }
+            NotificationApi.notify(serverPlayer, key);
         })
     );
 

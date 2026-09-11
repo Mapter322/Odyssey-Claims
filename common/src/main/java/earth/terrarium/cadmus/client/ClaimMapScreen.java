@@ -63,11 +63,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     public static final int WIDTH = MAP_SIZE + PADDING * 2 + 2;
     public static final int HEIGHT = MAP_SIZE + PADDING * 4 + 2 + BANNER_HEIGHT + BUTTON_HEIGHT;
 
-    private static final long NOTIFICATION_DURATION = 4000;
-    private static final int MAX_NOTIFICATIONS = 4;
-
     private final Map<ChunkPos, ClaimTile> claims = new HashMap<>();
-    private final List<Notification> notifications = new ArrayList<>();
 
     private final LocalPlayer player = Objects.requireNonNull(Minecraft.getInstance().player);
     private final ClientLevel level = player.clientLevel;
@@ -271,38 +267,10 @@ settingsButton.active = selectedTeam() != null;
 
         renderPlayerAvatar(graphics);
         contextMenu.render(graphics, mouseX, mouseY);
-        renderNotifications(graphics);
     }
 
     public void showNotification(Component message) {
-        notifications.removeIf(notification -> System.currentTimeMillis() > notification.expireAt());
-        notifications.removeIf(notification -> notification.message().getString().equals(message.getString()));
-        if (notifications.size() >= MAX_NOTIFICATIONS) {
-            notifications.removeFirst();
-        }
-        notifications.add(new Notification(message, System.currentTimeMillis() + NOTIFICATION_DURATION));
-    }
-
-    private void renderNotifications(GuiGraphics graphics) {
-        notifications.removeIf(notification -> System.currentTimeMillis() > notification.expireAt());
-        if (notifications.isEmpty()) return;
-
-        int width = notifications.stream()
-            .mapToInt(notification -> font.width(notification.message()))
-            .max().orElse(0) + ClaimContextMenu.PADDING * 2;
-        int itemHeight = font.lineHeight + 4;
-        int x = mapWidget.getX() + (mapWidget.getWidth() - width) / 2;
-        int y = mapWidget.getY() + PADDING;
-
-        graphics.pose().pushPose();
-        graphics.pose().translate(0, 0, 100);
-        graphics.fill(x - 1, y - 1, x + width + 1, y + notifications.size() * itemHeight + 1, ClaimContextMenu.BORDER);
-        graphics.fill(x, y, x + width, y + notifications.size() * itemHeight, ClaimContextMenu.BACKGROUND);
-        for (int i = 0; i < notifications.size(); i++) {
-            Component message = notifications.get(i).message();
-            graphics.drawString(font, message, x + ClaimContextMenu.PADDING, y + i * itemHeight + 2, 0xFFFF5555, false);
-        }
-        graphics.pose().popPose();
+        CadmusClient.showNotification(message);
     }
 
     private void drawClaimLabels(GuiGraphics graphics) {
@@ -852,8 +820,6 @@ private static void update() {
         boolean northEast, boolean southEast,
         boolean southWest, boolean northWest
     ) {}
-
-    private record Notification(Component message, long expireAt) {}
 
     private record TeamData(String name, int claimed, int maxClaims, int loaded, int maxLoaded, State<Color> color) {
         public static final TeamData EMPTY = new TeamData("empty", 0, 0, 0, 0, State.of(Color.DEFAULT));

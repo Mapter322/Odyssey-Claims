@@ -9,10 +9,9 @@ import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
+import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.network.NetworkHandler;
-import earth.terrarium.cadmus.common.network.packets.clientbound.ClaimMapNotificationPacket;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
@@ -55,9 +54,7 @@ public record AdminClaimActionPacket(ChunkPos start, ChunkPos end, boolean claim
     );
 
     private static void notify(ServerPlayer player, String key) {
-        if (NetworkHandler.CHANNEL.canSendToPlayer(player, ClaimMapNotificationPacket.TYPE)) {
-            NetworkHandler.CHANNEL.sendToPlayer(new ClaimMapNotificationPacket(key), player);
-        }
+        NotificationApi.notify(player, key);
     }
 
     @Override
