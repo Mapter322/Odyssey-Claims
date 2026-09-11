@@ -14,7 +14,7 @@ import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncAllTeamInfoPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTeamInfo;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
-import earth.terrarium.cadmus.common.utils.ModUtils;
+import earth.terrarium.argonauts.api.util.ModUtils;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

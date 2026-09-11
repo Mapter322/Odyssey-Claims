@@ -14,7 +14,7 @@ import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
-import earth.terrarium.cadmus.common.utils.ModUtils;
+import earth.terrarium.argonauts.api.util.ModUtils;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;

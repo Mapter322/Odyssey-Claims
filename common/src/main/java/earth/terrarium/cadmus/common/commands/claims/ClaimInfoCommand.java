@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
-import earth.terrarium.cadmus.common.utils.ModUtils;
+import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;

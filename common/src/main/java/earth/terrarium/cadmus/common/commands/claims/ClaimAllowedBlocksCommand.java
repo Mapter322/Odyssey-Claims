@@ -6,7 +6,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
-import earth.terrarium.cadmus.common.utils.ModUtils;
+import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
