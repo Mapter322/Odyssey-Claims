@@ -5,6 +5,7 @@ import com.teamresourceful.resourcefullib.client.CloseablePoseStack;
 import com.teamresourceful.resourcefullib.client.screens.BaseCursorScreen;
 import com.teamresourceful.resourcefullib.client.utils.ScreenUtils;
 import com.teamresourceful.resourcefullib.common.color.Color;
+import earth.terrarium.argonauts.client.Modals;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
@@ -466,7 +467,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
     }
 
     private void openCreateTownModal(ChunkPos startPos, ChunkPos endPos) {
-        CadmusModals.input(
+        Modals.input(
             ConstantComponents.CREATE_TOWN_MODAL_TITLE,
             ConstantComponents.CREATE_TOWN_MODAL_DESCRIPTION,
             ConstantComponents.CREATE_TOWN_MODAL_PLACEHOLDER,
@@ -484,7 +485,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             return;
         }
         this.lastPaintedChunk = null;
-        CadmusModals.confirm(
+        Modals.confirm(
             ConstantComponents.DELETE_TOWN_MODAL_TITLE,
             ConstantComponents.deleteTownModalDescription(removed.displayName()),
             ConstantComponents.DELETE_TOWN_MODAL_CONFIRM,

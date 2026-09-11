@@ -1,8 +1,8 @@
 package earth.terrarium.cadmus.client.compat.xaero;
 
+import earth.terrarium.argonauts.client.Modals;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.client.CadmusClient;
-import earth.terrarium.cadmus.client.CadmusModals;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.towns.TownManager;
@@ -63,7 +63,7 @@ public class CadmusRightClickOptions {
     }
 
     private static void openCreateTownModal(ChunkPos startPos, ChunkPos endPos) {
-        CadmusModals.input(
+        Modals.input(
             ConstantComponents.CREATE_TOWN_MODAL_TITLE,
             ConstantComponents.CREATE_TOWN_MODAL_DESCRIPTION,
             ConstantComponents.CREATE_TOWN_MODAL_PLACEHOLDER,
