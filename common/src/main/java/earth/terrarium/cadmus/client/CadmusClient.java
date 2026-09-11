@@ -13,6 +13,7 @@ import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimS
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import earth.terrarium.argonauts.client.NotificationManager;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.client.KeyMapping;
@@ -56,6 +57,10 @@ public class CadmusClient {
 
     public static void openClaimMap() {
         Minecraft.getInstance().setScreen(new ClaimMapScreen());
+    }
+
+    public static void openClaimMap(Screen parentScreen) {
+        Minecraft.getInstance().setScreen(new ClaimMapScreen(parentScreen));
     }
 
 public static void openClaimSettings(SyncClaimSettingsPacket packet) {

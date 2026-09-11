@@ -50,7 +50,10 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
@@ -90,8 +93,16 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private int selectionEndZ;
     private ChunkPos lastPaintedChunk;
 
+    @Nullable
+    private Screen parentScreen;
+
     public ClaimMapScreen() {
+        this(null);
+    }
+
+    public ClaimMapScreen(@Nullable Screen parentScreen) {
         super(CommonComponents.EMPTY);
+        this.parentScreen = parentScreen;
     }
 
     public void refresh() {
@@ -138,7 +149,13 @@ public class ClaimMapScreen extends BaseCursorScreen {
         var frame = new FrameLayout(x, y, WIDTH, HEIGHT);
         frame.setMinDimensions(WIDTH, HEIGHT);
 
-        frame.addChild(new ImageButton(0, 0, 11, 11, UIConstants.MODAL_CLOSE, button -> onClose()), (settings) -> {
+        frame.addChild(new ImageButton(0, 0, 11, 11, UIConstants.MODAL_CLOSE, button -> {
+                if (parentScreen != null) {
+                    Minecraft.getInstance().setScreen(parentScreen);
+                } else {
+                    onClose();
+                }
+            }), (settings) -> {
                 settings.padding(2);
                 settings.alignHorizontallyRight();
                 settings.alignVerticallyTop();
@@ -320,6 +337,15 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE && parentScreen != null) {
+            Minecraft.getInstance().setScreen(parentScreen);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
