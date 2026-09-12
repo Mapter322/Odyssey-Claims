@@ -45,11 +45,11 @@ public final class Settings {
             return getForTeam(level.getServer(), team, definition);
         }
         if (!level.isClientSide()) {
+            Optional<Boolean> roleValue = RoleSettingsResolver.resolve(level, team, player, definition.id());
+            if (roleValue.isPresent()) return roleValue.get();
             SettingOverride override = CadmusSaveData.getPlayerSettingOverride(level.getServer(), team, player, definition);
             if (override == SettingOverride.ALLOW) return true;
             if (override == SettingOverride.DENY) return false;
-            Optional<Boolean> roleValue = RoleSettingsResolver.resolve(level, team, player, definition.id());
-            if (roleValue.isPresent()) return roleValue.get();
         }
         if (!TeamApi.API.isMember(level, new com.mojang.authlib.GameProfile(player, ""), team)) return false;
         return true;

@@ -42,7 +42,7 @@ public final class CadmusMemberSettings {
         RoleSettingsResolver.set((level, team, player, setting) -> {
             if (!ARGONAUTS_TEAM.equals(team.provider())) return Optional.empty();
             return GuildApi.API.get(level, team.id())
-                .map(guild -> guild.getRoleValue(player, setting) == TriState.TRUE);
+                .map(guild -> guild.getPermission(player, setting) == TriState.TRUE);
         });
     }
 
