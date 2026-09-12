@@ -1,10 +1,12 @@
 package earth.terrarium.cadmus.common.compat.argonauts;
 
 import earth.terrarium.argonauts.api.teams.Team;
+import earth.terrarium.argonauts.api.teams.guild.GuildApi;
 import earth.terrarium.argonauts.api.teams.settings.MemberSetting;
 import earth.terrarium.argonauts.api.teams.settings.MemberSettingState;
 import earth.terrarium.argonauts.api.teams.settings.MemberSettingsApi;
 import earth.terrarium.argonauts.api.teams.settings.MemberSettingsHandler;
+import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.settings.SettingOverride;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
@@ -13,10 +15,12 @@ import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestMemberSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.UpdateMemberSettingPacket;
+import earth.terrarium.cadmus.common.settings.RoleSettingsResolver;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import java.util.Optional;
 import java.util.UUID;
 
 public final class CadmusMemberSettings {
@@ -35,6 +39,11 @@ public final class CadmusMemberSettings {
             ));
         });
         MemberSettingsApi.API.setHandler(new Handler());
+        RoleSettingsResolver.set((level, team, player, setting) -> {
+            if (!ARGONAUTS_TEAM.equals(team.provider())) return Optional.empty();
+            return GuildApi.API.get(level, team.id())
+                .map(guild -> guild.getRoleValue(player, setting) == TriState.TRUE);
+        });
     }
 
     private static TeamId teamId(Team team) {

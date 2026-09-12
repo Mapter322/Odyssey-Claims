@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import java.util.UUID;
 
 import java.util.Map;
+import java.util.Optional;
 
 public final class Settings {
 
@@ -43,12 +44,14 @@ public final class Settings {
         if (definition.target() != earth.terrarium.cadmus.api.settings.SettingTarget.PLAYER) {
             return getForTeam(level.getServer(), team, definition);
         }
-        if (!TeamApi.API.isMember(level, new com.mojang.authlib.GameProfile(player, ""), team)) return false;
         if (!level.isClientSide()) {
             SettingOverride override = CadmusSaveData.getPlayerSettingOverride(level.getServer(), team, player, definition);
             if (override == SettingOverride.ALLOW) return true;
             if (override == SettingOverride.DENY) return false;
+            Optional<Boolean> roleValue = RoleSettingsResolver.resolve(level, team, player, definition.id());
+            if (roleValue.isPresent()) return roleValue.get();
         }
+        if (!TeamApi.API.isMember(level, new com.mojang.authlib.GameProfile(player, ""), team)) return false;
         return true;
     }
 

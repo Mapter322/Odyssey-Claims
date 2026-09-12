@@ -170,6 +170,18 @@
   "cadmus.setting.motd": "MOTD",
   "cadmus.setting.color": "Color",
 
+  "cadmus.setting.block-break.description": "Allows breaking blocks in claims",
+  "cadmus.setting.block-place.description": "Allows placing blocks in claims",
+  "cadmus.setting.block-interactions.description": "Allows interacting with blocks in claims",
+  "cadmus.setting.entity-interactions.description": "Allows interacting with entities in claims",
+  "cadmus.setting.entity-damage.description": "Allows damaging entities in claims",
+  "cadmus.setting.item-pickup.description": "Allows picking up items in claims",
+  "cadmus.setting.use.description": "Allows using items in claims",
+  "cadmus.setting.use-chests.description": "Allows opening chests in claims",
+  "cadmus.setting.use-doors.description": "Allows opening doors in claims",
+  "cadmus.setting.use-redstone.description": "Allows using redstone in claims",
+  "cadmus.setting.use-vehicles.description": "Allows using vehicles in claims",
+
   "gui.cadmus.unclaim_modal.title": "Unclaim Chunks?",
   "gui.cadmus.unclaim_modal.description": "Are you sure you want to unclaim all your chunks? This action is irreversible.",
   "gui.cadmus.unclaim_modal.confirm": "Unclaim",
