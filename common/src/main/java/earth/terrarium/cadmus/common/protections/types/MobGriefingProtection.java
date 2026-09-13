@@ -18,16 +18,6 @@ public final class MobGriefingProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.mob_griefing";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.mob_griefing";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_MOB_GRIEFING;
     }

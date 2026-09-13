@@ -22,16 +22,6 @@ public final class ItemPickupProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.item_pickup";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.item_pickup";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_ITEM_PICKUP;
     }

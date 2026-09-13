@@ -23,16 +23,6 @@ public final class BlockExplosionProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.block_explosions";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.block_explosions";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_BLOCK_EXPLOSIONS;
     }

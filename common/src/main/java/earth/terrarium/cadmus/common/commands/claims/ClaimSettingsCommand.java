@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
@@ -22,7 +23,10 @@ import net.minecraft.world.level.ChunkPos;
 public class ClaimSettingsCommand {
 
     private static final SuggestionProvider<CommandSourceStack> SETTING_SUGGESTIONS = (context, builder) ->
-        SharedSuggestionProvider.suggest(SettingDefinitions.forScope(SettingScope.TOWN).keySet(), builder);
+        SharedSuggestionProvider.suggest(SettingDefinitions.forScope(SettingScope.TOWN).entrySet().stream()
+            .filter(entry -> entry.getValue().target() == SettingTarget.GLOBAL)
+            .map(java.util.Map.Entry::getKey)
+            .toList(), builder);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
@@ -86,21 +90,21 @@ public class ClaimSettingsCommand {
     }
 
     private static void set(CommandSourceStack source, ServerPlayer player, TeamId id, String idString, String input) throws CommandSyntaxException {
-        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.TOWN), idString);
+        var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), idString);
         SettingCommandSupport.checkTeamPermission(player, id);
         SettingCommandSupport.set(source.getServer(), id, definition, SettingCommandSupport.parse(definition, input));
         SettingCommandSupport.send(source, "command.cadmus.setting.set", idString, input);
     }
 
     private static void reset(CommandSourceStack source, ServerPlayer player, TeamId id, String idString) throws CommandSyntaxException {
-        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.TOWN), idString);
+        var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), idString);
         SettingCommandSupport.checkTeamPermission(player, id);
         CadmusSaveData.resetSettingValue(source.getServer(), id, definition);
         SettingCommandSupport.send(source, "command.cadmus.setting.reset", idString);
     }
 
     private static void get(CommandSourceStack source, TeamId id, String idString) throws CommandSyntaxException {
-        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.TOWN), idString);
+        var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), idString);
         var value = CadmusSaveData.getSettingValue(source.getServer(), id, definition);
         SettingCommandSupport.send(source, "command.cadmus.setting.get", idString, SettingCommandSupport.valueToString(value));
     }

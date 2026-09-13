@@ -17,16 +17,6 @@ public final class EntityExplosionProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.entity_explosions";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.entity_explosions";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_ENTITY_EXPLOSIONS;
     }

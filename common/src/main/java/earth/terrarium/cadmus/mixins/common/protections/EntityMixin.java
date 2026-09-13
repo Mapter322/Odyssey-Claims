@@ -24,11 +24,13 @@ public abstract class EntityMixin {
 
     @ModifyReturnValue(method = "canRide", at = @At("RETURN"))
     private boolean cadmus$canRide(boolean original, Entity vehicle) {
-        return original && !vehicle.level().isClientSide() ?
-            ClaimApi.API.getClaim(vehicle.level(), vehicle.chunkPosition())
-                .map(claim -> Settings.getForTeam(vehicle.getServer(), claim.team(), SettingDefinitions.USE_VEHICLES))
-                .orElse(true) :
-            original;
+        if (!original || vehicle.level().isClientSide()) return original;
+        var rider = (Entity) (Object) this;
+        return ClaimApi.API.getClaim(vehicle.level(), vehicle.chunkPosition())
+            .map(claim -> rider instanceof Player player
+                ? Settings.isPlayerAllowed(vehicle.level(), player.getUUID(), claim.team(), SettingDefinitions.USE_VEHICLES)
+                : Settings.getForTeam(vehicle.getServer(), claim.team(), SettingDefinitions.USE_VEHICLES))
+            .orElse(true);
     }
 
     @Inject(method = "mayInteract", at = @At("HEAD"), cancellable = true)

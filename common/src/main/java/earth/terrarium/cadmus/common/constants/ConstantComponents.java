@@ -22,6 +22,8 @@ public class ConstantComponents {
     public static final Component NO_PERMISSION_TEAM = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_team");
     public static final Component NO_PERMISSION_ROLE = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_role");
 
+    public static final Component SETTING_MANAGED_BY_ROLES = CommonUtils.serverTranslatable("command.cadmus.exception.setting_managed_by_roles");
+
     public static final Component TEAM_DOES_NOT_EXIST = CommonUtils.serverTranslatable("command.cadmus.exception.team_does_not_exist");
 
     public static final Component WILDERNESS = CommonUtils.serverTranslatable("message.cadmus.wilderness").copy().withStyle(ChatFormatting.GREEN);

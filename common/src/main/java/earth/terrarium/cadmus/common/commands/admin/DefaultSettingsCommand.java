@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
@@ -14,7 +15,10 @@ import net.minecraft.commands.SharedSuggestionProvider;
 public class DefaultSettingsCommand {
 
     private static final SuggestionProvider<CommandSourceStack> SETTING_SUGGESTIONS = (context, builder) ->
-        SharedSuggestionProvider.suggest(SettingDefinitions.forScope(SettingScope.TOWN).keySet(), builder);
+        SharedSuggestionProvider.suggest(SettingDefinitions.forScope(SettingScope.TOWN).entrySet().stream()
+            .filter(entry -> entry.getValue().target() == SettingTarget.GLOBAL)
+            .map(java.util.Map.Entry::getKey)
+            .toList(), builder);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
@@ -46,7 +50,7 @@ public class DefaultSettingsCommand {
     }
 
     private static void set(CommandSourceStack source, String id, String input) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.TOWN), id);
+        var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), id);
         setDefault(source.getServer(), definition, SettingCommandSupport.parse(definition, input));
         SettingCommandSupport.send(source, "command.cadmus.setting.set", id, input);
     }
@@ -57,13 +61,13 @@ public class DefaultSettingsCommand {
     }
 
     private static void reset(CommandSourceStack source, String id) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.TOWN), id);
+        var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), id);
         CadmusSaveData.resetDefaultSettingValue(source.getServer(), definition);
         SettingCommandSupport.send(source, "command.cadmus.setting.reset", id);
     }
 
     private static void get(CommandSourceStack source, String id) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.TOWN), id);
+        var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), id);
         var value = CadmusSaveData.getDefaultSettingValue(source.getServer(), definition);
         SettingCommandSupport.send(source, "command.cadmus.setting.get", id, SettingCommandSupport.valueToString(value));
     }

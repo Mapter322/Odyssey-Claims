@@ -20,16 +20,6 @@ public final class BlockBreakProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.block_breaking";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.block_breaking";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_BLOCK_BREAKING;
     }

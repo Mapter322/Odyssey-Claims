@@ -21,16 +21,6 @@ public final class EntityInteractProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.entity_interactions";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.entity_interactions";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_ENTITY_INTERACTIONS;
     }

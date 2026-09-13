@@ -45,6 +45,7 @@
 
   "command.cadmus.exception.no_permission_team": "You do not have permission on your team to manage this setting.",
   "command.cadmus.exception.no_permission_role": "Your role does not have permission to manage settings.",
+  "command.cadmus.exception.setting_managed_by_roles": "This setting is managed by guild roles, edit it in the guild menu.",
 
   "command.cadmus.exception.team_does_not_exist": "This team does not exist.",
 
@@ -86,26 +87,6 @@
   "gamerule.doClaimedEntityDamage.description": "Claimed Entity Damage",
   "gamerule.doClaimedMobGriefing.description": "Claimed Mob Griefing",
   "gamerule.doClaimedItemPickup.description": "Claimed Item Pickup",
-
-  "cadmus.block_breaking.permission":  "Claimed Block Breaking",
-  "cadmus.block_placing.permission":  "Claimed Block Placing",
-  "cadmus.block_interactions.permission":  "Claimed Block Interactions",
-  "cadmus.block_explosions.permission":  "Claimed Block Explosions",
-  "cadmus.entity_explosions.permission":  "Claimed Entity Explosions",
-  "cadmus.entity_interactions.permission":  "Claimed Entity Interactions",
-  "cadmus.entity_damage.permission":  "Claimed Entity Damage",
-  "cadmus.mob_griefing.permission":  "Claimed Mob Griefing",
-  "cadmus.item_pickup.permission":  "Claimed Item Pickup",
-
-  "cadmus.personal.block_breaking":  "Personal Block Breaking",
-  "cadmus.personal.block_placing":  "Personal Block Placing",
-  "cadmus.personal.block_interactions":  "Personal Block Interactions",
-  "cadmus.personal.block_explosions":  "Personal Block Explosions",
-  "cadmus.personal.entity_explosions":  "Personal Entity Explosions",
-  "cadmus.personal.entity_interactions":  "Personal Entity Interactions",
-  "cadmus.personal.entity_damage":  "Personal Entity Damage",
-  "cadmus.personal.mob_griefing":  "Personal Mob Griefing",
-  "cadmus.personal.item_pickup":  "Personal Item Pickup",
 
   "gui.cadmus.claim_map.title": "Claim Map",
   "gui.cadmus.claim_map.clear_claimed_chunks": "Unclaim All",

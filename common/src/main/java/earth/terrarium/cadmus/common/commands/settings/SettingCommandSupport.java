@@ -7,6 +7,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.SettingValue;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.api.settings.types.ColorSetting;
@@ -35,6 +36,14 @@ public final class SettingCommandSupport {
     public static SettingDefinition<?> find(Map<String, SettingDefinition<?>> definitions, String id) throws CommandSyntaxException {
         SettingDefinition<?> definition = definitions.get(id);
         if (definition == null) throw new SimpleCommandExceptionType(Component.literal("Unknown setting: " + id)).create();
+        return definition;
+    }
+
+    public static SettingDefinition<?> findGlobal(Map<String, SettingDefinition<?>> definitions, String id) throws CommandSyntaxException {
+        SettingDefinition<?> definition = find(definitions, id);
+        if (definition.target() != SettingTarget.GLOBAL) {
+            throw new SimpleCommandExceptionType(ConstantComponents.SETTING_MANAGED_BY_ROLES).create();
+        }
         return definition;
     }
 

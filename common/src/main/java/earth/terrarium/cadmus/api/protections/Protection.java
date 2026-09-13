@@ -28,20 +28,6 @@ public interface Protection {
     SettingDefinition<Boolean> setting();
 
     /**
-     * The permission name, used to enable or disable the protection.
-     *
-     * @return the permission name
-     */
-    String permission();
-
-    /**
-     * The personal permission name, used to allow players to manage their personal claim settings.
-     *
-     * @return the personal permission name
-     */
-    String personalPermission();
-
-    /**
      * The game rule key. Used to enable or disable the protection.
      *
      * @return the game rule key

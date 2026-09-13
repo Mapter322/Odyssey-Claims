@@ -24,16 +24,6 @@ public final class EntityDamageProtection implements Protection {
     }
 
     @Override
-    public String permission() {
-        return "cadmus.entity_damage";
-    }
-
-    @Override
-    public String personalPermission() {
-        return "cadmus.personal.entity_damage";
-    }
-
-    @Override
     public GameRules.Key<GameRules.BooleanValue> gameRule() {
         return CadmusGameRules.DO_CLAIMED_ENTITY_DAMAGE;
     }
