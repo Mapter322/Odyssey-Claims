@@ -153,4 +153,11 @@ public final class SettingDefinitions {
             .put(definition.id(), definition);
         return definition;
     }
+
+    public static void unregister(SettingScope scope, String id) {
+        Map<String, SettingDefinition<?>> definitions = DEFINITIONS.get(scope);
+        if (definitions != null) {
+            definitions.remove(id);
+        }
+    }
 }

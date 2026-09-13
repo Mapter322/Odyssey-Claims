@@ -70,7 +70,11 @@ public class Cadmus {
     }
 
     public static void onServerStarted(MinecraftServer server) {
-        if (ModInfoUtils.isModLoaded("argonauts")) CadmusRoleTargets.register();
+        if (ModInfoUtils.isModLoaded("argonauts")) {
+            CadmusRoleTargets.register();
+            CadmusRoleTargets.registerGuilds(server);
+            CadmusRoleTargets.prune(server);
+        }
         AdminTeamProvider.ensureAdminTeam(server);
         FORCE_LOADED_CHUNK_COUNT = 0;
         server.getAllLevels().forEach(level ->
