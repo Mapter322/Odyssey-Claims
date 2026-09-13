@@ -2,7 +2,10 @@ package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.protections.Protection;
+import earth.terrarium.cadmus.api.settings.EntityCondition;
+import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
@@ -34,11 +37,30 @@ public final class EntityDamageProtection implements Protection {
 
     public boolean canDamageEntity(Level level, GameProfile player, Entity entity) {
         if (entity.getType().is(ModEntityTypeTags.ALLOWS_CLAIM_DAMAGE_ENTITIES)) return true;
-        return level.isClientSide() || getId(level, entity.chunkPosition()).map(team ->
-            checkFlags(level.getServer(), entity, team) && isPlayerAllowed(level, player, team)).orElse(true);
+        if (level.isClientSide()) return true;
+        return getId(level, entity.chunkPosition()).map(team ->
+            checkFlags(level.getServer(), entity, team, specific(entity, team.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN))
+                && isPlayerAllowed(level, player, team, specific(entity, team.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN))).orElse(true);
     }
 
-    private boolean checkFlags(MinecraftServer server, Entity entity, TeamId team) {
+    @SuppressWarnings("unchecked")
+    private static SettingDefinition<Boolean> specific(Entity entity, SettingScope scope) {
+        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
+            ? SettingDefinitions.ADMIN_ENTITY_DAMAGE
+            : SettingDefinitions.ENTITY_DAMAGE;
+        int bestPriority = 0;
+        for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "entity-damage")) {
+            for (SettingCondition<?> condition : definition.conditions()) {
+                if (condition instanceof EntityCondition entityCondition && entityCondition.matches(entity.getType()) && entityCondition.priority() > bestPriority) {
+                    bestPriority = entityCondition.priority();
+                    best = (SettingDefinition<Boolean>) definition;
+                }
+            }
+        }
+        return best;
+    }
+
+    private boolean checkFlags(MinecraftServer server, Entity entity, TeamId team, SettingDefinition<Boolean> definition) {
         if (!team.isAdmin()) return true;
 
         if (entity instanceof Player) return Settings.getForTeam(server, team, SettingDefinitions.PVP);
@@ -50,7 +72,7 @@ public final class EntityDamageProtection implements Protection {
                 return Settings.getForTeam(server, team, SettingDefinitions.ADMIN_CREATURE_DAMAGE);
             }
 
-            return Settings.getForTeam(server, team, SettingDefinitions.ENTITY_DAMAGE);
+            return Settings.getForTeam(server, team, definition);
         }
     }
 }

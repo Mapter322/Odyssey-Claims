@@ -34,6 +34,7 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> BLOCK_BREAK = townBoolean("block-break", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> DIRT = townCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> BLOCK_PLACE = townBoolean("block-place", SettingTarget.PLAYER, false);
+    public static final SettingDefinition<Boolean> PLACE_DIRT = townCondition("block-place/minecraft:dirt", SettingTarget.PLAYER, "block-place", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> BLOCK_INTERACTIONS = townBoolean("block-interactions", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> DOORS = townCondition("block-interactions/minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
     public static final SettingDefinition<Boolean> TRAPDOORS = townCondition("block-interactions/minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
@@ -45,6 +46,7 @@ public final class SettingDefinitions {
         new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> HORSES = townCondition("entity-interactions/minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ENTITY_DAMAGE = townBoolean("entity-damage", SettingTarget.PLAYER, false);
+    public static final SettingDefinition<Boolean> DAMAGE_HORSES = townCondition("entity-damage/minecraft:horse", SettingTarget.PLAYER, "entity-damage", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> DIRT_ITEM = townCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
@@ -61,6 +63,7 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_BREAK = adminBoolean("block-break", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_DIRT = adminCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_PLACE = adminBoolean("block-place", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> ADMIN_PLACE_DIRT = adminCondition("block-place/minecraft:dirt", SettingTarget.PLAYER, "block-place", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_INTERACTIONS = adminBoolean("block-interactions", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_DOORS = adminCondition("block-interactions/minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
     public static final SettingDefinition<Boolean> ADMIN_TRAPDOORS = adminCondition("block-interactions/minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
@@ -72,6 +75,7 @@ public final class SettingDefinitions {
         new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ADMIN_HORSES = adminCondition("entity-interactions/minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_DAMAGE = adminBoolean("entity-damage", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> ADMIN_DAMAGE_HORSES = adminCondition("entity-damage/minecraft:horse", SettingTarget.PLAYER, "entity-damage", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ADMIN_MOB_GRIEFING = adminBoolean("mob-griefing", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ITEM_PICKUP = adminBoolean("item-pickup", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_DIRT_ITEM = adminCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
