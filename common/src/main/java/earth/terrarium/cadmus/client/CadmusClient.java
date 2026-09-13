@@ -5,6 +5,7 @@ import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
+import earth.terrarium.cadmus.common.compat.argonauts.CadmusRoleTargets;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -57,6 +59,7 @@ public class CadmusClient {
         TEAM_INFO.clear();
         TOWNS.clear();
         MEMBER_SETTINGS.clear();
+        CadmusRoleTargets.clearClient();
     }
 
     public static void openClaimMap() {
@@ -80,6 +83,10 @@ public static void openClaimSettings(SyncClaimSettingsPacket packet) {
     public static void syncMemberSettings(SyncMemberSettingsPacket packet) {
         MEMBER_SETTINGS.computeIfAbsent(new MemberSettingKey(packet.team(), packet.player()), ignored -> new HashMap<>()).putAll(packet.settings());
         if (Minecraft.getInstance().screen instanceof MembersScreen screen) screen.refreshMemberSettings();
+    }
+
+    public static void syncMemberTargets(List<String> targets) {
+        CadmusRoleTargets.syncClient(targets);
     }
 
     public record MemberSettingKey(TeamId team, UUID player) {}

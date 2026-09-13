@@ -16,16 +16,21 @@ import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
+import earth.terrarium.cadmus.common.network.NetworkHandler;
+import earth.terrarium.cadmus.common.network.packets.clientbound.SyncMemberTargetsPacket;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class CadmusRoleTargets {
 
@@ -39,6 +44,8 @@ public final class CadmusRoleTargets {
         "item-pickup", TargetKind.ITEM,
         "use", TargetKind.ITEM
     );
+
+    private static final Set<String> CLIENT_TARGETS = new LinkedHashSet<>();
 
     private CadmusRoleTargets() {
     }
@@ -58,6 +65,34 @@ public final class CadmusRoleTargets {
                 SettingAccess.PLAYER, new BooleanSetting(true), target.parent(), List.of(condition)));
             MemberSettingsApi.API.register(new MemberSetting(id, Component.literal(target.key()), Component.empty(), target.parent()));
         }
+    }
+
+    public static void sync(ServerPlayer player) {
+        List<String> ids = RoleDefaultsConfig.targets().stream()
+            .map(target -> target.parent() + "/" + target.key())
+            .toList();
+        if (NetworkHandler.CHANNEL.canSendToPlayer(player, SyncMemberTargetsPacket.TYPE)) {
+            NetworkHandler.CHANNEL.sendToPlayer(new SyncMemberTargetsPacket(ids), player);
+        }
+    }
+
+    public static void syncClient(List<String> ids) {
+        clearClient();
+        for (String id : ids) {
+            int index = id.indexOf('/');
+            if (index <= 0) continue;
+            String parent = id.substring(0, index);
+            String key = id.substring(index + 1);
+            MemberSettingsApi.API.register(new MemberSetting(id, Component.literal(key), Component.empty(), parent));
+            CLIENT_TARGETS.add(id);
+        }
+    }
+
+    public static void clearClient() {
+        for (String id : CLIENT_TARGETS) {
+            MemberSettingsApi.API.unregister(id);
+        }
+        CLIENT_TARGETS.clear();
     }
 
     private static SettingCondition<?> condition(TargetKind kind, String key) {

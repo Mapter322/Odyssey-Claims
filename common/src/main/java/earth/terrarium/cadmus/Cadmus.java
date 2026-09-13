@@ -62,6 +62,7 @@ public class Cadmus {
     public static void onPlayerJoin(ServerPlayer player) {
         AdminTeamProvider.ensureAdminTeam(player.server);
         ModUtils.sendJoinPackets(player);
+        if (ModInfoUtils.isModLoaded("argonauts")) CadmusRoleTargets.sync(player);
         TeamApi.API.syncAllTeamInfo(player);
         TownManager.sync(player.server);
         TeamApi.API.displayTeamName(player);
