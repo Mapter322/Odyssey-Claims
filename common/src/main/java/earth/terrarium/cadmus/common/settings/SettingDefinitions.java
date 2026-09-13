@@ -32,33 +32,20 @@ public final class SettingDefinitions {
     private static final Map<SettingScope, Map<String, SettingDefinition<?>>> DEFINITIONS = new EnumMap<>(SettingScope.class);
 
     public static final SettingDefinition<Boolean> BLOCK_BREAK = townBoolean("block-break", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> DIRT = townCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> BLOCK_PLACE = townBoolean("block-place", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> PLACE_DIRT = townCondition("block-place/minecraft:dirt", SettingTarget.PLAYER, "block-place", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> BLOCK_INTERACTIONS = townBoolean("block-interactions", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> DOORS = townCondition("block-interactions/minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
-    public static final SettingDefinition<Boolean> TRAPDOORS = townCondition("block-interactions/minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
     public static final SettingDefinition<Boolean> BLOCK_EXPLOSIONS = townBoolean("block-explosions", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ENTITY_EXPLOSIONS = townBoolean("entity-explosions", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ENTITY_INTERACTIONS = townBoolean("entity-interactions", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> BOATS = townCondition("entity-interactions/minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
-        new EntityValueCondition(EntityType.BOAT.builtInRegistryHolder().key().location()),
-        new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
-    public static final SettingDefinition<Boolean> HORSES = townCondition("entity-interactions/minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ENTITY_DAMAGE = townBoolean("entity-damage", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> DAMAGE_HORSES = townCondition("entity-damage/minecraft:horse", SettingTarget.PLAYER, "entity-damage", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> DIRT_ITEM = townCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> NON_PLAYERS_PLACE = townBoolean("non-players-place", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> FIRE_SPREAD = townBoolean("fire-spread", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> PVP = townBoolean("pvp", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ALLOW_ENTRY = townBoolean("allow-entry", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ALLOW_EXIT = townBoolean("allow-exit", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> USE = townBoolean("use", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> FOOD = townCondition("use/c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
-    public static final SettingDefinition<Boolean> POTIONS = townCondition("use/minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
-    public static final SettingDefinition<Boolean> SPLASH_POTIONS = townCondition("use/minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
 
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_BREAK = adminBoolean("block-break", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_DIRT = adminCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
@@ -137,14 +124,6 @@ public final class SettingDefinitions {
         return register(new SettingDefinition<>(id, SettingScope.TOWN, target, SettingAccess.PLAYER, new BooleanSetting(value)));
     }
 
-    private static SettingDefinition<Boolean> townBoolean(String id, SettingTarget target, String parent) {
-        return register(new SettingDefinition<>(id, SettingScope.TOWN, target, SettingAccess.PLAYER, new BooleanSetting(true), parent, List.of()));
-    }
-
-    private static SettingDefinition<Boolean> townCondition(String id, SettingTarget target, String parent, SettingCondition<?>... conditions) {
-        return register(new SettingDefinition<>(id, SettingScope.TOWN, target, SettingAccess.PLAYER, new BooleanSetting(true), parent, List.of(conditions)));
-    }
-
     private static SettingDefinition<Boolean> adminBoolean(String id, SettingTarget target) {
         return adminBoolean(id, target, true);
     }
@@ -169,7 +148,7 @@ public final class SettingDefinitions {
         return register(new SettingDefinition<>(id, SettingScope.ADMIN_CLAIM, target, SettingAccess.ADMIN, new StringSetting("")));
     }
 
-    private static <T> SettingDefinition<T> register(SettingDefinition<T> definition) {
+    public static <T> SettingDefinition<T> register(SettingDefinition<T> definition) {
         DEFINITIONS.computeIfAbsent(definition.scope(), ignored -> new LinkedHashMap<>())
             .put(definition.id(), definition);
         return definition;
