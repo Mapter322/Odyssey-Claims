@@ -58,7 +58,6 @@ subprojects {
     }
 
     dependencies {
-        val reiVersion: String by project
         val journeymapVersion: String by project
         val journeymapApiVersion: String by project
         val argonautsVersion: String by project
@@ -85,13 +84,7 @@ subprojects {
 
         "modCompileOnly"(group = "info.journeymap", name = "journeymap-api-$modLoader", version = journeymapApiVersion)
 
-        if (isCommon) {
-            "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-api", version = reiVersion)
-            "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-default-plugin", version = reiVersion)
-        } else {
-            // "modLocalRuntime"(group = "me.shedaniel", name = "RoughlyEnoughItems-$modLoader", version = reiVersion)
-            "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-api-$modLoader", version = reiVersion)
-            "modCompileOnly"(group = "me.shedaniel", name = "RoughlyEnoughItems-default-plugin-$modLoader", version = reiVersion)
+        if (!isCommon) {
             "include"(olympus)
 
             // "modRuntimeOnly"(group = "maven.modrinth", name = "journeymap", version = "$journeymapVersion+$modLoader")

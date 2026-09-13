@@ -113,10 +113,10 @@
 
   "cadmus.setting.block-break": "Break blocks",
   "cadmus.setting.block-place": "Place blocks",
-  "cadmus.setting.block-interactions": "Interact with blocks",
+  "cadmus.setting.block-interactions": "Interact blocks",
   "cadmus.setting.block-explosions": "Block explosions",
   "cadmus.setting.entity-explosions": "Entity explosions",
-  "cadmus.setting.entity-interactions": "Interact with entities",
+  "cadmus.setting.entity-interactions": "Interact entities",
   "cadmus.setting.entity-damage": "Damage entities",
   "cadmus.setting.mob-griefing": "Mob griefing",
   "cadmus.setting.item-pickup": "Item pickup",
@@ -168,8 +168,5 @@
 
   "gui.cadmus.modal.delete_town.title": "Delete Town?",
   "gui.cadmus.modal.delete_town.description": "You are about to remove the last chunk of %s. The town will be deleted!",
-  "gui.cadmus.modal.delete_town.confirm": "Delete",
-
-  "rei.sections.project_odyssey": "Project Odyssey",
-  "rei.cadmus.cadmus.tooltip": "Open Claim Map"
+  "gui.cadmus.modal.delete_town.confirm": "Delete"
 }
