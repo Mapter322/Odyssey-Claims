@@ -1,11 +1,9 @@
 package earth.terrarium.cadmus.neoforge;
 
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.client.neoforge.CadmusClientNeoForge;
 import earth.terrarium.cadmus.common.commands.CadmusCommands;
-import earth.terrarium.cadmus.common.settings.SettingDefinitions;
-import earth.terrarium.cadmus.common.settings.Settings;
+import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.common.Mod;
@@ -49,12 +47,8 @@ public class CadmusNeoForge {
     }
 
     private void onRightClick(PlayerInteractEvent.RightClickItem event) {
-        if (!event.getLevel().isClientSide()) {
-            ClaimApi.API.getClaim(event.getLevel(), event.getEntity().chunkPosition()).ifPresent(claim -> {
-                if (!Settings.getForTeam(event.getLevel().getServer(), claim.team(), SettingDefinitions.USE)) {
-                    event.setCanceled(true);
-                }
-            });
+        if (!Protections.ITEM_USE.canUseItem(event.getEntity(), event.getItemStack())) {
+            event.setCanceled(true);
         }
     }
 }

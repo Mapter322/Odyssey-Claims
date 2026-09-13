@@ -3,6 +3,8 @@ package earth.terrarium.cadmus.common.settings;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.settings.BlockTagCondition;
 import earth.terrarium.cadmus.api.settings.EntityValueCondition;
+import earth.terrarium.cadmus.api.settings.ItemTagCondition;
+import earth.terrarium.cadmus.api.settings.ItemValueCondition;
 import earth.terrarium.cadmus.api.settings.SettingAccess;
 import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
@@ -12,7 +14,10 @@ import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.api.settings.types.ColorSetting;
 import earth.terrarium.cadmus.api.settings.types.FloatSetting;
 import earth.terrarium.cadmus.api.settings.types.StringSetting;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.Collections;
@@ -46,6 +51,9 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> ALLOW_ENTRY = townBoolean("allow-entry", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ALLOW_EXIT = townBoolean("allow-exit", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> USE = townBoolean("use", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> FOOD = townCondition("c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
+    public static final SettingDefinition<Boolean> POTIONS = townCondition("minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
+    public static final SettingDefinition<Boolean> SPLASH_POTIONS = townCondition("minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
 
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_BREAK = adminBoolean("block-break", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_PLACE = adminBoolean("block-place", SettingTarget.PLAYER);
@@ -70,6 +78,9 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> ADMIN_ALLOW_ENTRY = adminBoolean("allow-entry", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ALLOW_EXIT = adminBoolean("allow-exit", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_USE = adminBoolean("use", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> ADMIN_FOOD = adminCondition("c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
+    public static final SettingDefinition<Boolean> ADMIN_POTIONS = adminCondition("minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
+    public static final SettingDefinition<Boolean> ADMIN_SPLASH_POTIONS = adminCondition("minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
 
     public static final SettingDefinition<Boolean> SNOW_FALL = adminBoolean("snow-fall", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> SNOW_MELT = adminBoolean("snow-melt", SettingTarget.GLOBAL);

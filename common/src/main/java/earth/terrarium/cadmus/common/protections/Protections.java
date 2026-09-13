@@ -15,6 +15,7 @@ public class Protections {
     public static final EntityDamageProtection ENTITY_DAMAGE = register(new EntityDamageProtection());
     public static final MobGriefingProtection MOB_GRIEFING = register(new MobGriefingProtection());
     public static final ItemPickupProtection ITEM_PICKUP = register(new ItemPickupProtection());
+    public static final ItemUseProtection ITEM_USE = register(new ItemUseProtection());
 
     public static <T extends Protection> T register(T protection) {
         ProtectionApi.API.register(protection);
