@@ -8,7 +8,6 @@ import earth.terrarium.olympus.client.components.renderers.TristateRenderers;
 import earth.terrarium.olympus.client.components.renderers.WidgetRenderers;
 import earth.terrarium.olympus.client.constants.MinecraftColors;
 import earth.terrarium.olympus.client.ui.UIConstants;
-import earth.terrarium.olympus.client.ui.UIIcons;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -16,7 +15,7 @@ import net.minecraft.network.chat.Component;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-class CategoryHeader extends Button {
+public class SettingSectionHeader extends Button {
     private static final int OPTION_WIDTH = 12;
     private static final int OPTION_HEIGHT = 14;
     private static final int OPTIONS_WIDTH = OPTION_WIDTH * 3;
@@ -25,17 +24,13 @@ class CategoryHeader extends Button {
 
     private final Font font;
     private final Component label;
-    private final Supplier<Boolean> expanded;
     private final Supplier<TriState> aggregate;
-    private final Runnable onToggle;
     private final Consumer<TriState> onApply;
 
-    CategoryHeader(Font font, Component label, Supplier<Boolean> expanded, Supplier<TriState> aggregate, Runnable onToggle, Consumer<TriState> onApply) {
+    public SettingSectionHeader(Font font, Component label, Supplier<TriState> aggregate, Consumer<TriState> onApply) {
         this.font = font;
         this.label = label;
-        this.expanded = expanded;
         this.aggregate = aggregate;
-        this.onToggle = onToggle;
         this.onApply = onApply;
         this.withSize(1, 20);
         this.withTexture(UIConstants.DARK_BUTTON);
@@ -43,9 +38,7 @@ class CategoryHeader extends Button {
     }
 
     private void renderContent(GuiGraphics graphics, WidgetRendererContext<Button> context, float partialTick) {
-        int iconY = context.getY() + (context.getHeight() - 12) / 2;
-        graphics.blitSprite(this.expanded.get() ? UIIcons.CHEVRON_DOWN : UIIcons.CHEVRON_UP, context.getX() + 6, iconY, 12, 12);
-        graphics.drawString(this.font, this.label, context.getX() + 24, context.getY() + (context.getHeight() - 8) / 2, 0xFFFFFFFF, false);
+        graphics.drawString(this.font, this.label, context.getX() + 6, context.getY() + (context.getHeight() - 8) / 2, 0xFFFFFFFF, false);
         if (this.onApply == null) return;
 
         TriState aggregate = this.aggregate.get();
@@ -69,11 +62,10 @@ class CategoryHeader extends Button {
 
     @Override
     public void onClick(double mouseX, double mouseY) {
-        if (this.onApply != null && mouseX >= this.getX() + this.getWidth() - OPTIONS_WIDTH - 3) {
+        if (this.onApply == null) return;
+        if (mouseX >= this.getX() + this.getWidth() - OPTIONS_WIDTH - 3) {
             int index = (int) ((mouseX - (this.getX() + this.getWidth() - OPTIONS_WIDTH - 3)) / OPTION_WIDTH);
             this.onApply.accept(OPTIONS[Math.max(0, Math.min(index, OPTIONS.length - 1))]);
-        } else {
-            this.onToggle.run();
         }
     }
 }

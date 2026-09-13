@@ -201,6 +201,13 @@ public static CadmusSaveData read(MinecraftServer server) {
             : definition.defaultValue();
     }
 
+    public static boolean hasSettingValue(MinecraftServer server, TeamId id, SettingDefinition<?> definition) {
+        return read(server).settingValues
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(id, Map.of())
+            .containsKey(definition.id());
+    }
+
     public static <T> void setSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition, SettingValue<T> value) {
         var data = read(server);
         data.settingValues

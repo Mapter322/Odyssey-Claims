@@ -2,22 +2,20 @@ package earth.terrarium.cadmus.common.protections.types;
 
 import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.protections.Protection;
+import earth.terrarium.cadmus.api.settings.BlockCondition;
+import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
+import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
-import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.UUID;
 
 public final class BlockInteractProtection implements Protection {
 
@@ -38,17 +36,26 @@ public final class BlockInteractProtection implements Protection {
     public boolean canInteractWithBlock(Level level, GameProfile player, BlockPos pos, BlockState state) {
         if (state.is(ModBlockTags.ALLOWS_CLAIM_INTERACTIONS)) return true;
         return level.isClientSide() || getId(level, pos).map(id ->
-            checkFlags((ServerLevel) level, pos, id) && isPlayerAllowed(level, player, id) || isBlockAllowed(level, id, pos)).orElse(true);
+            (id.isAdmin()
+                ? Settings.getForTeam(level.getServer(), id, specific(state, SettingScope.ADMIN_CLAIM))
+                : Settings.isPlayerAllowed(level, player.getId(), id, specific(state, SettingScope.TOWN)))
+                || isBlockAllowed(level, id, pos)).orElse(true);
     }
 
-    private boolean checkFlags(ServerLevel level, BlockPos pos, TeamId id) {
-        MinecraftServer server = level.getServer();
-        if (!id.isAdmin()) return true;
-
-        BlockState state = level.getBlockState(pos);
-        if (state.is(ModBlockTags.DOOR_LIKE)) return Settings.getForTeam(server, id, SettingDefinitions.USE_DOORS);
-        if (state.is(ModBlockTags.INTERACTABLE_STORAGE)) return Settings.getForTeam(server, id, SettingDefinitions.USE_CHESTS);
-        if (state.is(ModBlockTags.REDSTONE)) return Settings.getForTeam(server, id, SettingDefinitions.USE_REDSTONE);
-        return true;
+    @SuppressWarnings("unchecked")
+    private static SettingDefinition<Boolean> specific(BlockState state, SettingScope scope) {
+        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
+            ? SettingDefinitions.ADMIN_BLOCK_INTERACTIONS
+            : SettingDefinitions.BLOCK_INTERACTIONS;
+        int bestPriority = 0;
+        for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "block-interactions")) {
+            for (SettingCondition<?> condition : definition.conditions()) {
+                if (condition instanceof BlockCondition block && block.matches(state.getBlock()) && block.priority() > bestPriority) {
+                    bestPriority = block.priority();
+                    best = (SettingDefinition<Boolean>) definition;
+                }
+            }
+        }
+        return best;
     }
 }

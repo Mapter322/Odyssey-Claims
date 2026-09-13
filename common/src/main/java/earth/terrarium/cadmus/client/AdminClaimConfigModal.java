@@ -3,6 +3,7 @@ package earth.terrarium.cadmus.client;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.argonauts.client.widget.LabelledEntry;
+import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
@@ -32,6 +33,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class AdminClaimConfigModal extends BaseModal {
     private static final Set<String> IDENTITY_SETTINGS = Set.of("display-name", "motd", "color");
@@ -39,13 +41,11 @@ public class AdminClaimConfigModal extends BaseModal {
     private final OpenAdminClaimSettingsPacket packet;
     private final Map<String, RadioState<TriState>> booleanStates = new HashMap<>();
     private final Map<String, State<String>> textStates = new HashMap<>();
-    private final Map<SettingTarget, Boolean> expandedTargets = new HashMap<>();
     private final State<String> name;
     private final State<String> motd;
     private final State<Color> color;
 
     private SettingsListWidget settingsList;
-    private Integer pendingScroll;
 
     public AdminClaimConfigModal(ClaimMapScreen background, OpenAdminClaimSettingsPacket packet) {
         super(Component.translatable("gui.cadmus.admin_claim.settings"), background);
@@ -56,7 +56,15 @@ public class AdminClaimConfigModal extends BaseModal {
 
         SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
             if (IDENTITY_SETTINGS.contains(id)) return;
-            String value = packet.settings().getOrDefault(id, SettingCommandSupport.valueToString(definition.defaultValue()));
+            String value = packet.settings().get(id);
+            if (value == null && definition.hasParent()) {
+                SettingDefinition<?> parent = SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).get(definition.parent());
+                if (parent != null) {
+                    value = packet.settings().get(parent.id());
+                    if (value == null) value = SettingCommandSupport.valueToString(parent.defaultValue());
+                }
+            }
+            if (value == null) value = SettingCommandSupport.valueToString(definition.defaultValue());
             if (definition.defaultValue() instanceof BooleanSetting) {
                 TriState tri = Boolean.parseBoolean(value) ? TriState.TRUE : TriState.FALSE;
                 booleanStates.put(id, RadioState.of(tri, tri == TriState.TRUE ? 0 : 2));
@@ -92,18 +100,15 @@ public class AdminClaimConfigModal extends BaseModal {
             .setDrawDivider(true));
 
         for (SettingTarget target : SettingTarget.values()) {
-            this.settingsList.add(new CategoryHeader(font, targetLabel(target),
-                () -> this.expandedTargets.getOrDefault(target, true),
-                () -> this.aggregateState(target),
-                () -> this.toggleTarget(target),
-                hasBooleanSettings(target) ? value -> this.applyTarget(target, value) : null));
-            if (!this.expandedTargets.getOrDefault(target, true)) continue;
+            Consumer<TriState> apply = hasBooleanSettings(target) ? value -> this.applyTarget(target, value) : null;
+            this.settingsList.add(new SettingSectionHeader(font, targetLabel(target),
+                () -> this.aggregateState(target), apply));
 
             SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
                 if (IDENTITY_SETTINGS.contains(id) || definition.target() != target) return;
                 RadioState<TriState> state = this.booleanStates.get(id);
                 if (state != null) {
-                    this.settingsList.add(new LabelledEntry(font, settingLabel(id), Widgets.tristate(state))
+                    this.settingsList.add(new LabelledEntry(font, settingLabel(definition), Widgets.tristate(state))
                         .setLockedWidth()
                         .setColor(MinecraftColors.GRAY.getValue())
                         .setDrawDivider(true));
@@ -111,7 +116,7 @@ public class AdminClaimConfigModal extends BaseModal {
                     State<String> textState = this.textStates.get(id);
                     if (textState != null) {
                         AbstractWidget input = Widgets.textInput(textState).withMaxLength(64).withSize(100, 16);
-                        this.settingsList.add(new LabelledEntry(font, settingLabel(id), input)
+                        this.settingsList.add(new LabelledEntry(font, settingLabel(definition), input)
                             .setLockedWidth()
                             .setEntryYOffset(-2)
                             .setColor(MinecraftColors.GRAY.getValue())
@@ -119,11 +124,6 @@ public class AdminClaimConfigModal extends BaseModal {
                     }
                 }
             });
-        }
-
-        if (this.pendingScroll != null) {
-            this.settingsList.restoreScroll(this.pendingScroll);
-            this.pendingScroll = null;
         }
 
         FrameLayout footer = new FrameLayout(modalContentWidth, 20 + INNER_PADDING * 2);
@@ -194,15 +194,11 @@ public class AdminClaimConfigModal extends BaseModal {
         });
     }
 
-    private void toggleTarget(SettingTarget target) {
-        this.pendingScroll = this.settingsList == null ? 0 : this.settingsList.getScroll();
-        this.expandedTargets.put(target, !this.expandedTargets.getOrDefault(target, true));
-        this.clearWidgets();
-        this.init();
-    }
-
-    private static Component settingLabel(String id) {
-        return Component.literal("   ").append(Component.translatable("cadmus.setting." + id));
+    private static Component settingLabel(SettingDefinition<?> definition) {
+        if (definition.hasConditions()) {
+            return Component.literal("      ").append(Component.literal(definition.conditions().get(0).display()));
+        }
+        return Component.literal("   ").append(Component.translatable("cadmus.setting." + definition.id()));
     }
 
     private static Component targetLabel(SettingTarget target) {
@@ -213,10 +209,6 @@ public class AdminClaimConfigModal extends BaseModal {
         SettingsListWidget(int width, int height) {
             super(width, height);
             this.gap = 4;
-        }
-
-        void restoreScroll(int scroll) {
-            this.scroll = Math.max(0, Math.min(scroll, Math.max(0, this.getContentHeight() - this.getHeight())));
         }
     }
 

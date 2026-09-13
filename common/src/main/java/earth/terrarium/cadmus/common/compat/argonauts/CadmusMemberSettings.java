@@ -6,7 +6,6 @@ import earth.terrarium.argonauts.api.teams.settings.MemberSetting;
 import earth.terrarium.argonauts.api.teams.settings.MemberSettingState;
 import earth.terrarium.argonauts.api.teams.settings.MemberSettingsApi;
 import earth.terrarium.argonauts.api.teams.settings.MemberSettingsHandler;
-import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.settings.SettingOverride;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
@@ -32,17 +31,19 @@ public final class CadmusMemberSettings {
     public static void register() {
         SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
             if (definition.target() != SettingTarget.PLAYER) return;
-            MemberSettingsApi.API.register(new MemberSetting(
-                id,
-                Component.translatable("cadmus.setting." + id),
-                Component.translatable("cadmus.setting." + id + ".description")
-            ));
+            Component name = definition.hasConditions()
+                ? Component.literal(definition.conditions().get(0).display())
+                : Component.translatable("cadmus.setting." + id);
+            Component description = definition.hasConditions()
+                ? Component.empty()
+                : Component.translatable("cadmus.setting." + id + ".description");
+            MemberSettingsApi.API.register(new MemberSetting(id, name, description, definition.parent()));
         });
         MemberSettingsApi.API.setHandler(new Handler());
         RoleSettingsResolver.set((level, team, player, setting) -> {
             if (!ARGONAUTS_TEAM.equals(team.provider())) return Optional.empty();
             return GuildApi.API.get(level, team.id())
-                .map(guild -> guild.getPermission(player, setting) == TriState.TRUE);
+                .map(guild -> guild.getPermission(player, setting));
         });
     }
 
