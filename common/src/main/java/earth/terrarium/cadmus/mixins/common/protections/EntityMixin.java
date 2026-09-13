@@ -1,22 +1,14 @@
 package earth.terrarium.cadmus.mixins.common.protections;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.common.protections.Protections;
-import earth.terrarium.cadmus.common.settings.SettingDefinitions;
-import earth.terrarium.cadmus.common.settings.Settings;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.enchantment.EnchantedItemInUse;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Entity.class)
@@ -26,11 +18,8 @@ public abstract class EntityMixin {
     private boolean cadmus$canRide(boolean original, Entity vehicle) {
         if (!original || vehicle.level().isClientSide()) return original;
         var rider = (Entity) (Object) this;
-        return ClaimApi.API.getClaim(vehicle.level(), vehicle.chunkPosition())
-            .map(claim -> rider instanceof Player player
-                ? Settings.isPlayerAllowed(vehicle.level(), player.getUUID(), claim.team(), SettingDefinitions.USE_VEHICLES)
-                : Settings.getForTeam(vehicle.getServer(), claim.team(), SettingDefinitions.USE_VEHICLES))
-            .orElse(true);
+        if (!(rider instanceof Player player)) return original;
+        return Protections.ENTITY_INTERACTIONS.canInteractWithEntity(player, vehicle);
     }
 
     @Inject(method = "mayInteract", at = @At("HEAD"), cancellable = true)

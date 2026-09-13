@@ -8,7 +8,6 @@ import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
-import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.core.BlockPos;
@@ -35,11 +34,10 @@ public final class BlockInteractProtection implements Protection {
 
     public boolean canInteractWithBlock(Level level, GameProfile player, BlockPos pos, BlockState state) {
         if (state.is(ModBlockTags.ALLOWS_CLAIM_INTERACTIONS)) return true;
-        return level.isClientSide() || getId(level, pos).map(id ->
-            (id.isAdmin()
-                ? Settings.getForTeam(level.getServer(), id, specific(state, SettingScope.ADMIN_CLAIM))
-                : Settings.isPlayerAllowed(level, player.getId(), id, specific(state, SettingScope.TOWN)))
-                || isBlockAllowed(level, id, pos)).orElse(true);
+        if (level.isClientSide()) return true;
+        return getId(level, pos)
+            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)) || isBlockAllowed(level, id, pos))
+            .orElse(true);
     }
 
     @SuppressWarnings("unchecked")

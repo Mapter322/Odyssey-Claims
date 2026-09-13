@@ -47,17 +47,21 @@ public interface Protection {
     }
 
     default boolean isPlayerAllowed(Player player, TeamId id) {
-        return isPlayerAllowed(player.level(), player.getGameProfile(), id);
+        return isPlayerAllowed(player.level(), player.getGameProfile(), id, setting());
     }
 
     default boolean isPlayerAllowed(Level level, GameProfile player, TeamId id) {
+        return isPlayerAllowed(level, player, id, setting());
+    }
+
+    default boolean isPlayerAllowed(Level level, GameProfile player, TeamId id, SettingDefinition<Boolean> definition) {
         if (CadmusSaveData.canBypass(level.getServer(), player.getId())) return true;
 
-        if (id.isAdmin()) return Settings.getForTeam(level.getServer(), id, setting());
+        if (id.isAdmin()) return Settings.getForTeam(level.getServer(), id, definition);
 
         if (gameRuleEnabled(level)) return true;
 
-        return Settings.isPlayerAllowed(level, player.getId(), id, setting());
+        return Settings.isPlayerAllowed(level, player.getId(), id, definition);
     }
 
     default boolean isEntityAllowed(Entity entity, TeamId id) {

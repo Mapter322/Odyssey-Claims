@@ -128,7 +128,6 @@
   "cadmus.setting.allow-entry": "Allow entry",
   "cadmus.setting.allow-exit": "Allow exit",
   "cadmus.setting.use": "Use items",
-  "cadmus.setting.use-vehicles": "Use vehicles",
   "cadmus.setting.snow-fall": "Snow fall",
   "cadmus.setting.snow-melt": "Snow melt",
   "cadmus.setting.ice-form": "Ice form",
@@ -155,7 +154,6 @@
   "cadmus.setting.entity-damage.description": "Allows damaging entities in claims",
   "cadmus.setting.item-pickup.description": "Allows picking up items in claims",
   "cadmus.setting.use.description": "Allows using items in claims",
-  "cadmus.setting.use-vehicles.description": "Allows using vehicles in claims",
 
   "gui.cadmus.unclaim_modal.title": "Unclaim Chunks?",
   "gui.cadmus.unclaim_modal.description": "Are you sure you want to unclaim all your chunks? This action is irreversible.",

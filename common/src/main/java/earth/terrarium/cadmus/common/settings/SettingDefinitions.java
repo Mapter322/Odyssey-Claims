@@ -2,6 +2,7 @@ package earth.terrarium.cadmus.common.settings;
 
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.settings.BlockTagCondition;
+import earth.terrarium.cadmus.api.settings.EntityValueCondition;
 import earth.terrarium.cadmus.api.settings.SettingAccess;
 import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
@@ -12,6 +13,7 @@ import earth.terrarium.cadmus.api.settings.types.ColorSetting;
 import earth.terrarium.cadmus.api.settings.types.FloatSetting;
 import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.EntityType;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -31,7 +33,10 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> BLOCK_EXPLOSIONS = townBoolean("block-explosions", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ENTITY_EXPLOSIONS = townBoolean("entity-explosions", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ENTITY_INTERACTIONS = townBoolean("entity-interactions", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> USE_VEHICLES = townBoolean("use-vehicles", SettingTarget.PLAYER, "entity-interactions");
+    public static final SettingDefinition<Boolean> BOATS = townCondition("minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
+        new EntityValueCondition(EntityType.BOAT.builtInRegistryHolder().key().location()),
+        new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> HORSES = townCondition("minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ENTITY_DAMAGE = townBoolean("entity-damage", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingTarget.PLAYER, false);
@@ -50,7 +55,10 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_EXPLOSIONS = adminBoolean("block-explosions", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_EXPLOSIONS = adminBoolean("entity-explosions", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_INTERACTIONS = adminBoolean("entity-interactions", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> ADMIN_USE_VEHICLES = adminBoolean("use-vehicles", SettingTarget.PLAYER, "entity-interactions");
+    public static final SettingDefinition<Boolean> ADMIN_BOATS = adminCondition("minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
+        new EntityValueCondition(EntityType.BOAT.builtInRegistryHolder().key().location()),
+        new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> ADMIN_HORSES = adminCondition("minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_DAMAGE = adminBoolean("entity-damage", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_MOB_GRIEFING = adminBoolean("mob-griefing", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ITEM_PICKUP = adminBoolean("item-pickup", SettingTarget.PLAYER);
