@@ -31,12 +31,13 @@ public final class CadmusMemberSettings {
     public static void register() {
         SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
             if (definition.target() != SettingTarget.PLAYER) return;
+            String label = id.contains("/") ? id.substring(id.indexOf('/') + 1) : id;
             Component name = definition.hasConditions()
                 ? Component.literal(definition.conditions().get(0).display())
-                : Component.translatable("cadmus.setting." + id);
+                : Component.translatable("cadmus.setting." + label);
             Component description = definition.hasConditions()
                 ? Component.empty()
-                : Component.translatable("cadmus.setting." + id + ".description");
+                : Component.translatable("cadmus.setting." + label + ".description");
             MemberSettingsApi.API.register(new MemberSetting(id, name, description, definition.parent()));
         });
         MemberSettingsApi.API.setHandler(new Handler());

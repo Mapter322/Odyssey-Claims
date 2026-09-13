@@ -195,10 +195,8 @@ public class AdminClaimConfigModal extends BaseModal {
     }
 
     private static Component settingLabel(SettingDefinition<?> definition) {
-        if (definition.hasConditions()) {
-            return Component.literal("      ").append(Component.literal(definition.conditions().get(0).display()));
-        }
-        return Component.literal("   ").append(Component.translatable("cadmus.setting." + definition.id()));
+        String label = definition.id().contains("/") ? definition.id().substring(definition.id().indexOf('/') + 1) : definition.id();
+        return Component.literal("   ").append(Component.translatable("cadmus.setting." + label));
     }
 
     private static Component targetLabel(SettingTarget target) {

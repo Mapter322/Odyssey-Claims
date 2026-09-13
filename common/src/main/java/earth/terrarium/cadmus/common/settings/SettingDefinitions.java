@@ -32,47 +32,49 @@ public final class SettingDefinitions {
     private static final Map<SettingScope, Map<String, SettingDefinition<?>>> DEFINITIONS = new EnumMap<>(SettingScope.class);
 
     public static final SettingDefinition<Boolean> BLOCK_BREAK = townBoolean("block-break", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> DIRT = townCondition("minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
+    public static final SettingDefinition<Boolean> DIRT = townCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> BLOCK_PLACE = townBoolean("block-place", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> BLOCK_INTERACTIONS = townBoolean("block-interactions", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> DOORS = townCondition("minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
-    public static final SettingDefinition<Boolean> TRAPDOORS = townCondition("minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
+    public static final SettingDefinition<Boolean> DOORS = townCondition("block-interactions/minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
+    public static final SettingDefinition<Boolean> TRAPDOORS = townCondition("block-interactions/minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
     public static final SettingDefinition<Boolean> BLOCK_EXPLOSIONS = townBoolean("block-explosions", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ENTITY_EXPLOSIONS = townBoolean("entity-explosions", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ENTITY_INTERACTIONS = townBoolean("entity-interactions", SettingTarget.PLAYER, false);
-    public static final SettingDefinition<Boolean> BOATS = townCondition("minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
+    public static final SettingDefinition<Boolean> BOATS = townCondition("entity-interactions/minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
         new EntityValueCondition(EntityType.BOAT.builtInRegistryHolder().key().location()),
         new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
-    public static final SettingDefinition<Boolean> HORSES = townCondition("minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> HORSES = townCondition("entity-interactions/minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ENTITY_DAMAGE = townBoolean("entity-damage", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingTarget.PLAYER, false);
+    public static final SettingDefinition<Boolean> DIRT_ITEM = townCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> NON_PLAYERS_PLACE = townBoolean("non-players-place", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> FIRE_SPREAD = townBoolean("fire-spread", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> PVP = townBoolean("pvp", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ALLOW_ENTRY = townBoolean("allow-entry", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ALLOW_EXIT = townBoolean("allow-exit", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> USE = townBoolean("use", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> FOOD = townCondition("c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
-    public static final SettingDefinition<Boolean> POTIONS = townCondition("minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
-    public static final SettingDefinition<Boolean> SPLASH_POTIONS = townCondition("minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
+    public static final SettingDefinition<Boolean> FOOD = townCondition("use/c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
+    public static final SettingDefinition<Boolean> POTIONS = townCondition("use/minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
+    public static final SettingDefinition<Boolean> SPLASH_POTIONS = townCondition("use/minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
 
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_BREAK = adminBoolean("block-break", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> ADMIN_DIRT = adminCondition("minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
+    public static final SettingDefinition<Boolean> ADMIN_DIRT = adminCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_PLACE = adminBoolean("block-place", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_INTERACTIONS = adminBoolean("block-interactions", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> ADMIN_DOORS = adminCondition("minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
-    public static final SettingDefinition<Boolean> ADMIN_TRAPDOORS = adminCondition("minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
+    public static final SettingDefinition<Boolean> ADMIN_DOORS = adminCondition("block-interactions/minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
+    public static final SettingDefinition<Boolean> ADMIN_TRAPDOORS = adminCondition("block-interactions/minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_EXPLOSIONS = adminBoolean("block-explosions", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_EXPLOSIONS = adminBoolean("entity-explosions", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_INTERACTIONS = adminBoolean("entity-interactions", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> ADMIN_BOATS = adminCondition("minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
+    public static final SettingDefinition<Boolean> ADMIN_BOATS = adminCondition("entity-interactions/minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
         new EntityValueCondition(EntityType.BOAT.builtInRegistryHolder().key().location()),
         new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
-    public static final SettingDefinition<Boolean> ADMIN_HORSES = adminCondition("minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> ADMIN_HORSES = adminCondition("entity-interactions/minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
     public static final SettingDefinition<Boolean> ADMIN_ENTITY_DAMAGE = adminBoolean("entity-damage", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_MOB_GRIEFING = adminBoolean("mob-griefing", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ITEM_PICKUP = adminBoolean("item-pickup", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> ADMIN_DIRT_ITEM = adminCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> ADMIN_NON_PLAYERS_PLACE = adminBoolean("non-players-place", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ADMIN_PVP = adminBoolean("pvp", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_MONSTER_DAMAGE = adminBoolean("monster-damage", SettingTarget.GLOBAL);
@@ -81,9 +83,9 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> ADMIN_ALLOW_ENTRY = adminBoolean("allow-entry", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_ALLOW_EXIT = adminBoolean("allow-exit", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_USE = adminBoolean("use", SettingTarget.PLAYER);
-    public static final SettingDefinition<Boolean> ADMIN_FOOD = adminCondition("c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
-    public static final SettingDefinition<Boolean> ADMIN_POTIONS = adminCondition("minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
-    public static final SettingDefinition<Boolean> ADMIN_SPLASH_POTIONS = adminCondition("minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
+    public static final SettingDefinition<Boolean> ADMIN_FOOD = adminCondition("use/c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
+    public static final SettingDefinition<Boolean> ADMIN_POTIONS = adminCondition("use/minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
+    public static final SettingDefinition<Boolean> ADMIN_SPLASH_POTIONS = adminCondition("use/minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
 
     public static final SettingDefinition<Boolean> SNOW_FALL = adminBoolean("snow-fall", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> SNOW_MELT = adminBoolean("snow-melt", SettingTarget.GLOBAL);
