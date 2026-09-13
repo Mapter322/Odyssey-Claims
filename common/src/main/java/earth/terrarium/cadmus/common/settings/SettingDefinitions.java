@@ -2,6 +2,7 @@ package earth.terrarium.cadmus.common.settings;
 
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.settings.BlockTagCondition;
+import earth.terrarium.cadmus.api.settings.BlockValueCondition;
 import earth.terrarium.cadmus.api.settings.EntityValueCondition;
 import earth.terrarium.cadmus.api.settings.ItemTagCondition;
 import earth.terrarium.cadmus.api.settings.ItemValueCondition;
@@ -31,6 +32,7 @@ public final class SettingDefinitions {
     private static final Map<SettingScope, Map<String, SettingDefinition<?>>> DEFINITIONS = new EnumMap<>(SettingScope.class);
 
     public static final SettingDefinition<Boolean> BLOCK_BREAK = townBoolean("block-break", SettingTarget.PLAYER, false);
+    public static final SettingDefinition<Boolean> DIRT = townCondition("minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> BLOCK_PLACE = townBoolean("block-place", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> BLOCK_INTERACTIONS = townBoolean("block-interactions", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> DOORS = townCondition("minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
@@ -56,6 +58,7 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> SPLASH_POTIONS = townCondition("minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
 
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_BREAK = adminBoolean("block-break", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> ADMIN_DIRT = adminCondition("minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_PLACE = adminBoolean("block-place", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_BLOCK_INTERACTIONS = adminBoolean("block-interactions", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_DOORS = adminCondition("minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
