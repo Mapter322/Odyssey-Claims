@@ -1,6 +1,7 @@
 package earth.terrarium.cadmus.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.teamresourceful.resourcefullib.client.CloseablePoseStack;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.argonauts.client.screens.BaseScreen;
@@ -11,6 +12,7 @@ import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
+import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.BulkClaimSettingsPacket;
@@ -24,8 +26,11 @@ import earth.terrarium.olympus.client.constants.MinecraftColors;
 import earth.terrarium.olympus.client.ui.OverlayAlignment;
 import earth.terrarium.olympus.client.ui.UIConstants;
 import earth.terrarium.olympus.client.utils.State;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.network.chat.Component;
 
@@ -43,6 +48,7 @@ public class AdminClaimSettingsScreen extends BaseScreen {
     private static final int BANNER_HEIGHT = 16;
     private static final int FOOTER_TOTAL = 28;
     private static final int SIDE_PADDING = 8;
+    private static final int HEADER_PAD = 4;
     private static final int SAVE_W = 80;
     private static final int SAVE_H = 16;
 
@@ -85,6 +91,18 @@ public class AdminClaimSettingsScreen extends BaseScreen {
         this.imageWidth = Math.min(280, this.width - 12);
         this.imageHeight = Math.min(280, this.height - 12);
         super.init();
+
+        ImageButton closeButton = new ImageButton(
+            0, 0, 11, 11,
+            UIConstants.MODAL_CLOSE,
+            button -> close()
+        );
+        closeButton.setPosition(
+            this.leftPos + this.imageWidth - 11 - HEADER_PAD,
+            this.topPos + (BANNER_HEIGHT - 11) / 2
+        );
+        closeButton.setTooltip(Tooltip.create(ConstantComponents.CLOSE));
+        this.addRenderableWidget(closeButton);
 
         int listWidth = this.imageWidth - SIDE_PADDING * 2;
         int listY = this.topPos + BANNER_HEIGHT + 4;
@@ -228,7 +246,40 @@ public class AdminClaimSettingsScreen extends BaseScreen {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFFFFFF, false);
+        graphics.drawString(this.font, this.title, HEADER_PAD, (BANNER_HEIGHT - this.font.lineHeight) / 2, 0xFFFFFF, false);
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        graphics.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+        this.renderBg(graphics, partialTick, mouseX, mouseY);
+        RenderSystem.disableDepthTest();
+        try (var pose = new CloseablePoseStack(graphics)) {
+            pose.translate(this.leftPos, this.topPos, 0.0F);
+            this.renderLabels(graphics, mouseX, mouseY);
+        }
+        RenderSystem.enableDepthTest();
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        for (var listener : this.children()) {
+            if (listener.mouseClicked(mx, my, button)) {
+                this.setFocused(listener);
+                if (button == 0) this.setDragging(true);
+                return true;
+            }
+        }
+        this.setFocused(null);
+        return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (Minecraft.getInstance().options.keyInventory.matches(keyCode, scanCode)) {
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
