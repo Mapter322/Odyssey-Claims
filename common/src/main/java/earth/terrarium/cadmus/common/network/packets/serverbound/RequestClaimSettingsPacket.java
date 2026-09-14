@@ -50,10 +50,16 @@ public record RequestClaimSettingsPacket(ClaimSettingsTarget target) implements 
                 if (definition.target() != SettingTarget.GLOBAL) return;
                 if (definition.access() == SettingAccess.ADMIN && !player.hasPermissions(2)) return;
 
-                SettingValue<?> explicit = explicit(server, packet.target(), townId, definition);
-                if (explicit != null) values.put(id, SettingCommandSupport.valueToString(explicit));
-                inherited.put(id, SettingCommandSupport.valueToString(
-                    Settings.resolveInherited(server, packet.target().team(), townId, definition)));
+                if (townId == null) {
+                    SettingValue<?> value = explicit(server, packet.target(), null, definition);
+                    if (value == null) value = Settings.defaults(packet.target().team(), definition);
+                    values.put(id, SettingCommandSupport.valueToString(value));
+                } else {
+                    SettingValue<?> value = explicit(server, packet.target(), townId, definition);
+                    if (value != null) values.put(id, SettingCommandSupport.valueToString(value));
+                    inherited.put(id, SettingCommandSupport.valueToString(
+                        Settings.resolveInherited(server, packet.target().team(), townId, definition)));
+                }
             });
 
             String name = townId == null

@@ -73,6 +73,14 @@ public final class Settings {
         return resolveTeam(server, team, scoped, scope);
     }
 
+    /**
+     * The configured or code default value, treated as an assigned value on the top level.
+     */
+    public static SettingValue<?> defaults(TeamId team, SettingDefinition<?> definition) {
+        SettingScope scope = scopeOf(team);
+        return resolveDefaults(scoped(scope, definition), scope);
+    }
+
     private static SettingValue<?> resolveTeam(MinecraftServer server, TeamId team, SettingDefinition<?> scoped, SettingScope scope) {
         SettingValue<?> value = findValue(scoped, scope, d ->
             CadmusSaveData.hasSettingValue(server, team, d) ? CadmusSaveData.getSettingValue(server, team, d) : null);

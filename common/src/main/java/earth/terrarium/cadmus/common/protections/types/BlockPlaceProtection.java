@@ -56,7 +56,7 @@ public final class BlockPlaceProtection implements Protection {
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
         if (isBlockAllowed(level, id, state)) return true;
-        return Settings.getForTeam(level.getServer(), id, SettingDefinitions.NON_PLAYERS_PLACE);
+        return Settings.getAt(level, new net.minecraft.world.level.ChunkPos(pos), SettingDefinitions.NON_PLAYERS_PLACE);
     }
 
     @SuppressWarnings("unchecked")

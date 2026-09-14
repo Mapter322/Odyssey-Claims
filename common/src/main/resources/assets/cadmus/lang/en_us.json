@@ -108,6 +108,10 @@
   "gui.cadmus.claim_map.admin_claim": "Admin Claim",
   "gui.cadmus.claim_map.personal_camp": "Personal Camp",
   "gui.cadmus.claim_map.camp_single_chunk": "A camp can only be one chunk",
+
+  "gui.cadmus.claim_settings.title": "Claim Settings",
+  "gui.cadmus.claim_settings.title.town": "Claim Settings — %s",
+  "gui.cadmus.claim_settings.inherited": "Inherited: %s",
   "gui.cadmus.claim_map.no_town_selected": "Create a town first",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",

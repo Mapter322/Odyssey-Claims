@@ -11,6 +11,7 @@ import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.client.events.CadmusClientEvents;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
+import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
@@ -210,8 +211,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
 .withCallback(() -> {
                     if (isAdminSelected()) {
                         NetworkHandler.CHANNEL.sendToServer(new RequestAdminClaimSettingsPacket());
-                    } else if (!isCampSelected() && selectedTeam() != null) {
-                        NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(selectedTeam()));
+                    } else if (isTownSelected()) {
+                        NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(new ClaimSettingsTarget(selectedTeam(), selected.get())));
                     }
                 })
                 .withSize(MAP_SIZE / 2, BUTTON_HEIGHT)
@@ -236,7 +237,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             settings.alignVerticallyBottom();
         });
 
-settingsButton.active = selectedTeam() != null && !isCampSelected();
+settingsButton.active = isAdminSelected() || isTownSelected();
 
         frame.arrangeElements();
         frame.visitWidgets(this::addRenderableWidget);
@@ -878,6 +879,10 @@ private static void update() {
         return CREATE_TOWN_SELECTION.equals(selected.get());
     }
 
+    private boolean isTownSelected() {
+        return selected.get() != null && CadmusClient.TOWNS.containsKey(selected.get());
+    }
+
     private void sendAdminAction(ChunkPos start, ChunkPos end, boolean claim) {
         NetworkHandler.CHANNEL.sendToServer(new AdminClaimActionPacket(start, end, claim));
     }
@@ -889,7 +894,7 @@ private static void update() {
     private void select(UUID value) {
         selected.set(value);
         if (settingsButton != null) {
-            settingsButton.active = selectedTeam() != null && !isCampSelected();
+            settingsButton.active = isAdminSelected() || isTownSelected();
         }
     }
 

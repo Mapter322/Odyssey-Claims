@@ -35,7 +35,7 @@ public final class BlockExplosionProtection implements Protection {
         LivingEntity entity = explosion.getIndirectSourceEntity();
 
         if (entity instanceof Player player) {
-            return isPlayerAllowed(player, id);
+            return isPlayerAllowed(player, id, new net.minecraft.world.level.ChunkPos(pos));
         } else if (entity != null) {
             return isEntityAllowed(entity, id);
         }
