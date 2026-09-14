@@ -31,6 +31,9 @@ public final class TownManager {
     public static final String ERR_NOT_ADJACENT = "command.cadmus.exception.town.not_adjacent";
     public static final String ERR_TOWN_NOT_FOUND = "command.cadmus.exception.town.not_found";
     public static final String ERR_TOWN_NAME = "command.cadmus.exception.town.invalid_name";
+    public static final String ERR_TOWN_NAME_TAKEN = "command.cadmus.exception.town.name_taken";
+
+    private static final Set<String> RESERVED_NAMES = Set.of("create", "add");
 
     private TownManager() {}
 
@@ -54,7 +57,8 @@ public final class TownManager {
 
     public static boolean isValidTownName(String name) {
         if (name == null || name.isBlank() || name.length() > MAX_TOWN_NAME_LENGTH) return false;
-        return name.indexOf('|') < 0 && name.indexOf('/') < 0;
+        if (name.indexOf('|') >= 0 || name.indexOf('/') >= 0) return false;
+        return !RESERVED_NAMES.contains(name.toLowerCase(Locale.ROOT));
     }
 
     public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end, String name) {
@@ -62,7 +66,11 @@ public final class TownManager {
         if (team == null || !TeamApi.API.canModifySettings(player, team)) return Component.translatable(ERR_NO_PERMISSION);
         name = name == null ? "" : name.strip();
         if (!isValidTownName(name)) return Component.translatable(ERR_TOWN_NAME);
-        if (getTowns(player.server, team).size() >= MAX_TOWNS_PER_TEAM) return Component.translatable(ERR_MAX_TOWNS);
+        Collection<Town> towns = getTowns(player.server, team);
+        for (Town town : towns) {
+            if (town.name().equalsIgnoreCase(name)) return Component.translatable(ERR_TOWN_NAME_TAKEN);
+        }
+        if (towns.size() >= MAX_TOWNS_PER_TEAM) return Component.translatable(ERR_MAX_TOWNS);
 
         Set<ChunkPos> positions = positions(start, end);
         if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return Component.translatable(ERR_CHUNK_CLAIMED);

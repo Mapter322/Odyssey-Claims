@@ -52,6 +52,7 @@
   "command.cadmus.exception.town.not_adjacent": "This chunk doesn't match the selected town",
   "command.cadmus.exception.town.not_found": "This town does not exist.",
   "command.cadmus.exception.town.invalid_name": "Invalid town name. Use 1-32 characters without '|' or '/'.",
+  "command.cadmus.exception.town.name_taken": "A town with this name already exists",
 
   "cadmus.camp.already_active": "You already have an active camp",
   "cadmus.camp.none": "You don't have an active camp",
