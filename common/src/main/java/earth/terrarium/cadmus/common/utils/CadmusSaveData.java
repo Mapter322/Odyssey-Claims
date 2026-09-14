@@ -13,7 +13,6 @@ import earth.terrarium.cadmus.api.settings.types.ColorSetting;
 import earth.terrarium.cadmus.api.settings.types.FloatSetting;
 import earth.terrarium.cadmus.api.settings.types.StringSetting;
 import earth.terrarium.cadmus.common.towns.Town;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -24,7 +23,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.ChunkPos;
 
 import java.nio.charset.StandardCharsets;
@@ -36,7 +34,6 @@ public class CadmusSaveData extends SaveHandler {
     private final Map<SettingScope, Map<UUID, Map<String, SettingValue<?>>>> townSettingValues = new EnumMap<>(SettingScope.class);
     private final Map<SettingScope, Map<TeamId, Map<UUID, Map<String, SettingOverride>>>> playerSettingOverrides = new EnumMap<>(SettingScope.class);
     private final Map<UUID, String> adminTeams = new HashMap<>();
-    private final Map<TeamId, Set<ResourceLocation>> allowedBlocks = new HashMap<>();
     private final Set<UUID> bypassPlayers = new HashSet<>();
     private final Map<TeamId, Color> teamColors = new HashMap<>();
     private final Set<UUID> uniquePlayers = new HashSet<>();
@@ -44,18 +41,6 @@ public class CadmusSaveData extends SaveHandler {
 
     @Override
     public void loadData(CompoundTag tag) {
-        CompoundTag allowedBlocksTag = tag.getCompound("allowedBlocks");
-        allowedBlocksTag.getAllKeys().forEach(provider -> {
-            CompoundTag providerMap = allowedBlocksTag.getCompound(provider);
-            providerMap.getAllKeys().forEach(id -> {
-                ListTag blockTag = providerMap.getList(provider, Tag.TAG_STRING);
-                Set<ResourceLocation> blocks = new HashSet<>();
-                blockTag.forEach(tagEntry ->
-                    blocks.add(ResourceLocation.parse(tagEntry.getAsString())));
-                allowedBlocks.put(new TeamId(ResourceLocation.parse(provider), UUID.fromString(id)), blocks);
-            });
-        });
-
         ListTag bypassTag = tag.getList("bypass", Tag.TAG_STRING);
         bypassTag.forEach(tagEntry -> bypassPlayers.add(UUID.fromString(tagEntry.getAsString())));
 
@@ -94,14 +79,6 @@ UUID id = UUID.fromString(idString);
 
     @Override
     public void saveData(CompoundTag tag) {
-        CompoundTag allowedBlocksTag = new CompoundTag();
-        this.allowedBlocks.forEach((id, blocks) -> {
-            ListTag blockTag = new ListTag();
-            blocks.forEach(block -> blockTag.add(StringTag.valueOf(block.toString())));
-            allowedBlocksTag.put(id.toString(), blockTag);
-        });
-        tag.put("allowedBlocks", allowedBlocksTag);
-
         ListTag bypassTag = new ListTag();
         bypassPlayers.forEach(uuid -> bypassTag.add(StringTag.valueOf(uuid.toString())));
         tag.put("bypass", bypassTag);
@@ -292,32 +269,10 @@ public static CadmusSaveData read(MinecraftServer server) {
         data.setDirty();
     }
 
-    public static void addAllowedBlock(MinecraftServer server, TeamId player, Block block) {
-        var data = read(server);
-        data.allowedBlocks.computeIfAbsent(player, ignored -> new HashSet<>()).add(BuiltInRegistries.BLOCK.getKey(block));
-        data.setDirty();
-    }
-
-    public static void removeAllowedBlock(MinecraftServer server, TeamId player, Block block) {
-        var data = read(server);
-        data.allowedBlocks.computeIfAbsent(player, ignored -> new HashSet<>()).remove(BuiltInRegistries.BLOCK.getKey(block));
-        data.setDirty();
-    }
-
-    public static boolean isBlockAllowed(MinecraftServer server, TeamId player, Block block) {
-        var data = read(server);
-        return data.allowedBlocks.computeIfAbsent(player, ignored -> new HashSet<>()).contains(BuiltInRegistries.BLOCK.getKey(block));
-    }
-
-    public static Set<ResourceLocation> getAllowedBlocks(MinecraftServer server, TeamId player) {
-        return read(server).allowedBlocks.computeIfAbsent(player, ignored -> new HashSet<>());
-    }
-
     public static void removeTeam(MinecraftServer server, TeamId id) {
         var data = read(server);
         data.settingValues.values().forEach(values -> values.remove(id));
         data.playerSettingOverrides.values().forEach(values -> values.remove(id));
-        data.allowedBlocks.remove(id);
         data.setDirty();
     }
 
@@ -327,7 +282,6 @@ public static CadmusSaveData read(MinecraftServer server) {
         data.townSettingValues.clear();
         data.playerSettingOverrides.clear();
         data.adminTeams.clear();
-        data.allowedBlocks.clear();
         data.setDirty();
     }
 

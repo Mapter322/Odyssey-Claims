@@ -30,9 +30,6 @@
   "command.cadmus.setting.get": "§b%s§7 is set to §b%s",
   "command.cadmus.setting.set": "§7Set %s§7 to §b%s",
   "command.cadmus.setting.reset": "§7Reset §b%s§7 to its default value",
-  "command.cadmus.setting.add_allowed_block": "§7Added §b%s§7 to allowed blocks",
-  "command.cadmus.setting.remove_allowed_block": "§7Removed §b%s§7 from allowed blocks",
-  "command.cadmus.setting.list_allowed_blocks": "§b%s",
 
   "command.cadmus.exception.already_claimed": "This chunk is already claimed by %s",
   "command.cadmus.exception.maxed_out_claims": "You have reached the maximum amount of claims §6(%s/%s)",
@@ -40,8 +37,6 @@
   "command.cadmus.exception.not_claimed": "This chunk is not claimed",
   "command.cadmus.exception.not_owner": "You do not own this claim",
   "command.cadmus.exception.area_too_large": "The area is too large §6(%s/%s)",
-
-  "command.cadmus.exception.block_not_added": "This block is not in the allowed blocks list.",
 
   "command.cadmus.exception.no_permission_team": "You do not have permission on your team to manage this setting.",
   "command.cadmus.exception.no_permission_role": "Your role does not have permission to manage settings.",

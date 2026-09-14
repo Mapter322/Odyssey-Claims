@@ -30,7 +30,7 @@ public final class BlockBreakProtection implements Protection {
         if (level.isClientSide()) return true;
         BlockState state = level.getBlockState(pos);
         return getId(level, pos)
-            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)) || isBlockAllowed(level, id, pos))
+            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)))
             .orElse(true);
     }
 

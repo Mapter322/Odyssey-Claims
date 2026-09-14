@@ -17,8 +17,6 @@ public class ConstantComponents {
     public static final Component NOT_CLAIMED = CommonUtils.serverTranslatable("command.cadmus.exception.not_claimed").copy().withStyle(ChatFormatting.RED);
     public static final Component NOT_OWNER = CommonUtils.serverTranslatable("command.cadmus.exception.not_owner").copy().withStyle(ChatFormatting.RED);
 
-    public static final Component BLOCK_NOT_ADDED = CommonUtils.serverTranslatable("command.cadmus.exception.block_not_added");
-
     public static final Component NO_PERMISSION_TEAM = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_team");
     public static final Component NO_PERMISSION_ROLE = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_role");
 

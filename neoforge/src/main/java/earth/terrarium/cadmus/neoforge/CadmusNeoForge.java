@@ -50,7 +50,7 @@ public class CadmusNeoForge {
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
-        CadmusCommands.register(event.getDispatcher(), event.getBuildContext());
+        CadmusCommands.register(event.getDispatcher());
     }
 
     private void onRightClick(PlayerInteractEvent.RightClickItem event) {

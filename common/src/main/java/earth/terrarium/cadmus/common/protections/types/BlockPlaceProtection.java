@@ -35,7 +35,6 @@ public final class BlockPlaceProtection implements Protection {
         if (entity.level().isClientSide()) return true;
         TeamId id = getId(entity.level(), pos).orElse(null);
         if (id == null) return true;
-        if (isBlockAllowed(entity.level(), id, state)) return true;
 
         return entity instanceof Player player ?
             isPlayerAllowed(entity.level(), player.getGameProfile(), id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)) :
@@ -46,7 +45,6 @@ public final class BlockPlaceProtection implements Protection {
         if (level.isClientSide()) return true;
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
-        if (isBlockAllowed(level, id, state)) return true;
 
         return isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN));
     }
@@ -55,7 +53,6 @@ public final class BlockPlaceProtection implements Protection {
         if (level.isClientSide()) return true;
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
-        if (isBlockAllowed(level, id, state)) return true;
         return Settings.getAt(level, new net.minecraft.world.level.ChunkPos(pos), SettingDefinitions.NON_PLAYERS_PLACE);
     }
 

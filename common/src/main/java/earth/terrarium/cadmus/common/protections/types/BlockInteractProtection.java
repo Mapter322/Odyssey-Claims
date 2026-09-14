@@ -36,7 +36,7 @@ public final class BlockInteractProtection implements Protection {
         if (state.is(ModBlockTags.ALLOWS_CLAIM_INTERACTIONS)) return true;
         if (level.isClientSide()) return true;
         return getId(level, pos)
-            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)) || isBlockAllowed(level, id, pos))
+            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)))
             .orElse(true);
     }
 

@@ -827,18 +827,8 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
     }
 
 
-    private void claim(ChunkPos pos, boolean chunkLoad) {
-        if (selectedTeam() == null) return;
-        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM, selectedTeam(), "%s %s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ(), chunkLoad));
-    }
-
     private void unclaim(ChunkPos pos) {
         CadmusClient.sendTeamlessClaimCommand(ClaimCommandType.UNCLAIM, "%s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ()));
-    }
-
-    private void claimArea(ChunkPos startPos, ChunkPos endPos, boolean chunkLoad) {
-        if (selectedTeam() == null) return;
-        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM_AREA, selectedTeam(), "%s %s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ(), chunkLoad));
     }
 
     private void unclaimArea(ChunkPos startPos, ChunkPos endPos) {

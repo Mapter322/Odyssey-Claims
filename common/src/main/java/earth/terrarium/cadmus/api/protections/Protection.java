@@ -14,7 +14,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Optional;
 
@@ -82,13 +81,5 @@ public interface Protection {
         if (id.isAdmin()) return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
         if (gameRuleEnabled(entity.level())) return true;
         return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
-    }
-
-    default boolean isBlockAllowed(Level level, TeamId id, BlockPos pos) {
-        return isBlockAllowed(level, id, level.getBlockState(pos));
-    }
-
-    default boolean isBlockAllowed(Level level, TeamId id, BlockState state) {
-        return CadmusSaveData.isBlockAllowed(level.getServer(), id, state.getBlock());
     }
 }

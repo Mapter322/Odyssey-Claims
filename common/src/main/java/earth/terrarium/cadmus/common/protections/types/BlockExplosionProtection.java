@@ -31,7 +31,6 @@ public final class BlockExplosionProtection implements Protection {
         if (level.isClientSide()) return true;
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
-        if (isBlockAllowed(level, id, pos)) return true;
         LivingEntity entity = explosion.getIndirectSourceEntity();
 
         if (entity instanceof Player player) {

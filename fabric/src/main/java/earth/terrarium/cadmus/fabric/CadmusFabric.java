@@ -23,7 +23,7 @@ public class CadmusFabric implements ModInitializer {
         Cadmus.init();
         ServerLifecycleEvents.SERVER_STARTED.register(Cadmus::onServerStarted);
         ServerTickEvents.END_SERVER_TICK.register(CampManager::tick);
-        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> CadmusCommands.register(dispatcher, context));
+        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> CadmusCommands.register(dispatcher));
 
         BlockBreakProtectionImpl.register();
         BlockInteractProtectionImpl.register();
