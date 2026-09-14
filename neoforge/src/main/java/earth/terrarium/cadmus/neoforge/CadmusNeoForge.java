@@ -2,6 +2,7 @@ package earth.terrarium.cadmus.neoforge;
 
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.client.neoforge.CadmusClientNeoForge;
+import earth.terrarium.cadmus.common.camps.CampManager;
 import earth.terrarium.cadmus.common.commands.CadmusCommands;
 import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.event.entity.EntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @Mod(Cadmus.MOD_ID)
 public class CadmusNeoForge {
@@ -21,6 +23,7 @@ public class CadmusNeoForge {
         Cadmus.init();
         NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(this::onServerTick);
         NeoForge.EVENT_BUS.addListener(this::onEnterSection);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onRightClick);
@@ -34,6 +37,10 @@ public class CadmusNeoForge {
 
     private void onServerStarted(ServerStartedEvent event) {
         Cadmus.onServerStarted(event.getServer());
+    }
+
+    private void onServerTick(ServerTickEvent.Post event) {
+        CampManager.tick(event.getServer());
     }
 
     private void onEnterSection(EntityEvent.EnteringSection event) {

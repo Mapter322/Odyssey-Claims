@@ -7,11 +7,13 @@ import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
 import earth.terrarium.cadmus.common.claims.limit.VanillaClaimLimiter;
+import earth.terrarium.cadmus.common.camps.CampManager;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.protections.Protections;
 import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
+import earth.terrarium.cadmus.common.teams.CampTeamProvider;
 import earth.terrarium.cadmus.common.teams.IndividualTeamProvider;
 import earth.terrarium.cadmus.common.teams.VanillaTeamProvider;
 import earth.terrarium.cadmus.common.utils.AdminUtils;
@@ -19,6 +21,7 @@ import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.compat.argonauts.CadmusMemberSettings;
+import earth.terrarium.cadmus.common.compat.argonauts.CadmusPartyCompat;
 import earth.terrarium.cadmus.common.compat.argonauts.CadmusRoleTargets;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -41,7 +44,10 @@ public class Cadmus {
 
     public static void init() {
         NetworkHandler.init();
-        if (ModInfoUtils.isModLoaded("argonauts")) CadmusMemberSettings.register();
+        if (ModInfoUtils.isModLoaded("argonauts")) {
+            CadmusMemberSettings.register();
+            CadmusPartyCompat.register();
+        }
         CadmusGameRules.init();
         Protections.init();
         if (!ModInfoUtils.isModLoaded("argonauts")) {
@@ -49,6 +55,8 @@ public class Cadmus {
             TeamApi.API.register(VanillaTeamProvider.ID, new VanillaTeamProvider());
         }
         TeamApi.API.register(AdminTeamProvider.ID, new AdminTeamProvider());
+        TeamApi.API.register(CampTeamProvider.ID, new CampTeamProvider());
+        CampManager.init();
         ClaimLimitApi.API.register(new VanillaClaimLimiter());
     }
 
@@ -62,6 +70,7 @@ public class Cadmus {
     public static void onPlayerJoin(ServerPlayer player) {
         AdminTeamProvider.ensureAdminTeam(player.server);
         ModUtils.sendJoinPackets(player);
+        CampManager.sync(player);
         if (ModInfoUtils.isModLoaded("argonauts")) CadmusRoleTargets.sync(player);
         TeamApi.API.syncAllTeamInfo(player);
         TownManager.sync(player.server);
@@ -76,6 +85,7 @@ public class Cadmus {
             CadmusRoleTargets.prune(server);
         }
         AdminTeamProvider.ensureAdminTeam(server);
+        CampManager.prune(server);
         FORCE_LOADED_CHUNK_COUNT = 0;
         server.getAllLevels().forEach(level ->
             ClaimApi.API.getAllClaims(level).forEach((pos, claim) -> {

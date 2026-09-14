@@ -19,10 +19,13 @@ import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.AdminClaimActionPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.CampActionPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
+import earth.terrarium.cadmus.common.teams.CampTeamProvider;
 import earth.terrarium.cadmus.common.towns.TownManager;
+import earth.terrarium.cadmus.common.utils.ModUtils;
 import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.buttons.Button;
 import earth.terrarium.olympus.client.components.dropdown.DropdownState;
@@ -81,6 +84,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private TeamId fallbackTeam;
     public static final DropdownState<UUID> selected = DropdownState.of(null);
     private static final UUID ADMIN_SELECTION = new UUID(0L, 0L);
+    private static final UUID CAMP_SELECTION = new UUID(1L, 0L);
 
     private float chunkScale;
     private float pixelScale;
@@ -124,7 +128,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             .filter(town -> teams.containsKey(town.team()))
             .map(CadmusClient.ClientTown::id)
             .toList();
-        if (selected.get() == null || (!isAdminSelected() && !this.availableTowns.contains(selected.get()))) {
+        if (selected.get() == null || (!isAdminSelected() && !isCampSelected() && !this.availableTowns.contains(selected.get()))) {
             selected.set(this.availableTowns.isEmpty() ? null : this.availableTowns.get(0));
         }
 
@@ -205,7 +209,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
 .withCallback(() -> {
                     if (isAdminSelected()) {
                         NetworkHandler.CHANNEL.sendToServer(new RequestAdminClaimSettingsPacket());
-                    } else if (selectedTeam() != null) {
+                    } else if (!isCampSelected() && selectedTeam() != null) {
                         NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(selectedTeam()));
                     }
                 })
@@ -231,7 +235,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             settings.alignVerticallyBottom();
         });
 
-settingsButton.active = selectedTeam() != null;
+settingsButton.active = selectedTeam() != null && !isCampSelected();
 
         frame.arrangeElements();
         frame.visitWidgets(this::addRenderableWidget);
@@ -252,6 +256,11 @@ settingsButton.active = selectedTeam() != null;
                     .withSize(MAP_SIZE / 2, 20)
                     .withCallback(() -> select(ADMIN_SELECTION)));
             }
+            ctx.add(() -> Widgets.button()
+                .withTexture(UIConstants.LIST_ENTRY)
+                .withRenderer(WidgetRenderers.text(Component.translatable("gui.cadmus.claim_map.personal_camp")).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                .withSize(MAP_SIZE / 2, 20)
+                .withCallback(() -> select(CAMP_SELECTION)));
             for (UUID town : towns) {
                 ctx.add(() -> Widgets.button()
                     .withTexture(UIConstants.LIST_ENTRY)
@@ -264,6 +273,7 @@ settingsButton.active = selectedTeam() != null;
 
     private Component townName(UUID townId) {
         if (ADMIN_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.admin_claim");
+        if (CAMP_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.personal_camp");
         return Optional.ofNullable(CadmusClient.TOWNS.get(townId))
             .map(CadmusClient.ClientTown::displayName)
             .orElse(ConstantComponents.NO_TOWNS.copy());
@@ -313,12 +323,18 @@ settingsButton.active = selectedTeam() != null;
 return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false), 0,
                 ClaimCommand.getClaimsCount(level, admin, true), 0, State.of(info.color()));
         }
+        if (isCampSelected()) {
+            TeamId camp = selectedTeam();
+            TeamInfo info = CadmusClient.TEAM_INFO.getOrDefault(camp, new TeamInfo("Personal Camp", Color.DEFAULT));
+            return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, camp, false), 1, 0, 0, State.of(info.color()));
+        }
         TeamData teamData = teams.get(selectedTeam());
         return teamData == null ? TeamData.EMPTY : teamData;
     }
 
     TeamId selectedTeam() {
         if (isAdminSelected()) return TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
+        if (isCampSelected()) return CampTeamProvider.teamId(player.getUUID());
         return Optional.ofNullable(CadmusClient.TOWNS.get(selected.get()))
             .map(CadmusClient.ClientTown::team)
             .orElse(this.fallbackTeam);
@@ -441,14 +457,21 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         boolean canUnclaim = hasOwnedClaim(startPos, endPos);
         boolean allFree = allUnclaimed(startPos, endPos);
         boolean hasTeam = selected.get() != null || isAdminSelected();
+        boolean singleChunk = startPos.equals(endPos);
         contextMenu.addItem(ConstantComponents.CLAIM, () -> {
             if (isAdminSelected()) {
                 sendAdminAction(startPos, endPos, true);
+            } else if (isCampSelected()) {
+                if (singleChunk) {
+                    sendCampAction(startPos, true);
+                } else {
+                    showNotification(Component.translatable("gui.cadmus.claim_map.camp_single_chunk"));
+                }
             } else {
                 CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             }
             clearSelection();
-        }, canClaim && hasTeam);
+        }, canClaim && hasTeam && (!isCampSelected() || singleChunk));
         contextMenu.addItem(ConstantComponents.UNCLAIM, () -> {
             unclaimWithConfirmation(startPos, endPos);
             clearSelection();
@@ -456,7 +479,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         contextMenu.addItem(ConstantComponents.CREATE_TOWN, () -> {
             openCreateTownModal(startPos, endPos);
             clearSelection();
-        }, allFree && !isAdminSelected());
+        }, allFree && !isAdminSelected() && !isCampSelected());
         contextMenu.open(mouseX, mouseY);
     }
 
@@ -490,6 +513,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
     private void doUnclaim(ChunkPos startPos, ChunkPos endPos) {
         if (isAdminSelected()) {
             sendAdminAction(startPos, endPos, false);
+            return;
+        }
+        if (isCampSelected()) {
+            sendCampAction(startPos, false);
             return;
         }
         if (startPos.equals(endPos)) {
@@ -532,11 +559,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
     private boolean hasOwnedClaim(ChunkPos startPos, ChunkPos endPos) {
         TeamId team = selectedTeam();
         if (team == null) return false;
-        UUID teamId = team.id();
         for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
             for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
                 ClaimTile claim = claims.get(new ChunkPos(x, z));
-                if (claim != null && claim.id().equals(teamId)) return true;
+                if (claim != null && claim.team().equals(team)) return true;
             }
         }
         return false;
@@ -563,6 +589,9 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             if (isAdminSelected()) {
                 if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
                 else sendAdminAction(pos, pos, true);
+            } else if (isCampSelected()) {
+                if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
+                else sendCampAction(pos, true);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
             } else if (this.claims.containsKey(pos)) {
@@ -571,7 +600,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 CadmusClient.sendTownAdd(selected.get(), pos, pos);
             }
         } else if (button == 2) {
-            if (this.claims.get(pos) != null && selectedTeam() != null && this.claims.get(pos).id().equals(selectedTeam().id())) {
+            if (this.claims.get(pos) != null && selectedTeam() != null && this.claims.get(pos).team().equals(selectedTeam())) {
                 unclaimWithConfirmation(pos, pos);
             }
         }
@@ -589,7 +618,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 claim.southWest, claim.northWest);
 
             if (isHovering(mouseX, mouseY, x, y)) {
-                ScreenUtils.setTooltip(claim.name);
+                ScreenUtils.setTooltip(CampTeamProvider.ID.equals(claim.team().provider()) ? campName(claim.team().id()) : claim.name);
             }
         });
     }
@@ -647,7 +676,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 boolean southWest = checkSide(i, j, -1, 1);
                 boolean northWest = checkSide(i, j, -1, -1);
 
-                this.claims.put(pos, new ClaimTile(id.id(), name, color, pos, i, j, north, east, south, west, northEast, southEast, southWest, northWest));
+                this.claims.put(pos, new ClaimTile(id, name, color, pos, i, j, north, east, south, west, northEast, southEast, southWest, northWest));
             }
         }
     }
@@ -734,7 +763,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             }
         } else if (button == 2) {
             if (startPos.equals(endPos)) {
-                if (this.claims.containsKey(startPos) && selectedTeam() != null && this.claims.get(startPos).id().equals(selectedTeam().id())) {
+                if (this.claims.containsKey(startPos) && selectedTeam() != null && this.claims.get(startPos).team().equals(selectedTeam())) {
                     unclaimWithConfirmation(startPos, startPos);
                 }
             } else {
@@ -761,6 +790,9 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
     }
 
     private Component getName(TeamId id, ChunkPos pos, boolean chunkLoad) {
+        if (CampTeamProvider.ID.equals(id.provider())) {
+            return campName(id.id());
+        }
         String townName = CadmusClient.TOWNS.values().stream()
             .filter(town -> town.chunks().contains(pos))
             .map(town -> town.displayName().getString())
@@ -771,6 +803,13 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 Component.translatable("text.cadmus.chunk_loaded").withStyle(ChatFormatting.GOLD) :
                 CommonComponents.EMPTY
             );
+    }
+
+    private Component campName(UUID owner) {
+        CadmusClient.ClientCamp camp = CadmusClient.CAMPS.get(owner);
+        if (camp == null) return Component.translatable("gui.cadmus.claim_map.personal_camp");
+        long remaining = Math.max(0L, camp.expiresAt() - level.getGameTime());
+        return Component.translatable("text.cadmus.camp.name", camp.name(), ModUtils.formatTime(remaining));
     }
 
     private int getScaledRenderDistance() {
@@ -804,6 +843,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
 
     private void unclaimAll() {
         if (selectedTeam() == null) return;
+        if (isCampSelected()) {
+            DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> sendCampAction(player.chunkPosition(), false));
+            return;
+        }
         DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, selectedTeam(), selectedTeam().asArg()));
     }
 
@@ -824,19 +867,27 @@ private static void update() {
         return ADMIN_SELECTION.equals(selected.get()) && player.hasPermissions(2);
     }
 
+    private boolean isCampSelected() {
+        return CAMP_SELECTION.equals(selected.get());
+    }
+
     private void sendAdminAction(ChunkPos start, ChunkPos end, boolean claim) {
         NetworkHandler.CHANNEL.sendToServer(new AdminClaimActionPacket(start, end, claim));
+    }
+
+    private void sendCampAction(ChunkPos pos, boolean claim) {
+        NetworkHandler.CHANNEL.sendToServer(new CampActionPacket(pos, claim));
     }
 
     private void select(UUID value) {
         selected.set(value);
         if (settingsButton != null) {
-            settingsButton.active = selectedTeam() != null;
+            settingsButton.active = selectedTeam() != null && !isCampSelected();
         }
     }
 
     private record ClaimTile(
-        UUID id,
+        TeamId team,
         Component name,
         int color,
         ChunkPos pos,

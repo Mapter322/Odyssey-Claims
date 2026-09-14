@@ -58,6 +58,12 @@
   "command.cadmus.exception.town.not_found": "This town does not exist.",
   "command.cadmus.exception.town.invalid_name": "Invalid town name. Use 1-32 characters without '|' or '/'.",
 
+  "cadmus.camp.already_active": "You already have an active camp",
+  "cadmus.camp.none": "You don't have an active camp",
+  "cadmus.camp.expired": "Your camp has expired",
+  "cadmus.camp.too_close": "Too close to another claim",
+  "text.cadmus.camp.name": "Camp %s %s",
+
 "message.cadmus.wilderness": "Wilderness",
 
   "text.cadmus.chunkload_selected": "Chunkload Selected",
@@ -100,6 +106,8 @@
 "gui.cadmus.claim_map.no_towns": "No towns",
   "gui.cadmus.claim_map.create_town": "Create town",
   "gui.cadmus.claim_map.admin_claim": "Admin Claim",
+  "gui.cadmus.claim_map.personal_camp": "Personal Camp",
+  "gui.cadmus.claim_map.camp_single_chunk": "A camp can only be one chunk",
   "gui.cadmus.claim_map.no_town_selected": "Create a town first",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",

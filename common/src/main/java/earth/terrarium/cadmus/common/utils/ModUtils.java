@@ -30,6 +30,11 @@ public class ModUtils {
         return UUID.nameUUIDFromBytes(string.getBytes(StandardCharsets.UTF_8));
     }
 
+    public static String formatTime(long ticks) {
+        long seconds = Math.max(0L, ticks) / 20L;
+        return "%d:%02d".formatted(seconds / 60L, seconds % 60L);
+    }
+
     /**
      * Sends all claims, packet splitting in batches of {@link #MAX_CHUNKS_PER_PACKET} to the player joining the server.
      */

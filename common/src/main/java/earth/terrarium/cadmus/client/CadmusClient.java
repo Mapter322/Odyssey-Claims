@@ -39,6 +39,7 @@ public class CadmusClient {
 
     public static final Map<TeamId, TeamInfo> TEAM_INFO = new HashMap<>();
     public static final Map<UUID, ClientTown> TOWNS = new HashMap<>();
+    public static final Map<UUID, ClientCamp> CAMPS = new HashMap<>();
     public static final Map<MemberSettingKey, Map<String, String>> MEMBER_SETTINGS = new HashMap<>();
 
     public static final KeyMapping KEY_OPEN_CLAIM_MAP = new KeyMapping(
@@ -58,6 +59,7 @@ public class CadmusClient {
         ClaimSaveData.clearClientClaims();
         TEAM_INFO.clear();
         TOWNS.clear();
+        CAMPS.clear();
         MEMBER_SETTINGS.clear();
         CadmusRoleTargets.clearClient();
     }
@@ -166,4 +168,20 @@ public static void openClaimSettings(SyncClaimSettingsPacket packet) {
             return Component.literal(name.isBlank() ? "Town " + id : name);
         }
     }
+
+    public static void updateCamps(String encoded) {
+        CAMPS.clear();
+        if (encoded.isBlank()) return;
+        for (String campValue : encoded.split("/")) {
+            String[] fields = campValue.split("\\|", 3);
+            if (fields.length != 3) continue;
+            try {
+                CAMPS.put(UUID.fromString(fields[0]), new ClientCamp(fields[1], Long.parseLong(fields[2])));
+            } catch (RuntimeException ignored) {
+                // Ignore malformed data from an incompatible server.
+            }
+        }
+    }
+
+    public record ClientCamp(String name, long expiresAt) {}
 }
