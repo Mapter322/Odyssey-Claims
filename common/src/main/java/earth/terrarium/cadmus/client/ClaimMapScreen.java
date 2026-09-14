@@ -85,6 +85,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     public static final DropdownState<UUID> selected = DropdownState.of(null);
     private static final UUID ADMIN_SELECTION = new UUID(0L, 0L);
     private static final UUID CAMP_SELECTION = new UUID(1L, 0L);
+    private static final UUID CREATE_TOWN_SELECTION = new UUID(2L, 0L);
 
     private float chunkScale;
     private float pixelScale;
@@ -128,7 +129,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             .filter(town -> teams.containsKey(town.team()))
             .map(CadmusClient.ClientTown::id)
             .toList();
-        if (selected.get() == null || (!isAdminSelected() && !isCampSelected() && !this.availableTowns.contains(selected.get()))) {
+        if (selected.get() == null || (!isAdminSelected() && !isCampSelected() && !isCreateTownSelected() && !this.availableTowns.contains(selected.get()))) {
             selected.set(this.availableTowns.isEmpty() ? null : this.availableTowns.get(0));
         }
 
@@ -268,12 +269,18 @@ settingsButton.active = selectedTeam() != null && !isCampSelected();
                     .withSize(MAP_SIZE / 2, 20)
                     .withCallback(() -> select(town)));
             }
+            ctx.add(() -> Widgets.button()
+                .withTexture(UIConstants.LIST_ENTRY)
+                .withRenderer(WidgetRenderers.text(ConstantComponents.CREATE_TOWN).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                .withSize(MAP_SIZE / 2, 20)
+                .withCallback(() -> select(CREATE_TOWN_SELECTION)));
         });
     }
 
     private Component townName(UUID townId) {
         if (ADMIN_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.admin_claim");
         if (CAMP_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.personal_camp");
+        if (CREATE_TOWN_SELECTION.equals(townId)) return ConstantComponents.CREATE_TOWN;
         return Optional.ofNullable(CadmusClient.TOWNS.get(townId))
             .map(CadmusClient.ClientTown::displayName)
             .orElse(ConstantComponents.NO_TOWNS.copy());
@@ -424,6 +431,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             return super.mouseReleased(mouseX, mouseY, button);
         }
         if (button == 1) {
+            if (isCreateTownSelected()) {
+                clearSelection();
+                return super.mouseReleased(mouseX, mouseY, button);
+            }
             if (this.selectionStartX != 0 || this.selectionStartZ != 0) {
                 openContextMenu(
                     new ChunkPos(this.selectionStartX, this.selectionStartZ),
@@ -455,8 +466,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         contextMenu.clearItems();
         boolean canClaim = hasUnclaimedChunk(startPos, endPos);
         boolean canUnclaim = hasOwnedClaim(startPos, endPos);
-        boolean allFree = allUnclaimed(startPos, endPos);
-        boolean hasTeam = selected.get() != null || isAdminSelected();
+        boolean hasTeam = (selected.get() != null && !isCreateTownSelected()) || isAdminSelected();
         boolean singleChunk = startPos.equals(endPos);
         contextMenu.addItem(ConstantComponents.CLAIM, () -> {
             if (isAdminSelected()) {
@@ -476,10 +486,6 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             unclaimWithConfirmation(startPos, endPos);
             clearSelection();
         }, canUnclaim);
-        contextMenu.addItem(ConstantComponents.CREATE_TOWN, () -> {
-            openCreateTownModal(startPos, endPos);
-            clearSelection();
-        }, allFree && !isAdminSelected() && !isCampSelected());
         contextMenu.open(mouseX, mouseY);
     }
 
@@ -491,7 +497,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             TownManager.MAX_TOWN_NAME_LENGTH,
             ConstantComponents.CREATE_TOWN_MODAL_CONFIRM,
             TownManager::isValidTownName,
-            name -> CadmusClient.sendTownCreate(name, startPos, endPos)
+            name -> {
+                CadmusClient.sendTownCreate(name, startPos, endPos);
+                select(null);
+            }
         );
     }
 
@@ -568,15 +577,6 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         return false;
     }
 
-    private boolean allUnclaimed(ChunkPos startPos, ChunkPos endPos) {
-        for (int x = Math.min(startPos.x, endPos.x); x <= Math.max(startPos.x, endPos.x); x++) {
-            for (int z = Math.min(startPos.z, endPos.z); z <= Math.max(startPos.z, endPos.z); z++) {
-                if (claims.containsKey(new ChunkPos(x, z))) return false;
-            }
-        }
-        return true;
-    }
-
     private void clearSelection() {
         this.selectionStartX = 0;
         this.selectionStartZ = 0;
@@ -592,6 +592,9 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             } else if (isCampSelected()) {
                 if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
                 else sendCampAction(pos, true);
+            } else if (isCreateTownSelected()) {
+                if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
+                else openCreateTownModal(pos, pos);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
             } else if (this.claims.containsKey(pos)) {
@@ -869,6 +872,10 @@ private static void update() {
 
     private boolean isCampSelected() {
         return CAMP_SELECTION.equals(selected.get());
+    }
+
+    private boolean isCreateTownSelected() {
+        return CREATE_TOWN_SELECTION.equals(selected.get());
     }
 
     private void sendAdminAction(ChunkPos start, ChunkPos end, boolean claim) {
