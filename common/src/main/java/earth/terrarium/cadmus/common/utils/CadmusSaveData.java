@@ -33,8 +33,8 @@ import java.util.*;
 public class CadmusSaveData extends SaveHandler {
 
     private final Map<SettingScope, Map<TeamId, Map<String, SettingValue<?>>>> settingValues = new EnumMap<>(SettingScope.class);
+    private final Map<SettingScope, Map<UUID, Map<String, SettingValue<?>>>> townSettingValues = new EnumMap<>(SettingScope.class);
     private final Map<SettingScope, Map<TeamId, Map<UUID, Map<String, SettingOverride>>>> playerSettingOverrides = new EnumMap<>(SettingScope.class);
-    private final Map<SettingScope, Map<String, SettingValue<?>>> settingDefaults = new EnumMap<>(SettingScope.class);
     private final Map<UUID, String> adminTeams = new HashMap<>();
     private final Map<TeamId, Set<ResourceLocation>> allowedBlocks = new HashMap<>();
     private final Set<UUID> bypassPlayers = new HashSet<>();
@@ -88,8 +88,8 @@ UUID id = UUID.fromString(idString);
             adminTeams.put(UUID.fromString(adminTeamsTag.getString(name)), name));
 
         loadSettingValues(tag.getCompound("settingValues"));
+        loadTownSettingValues(tag.getCompound("townSettings"));
         loadPlayerSettingOverrides(tag.getCompound("playerSettingOverrides"));
-        loadSettingDefaults(tag.getCompound("settingDefaults"));
     }
 
     @Override
@@ -132,8 +132,8 @@ tag.put("towns", townsTag);
         tag.put("adminTeams", adminTeamsTag);
 
         tag.put("settingValues", saveSettingValues());
+        tag.put("townSettings", saveTownSettingValues());
         tag.put("playerSettingOverrides", savePlayerSettingOverrides());
-        tag.put("settingDefaults", saveSettingDefaults());
     }
 
 public static CadmusSaveData read(MinecraftServer server) {
@@ -190,13 +190,10 @@ public static CadmusSaveData read(MinecraftServer server) {
     @SuppressWarnings("unchecked")
     public static <T> SettingValue<T> getSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition) {
         var data = read(server);
-        SettingValue<?> defaultValue = data.settingDefaults
-            .getOrDefault(definition.scope(), Map.of())
-            .getOrDefault(definition.id(), definition.defaultValue());
         return data.settingValues
             .getOrDefault(definition.scope(), Map.of())
             .getOrDefault(id, Map.of())
-            .getOrDefault(definition.id(), defaultValue) instanceof SettingValue<?> value
+            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
             ? (SettingValue<T>) value
             : definition.defaultValue();
     }
@@ -206,6 +203,51 @@ public static CadmusSaveData read(MinecraftServer server) {
             .getOrDefault(definition.scope(), Map.of())
             .getOrDefault(id, Map.of())
             .containsKey(definition.id());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> SettingValue<T> getTownSettingValue(MinecraftServer server, UUID town, SettingDefinition<T> definition) {
+        var data = read(server);
+        return data.townSettingValues
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(town, Map.of())
+            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
+            ? (SettingValue<T>) value
+            : definition.defaultValue();
+    }
+
+    public static boolean hasTownSettingValue(MinecraftServer server, UUID town, SettingDefinition<?> definition) {
+        return read(server).townSettingValues
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(town, Map.of())
+            .containsKey(definition.id());
+    }
+
+    public static <T> void setTownSettingValue(MinecraftServer server, UUID town, SettingDefinition<T> definition, SettingValue<T> value) {
+        var data = read(server);
+        data.townSettingValues
+            .computeIfAbsent(definition.scope(), ignored -> new HashMap<>())
+            .computeIfAbsent(town, ignored -> new HashMap<>())
+            .put(definition.id(), value);
+        data.setDirty();
+    }
+
+    public static void resetTownSettingValue(MinecraftServer server, UUID town, SettingDefinition<?> definition) {
+        var data = read(server);
+        Map<UUID, Map<String, SettingValue<?>>> scopeValues = data.townSettingValues.get(definition.scope());
+        if (scopeValues != null) {
+            scopeValues.computeIfPresent(town, (ignored, values) -> {
+                values.remove(definition.id());
+                return values.isEmpty() ? null : values;
+            });
+        }
+        data.setDirty();
+    }
+
+    public static void removeTownSettings(MinecraftServer server, UUID town) {
+        var data = read(server);
+        data.townSettingValues.values().forEach(values -> values.remove(town));
+        data.setDirty();
     }
 
     public static <T> void setSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition, SettingValue<T> value) {
@@ -250,30 +292,6 @@ public static CadmusSaveData read(MinecraftServer server) {
         data.setDirty();
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> SettingValue<T> getDefaultSettingValue(MinecraftServer server, SettingDefinition<T> definition) {
-        return read(server).settingDefaults
-            .getOrDefault(definition.scope(), Map.of())
-            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
-            ? (SettingValue<T>) value
-            : definition.defaultValue();
-    }
-
-    public static <T> void setDefaultSettingValue(MinecraftServer server, SettingDefinition<T> definition, SettingValue<T> value) {
-        var data = read(server);
-        data.settingDefaults
-            .computeIfAbsent(definition.scope(), ignored -> new HashMap<>())
-            .put(definition.id(), value);
-        data.setDirty();
-    }
-
-    public static void resetDefaultSettingValue(MinecraftServer server, SettingDefinition<?> definition) {
-        var data = read(server);
-        Map<String, SettingValue<?>> scopeDefaults = data.settingDefaults.get(definition.scope());
-        if (scopeDefaults != null) scopeDefaults.remove(definition.id());
-        data.setDirty();
-    }
-
     public static void addAllowedBlock(MinecraftServer server, TeamId player, Block block) {
         var data = read(server);
         data.allowedBlocks.computeIfAbsent(player, ignored -> new HashSet<>()).add(BuiltInRegistries.BLOCK.getKey(block));
@@ -306,6 +324,7 @@ public static CadmusSaveData read(MinecraftServer server) {
     public static void clearAll(MinecraftServer server) {
         var data = read(server);
         data.settingValues.clear();
+        data.townSettingValues.clear();
         data.playerSettingOverrides.clear();
         data.adminTeams.clear();
         data.allowedBlocks.clear();
@@ -357,13 +376,21 @@ public static CadmusSaveData read(MinecraftServer server) {
         });
     }
 
-    private void loadSettingDefaults(CompoundTag root) {
+    private void loadTownSettingValues(CompoundTag root) {
         root.getAllKeys().forEach(scopeName -> {
             SettingScope scope = SettingScope.valueOf(scopeName);
             CompoundTag scopeTag = root.getCompound(scopeName);
-            scopeTag.getAllKeys().forEach(id -> {
-                SettingValue<?> value = readSettingValue(scopeTag.getCompound(id));
-                if (value != null) settingDefaults.computeIfAbsent(scope, ignored -> new HashMap<>()).put(id, value);
+            scopeTag.getAllKeys().forEach(townName -> {
+                CompoundTag townTag = scopeTag.getCompound(townName);
+                UUID town = UUID.fromString(townName);
+                townTag.getAllKeys().forEach(id -> {
+                    SettingValue<?> value = readSettingValue(townTag.getCompound(id));
+                    if (value != null) {
+                        townSettingValues.computeIfAbsent(scope, ignored -> new HashMap<>())
+                            .computeIfAbsent(town, ignored -> new HashMap<>())
+                            .put(id, value);
+                    }
+                });
             });
         });
     }
@@ -406,11 +433,15 @@ public static CadmusSaveData read(MinecraftServer server) {
         return root;
     }
 
-    private CompoundTag saveSettingDefaults() {
+    private CompoundTag saveTownSettingValues() {
         CompoundTag root = new CompoundTag();
-        settingDefaults.forEach((scope, values) -> {
+        townSettingValues.forEach((scope, towns) -> {
             CompoundTag scopeTag = new CompoundTag();
-            values.forEach((id, value) -> scopeTag.put(id, writeSettingValue(value)));
+            towns.forEach((town, values) -> {
+                CompoundTag townTag = new CompoundTag();
+                values.forEach((id, value) -> townTag.put(id, writeSettingValue(value)));
+                scopeTag.put(town.toString(), townTag);
+            });
             root.put(scope.name(), scopeTag);
         });
         return root;

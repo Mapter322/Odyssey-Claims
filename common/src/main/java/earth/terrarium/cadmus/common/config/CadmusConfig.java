@@ -11,6 +11,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CadmusConfig {
 
@@ -21,6 +23,7 @@ public class CadmusConfig {
     public int defaultMaxChunkLoadedClaims = 64;
     public int minChunksBetweenTowns = 10;
     public int personalCampDurationSeconds = 300;
+    public Map<String, Boolean> defaultClaimSettings = new LinkedHashMap<>();
 
     public static CadmusConfig get() {
         if (INSTANCE == null) {

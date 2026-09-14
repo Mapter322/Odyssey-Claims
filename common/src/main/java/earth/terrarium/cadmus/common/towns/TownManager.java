@@ -14,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +42,14 @@ public final class TownManager {
 
     public static Optional<Town> getTown(MinecraftServer server, UUID id) {
         return Optional.ofNullable(CadmusSaveData.read(server).towns().get(id));
+    }
+
+    @Nullable
+    public static Town getTownAt(MinecraftServer server, TeamId team, ChunkPos pos) {
+        for (Town town : CadmusSaveData.read(server).towns().values()) {
+            if (town.team().equals(team) && town.chunks().contains(pos)) return town;
+        }
+        return null;
     }
 
     public static boolean isValidTownName(String name) {
@@ -125,14 +134,21 @@ public final class TownManager {
             .findFirst().orElse(null);
         if (town == null) return;
         town.chunks().remove(pos);
-        if (town.chunks().isEmpty()) data.towns().remove(town.id());
+        if (town.chunks().isEmpty()) {
+            data.towns().remove(town.id());
+            CadmusSaveData.removeTownSettings(server, town.id());
+        }
         data.setDirty();
         sync(server);
     }
 
     public static void removeTeam(MinecraftServer server, TeamId team) {
         CadmusSaveData data = CadmusSaveData.read(server);
-        data.towns().values().removeIf(town -> town.team().equals(team));
+        data.towns().values().removeIf(town -> {
+            if (!town.team().equals(team)) return false;
+            CadmusSaveData.removeTownSettings(server, town.id());
+            return true;
+        });
         data.setDirty();
         sync(server);
     }

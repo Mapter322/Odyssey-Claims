@@ -24,7 +24,7 @@ public final class EntityExplosionProtection implements Protection {
     public boolean canExplodeEntity(Entity entity, Explosion explosion) {
         return entity.level().isClientSide() || getId(entity.level(), entity.chunkPosition()).map(id ->
             explosion.getIndirectSourceEntity() instanceof Player player ?
-                isPlayerAllowed(player, id) :
+                isPlayerAllowed(player, id, entity.chunkPosition()) :
                 isEntityAllowed(entity, id)
         ).orElse(true);
     }

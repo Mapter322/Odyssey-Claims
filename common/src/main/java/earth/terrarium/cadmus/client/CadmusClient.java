@@ -2,6 +2,7 @@ package earth.terrarium.cadmus.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.teamresourceful.resourcefullib.common.color.Color;
+import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
@@ -9,6 +10,7 @@ import earth.terrarium.cadmus.common.compat.argonauts.CadmusRoleTargets;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
@@ -72,14 +74,13 @@ public class CadmusClient {
         Minecraft.getInstance().setScreen(new ClaimMapScreen(parentScreen));
     }
 
-public static void openClaimSettings(SyncClaimSettingsPacket packet) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (!(minecraft.screen instanceof ClaimMapScreen)) {
-            minecraft.setScreen(new ClaimMapScreen());
-        }
-        if (minecraft.screen instanceof ClaimMapScreen screen) {
-            minecraft.setScreen(new ClaimConfigModal(screen, packet.id(), packet.settings()));
-        }
+    public static void openClaimSettings(SyncClaimSettingsPacket packet) {
+        Minecraft.getInstance().setScreen(new ClaimSettingsScreen(packet));
+    }
+
+    public static void requestGuildClaimSettings(UUID guildId) {
+        TeamId team = new TeamId(ResourceLocation.fromNamespaceAndPath("argonauts", "team"), guildId);
+        NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(new ClaimSettingsTarget(team)));
     }
 
     public static void syncMemberSettings(SyncMemberSettingsPacket packet) {
@@ -118,13 +119,7 @@ public static void openClaimSettings(SyncClaimSettingsPacket packet) {
     }
 
     public static void openAdminClaimSettings(OpenAdminClaimSettingsPacket packet) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (!(minecraft.screen instanceof ClaimMapScreen)) {
-            minecraft.setScreen(new ClaimMapScreen());
-        }
-        if (minecraft.screen instanceof ClaimMapScreen screen) {
-            minecraft.setScreen(new AdminClaimConfigModal(screen, packet));
-        }
+        Minecraft.getInstance().setScreen(new AdminClaimSettingsScreen(packet));
     }
 
     public static void sendTownCreate(String name, ChunkPos start, ChunkPos end) {

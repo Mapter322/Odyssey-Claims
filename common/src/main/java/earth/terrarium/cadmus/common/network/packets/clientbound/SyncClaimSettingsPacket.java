@@ -7,18 +7,27 @@ import com.teamresourceful.resourcefullib.common.network.base.ClientboundPacketT
 import com.teamresourceful.resourcefullib.common.network.base.NetworkHandle;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
 import earth.terrarium.cadmus.client.CadmusClient;
 
 import java.util.Map;
 
-public record SyncClaimSettingsPacket(TeamId id, Map<String, String> settings) implements Packet<SyncClaimSettingsPacket> {
+public record SyncClaimSettingsPacket(
+    ClaimSettingsTarget target,
+    String name,
+    boolean canEdit,
+    Map<String, String> values,
+    Map<String, String> inherited
+) implements Packet<SyncClaimSettingsPacket> {
 
     public static final ClientboundPacketType<SyncClaimSettingsPacket> TYPE = CodecPacketType.Client.create(
         Cadmus.id("sync_claim_settings"),
         ObjectByteCodec.create(
-            TeamId.BYTE_CODEC.fieldOf(SyncClaimSettingsPacket::id),
-            ByteCodec.mapOf(ByteCodec.STRING, ByteCodec.STRING).fieldOf(SyncClaimSettingsPacket::settings),
+            ClaimSettingsTarget.BYTE_CODEC.fieldOf(SyncClaimSettingsPacket::target),
+            ByteCodec.STRING.fieldOf(SyncClaimSettingsPacket::name),
+            ByteCodec.BOOLEAN.fieldOf(SyncClaimSettingsPacket::canEdit),
+            ByteCodec.mapOf(ByteCodec.STRING, ByteCodec.STRING).fieldOf(SyncClaimSettingsPacket::values),
+            ByteCodec.mapOf(ByteCodec.STRING, ByteCodec.STRING).fieldOf(SyncClaimSettingsPacket::inherited),
             SyncClaimSettingsPacket::new
         ),
         NetworkHandle.handle(CadmusClient::openClaimSettings)

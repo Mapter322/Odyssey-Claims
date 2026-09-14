@@ -18,7 +18,6 @@ public class CadmusCommands {
         TownCommand.register(dispatcher);
 
 AdminCommands.register(dispatcher);
-        DefaultSettingsCommand.register(dispatcher);
         AdminSettingsCommand.register(dispatcher);
         AdminClaimCommands.register(dispatcher);
     }

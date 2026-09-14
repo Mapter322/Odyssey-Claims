@@ -64,10 +64,24 @@ public interface Protection {
         return Settings.isPlayerAllowed(level, player.getId(), id, definition);
     }
 
+    default boolean isPlayerAllowed(Player player, TeamId id, ChunkPos pos) {
+        return isPlayerAllowed(player.level(), player.getGameProfile(), id, pos, setting());
+    }
+
+    default boolean isPlayerAllowed(Level level, GameProfile player, TeamId id, ChunkPos pos, SettingDefinition<Boolean> definition) {
+        if (CadmusSaveData.canBypass(level.getServer(), player.getId())) return true;
+
+        if (id.isAdmin()) return Settings.getAt(level, pos, definition);
+
+        if (gameRuleEnabled(level)) return true;
+
+        return Settings.isPlayerAllowed(level, player.getId(), id, pos, definition);
+    }
+
     default boolean isEntityAllowed(Entity entity, TeamId id) {
-        if (id.isAdmin()) return Settings.getForTeam(entity.getServer(), id, setting());
+        if (id.isAdmin()) return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
         if (gameRuleEnabled(entity.level())) return true;
-        return Settings.getForTeam(entity.getServer(), id, setting());
+        return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
     }
 
     default boolean isBlockAllowed(Level level, TeamId id, BlockPos pos) {
