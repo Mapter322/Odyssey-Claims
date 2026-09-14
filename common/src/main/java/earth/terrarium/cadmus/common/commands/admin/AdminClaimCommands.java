@@ -7,39 +7,35 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.settings.SettingScope;
-import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
-import earth.terrarium.cadmus.common.settings.SettingDefinitions;
-import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
-import earth.terrarium.argonauts.api.util.ModUtils;
-import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
+import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
+import earth.terrarium.cadmus.common.utils.CadmusSaveData;
+import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 
-import java.util.Collection;
-import java.util.UUID;
+import java.util.HashMap;
 
 public class AdminClaimCommands {
 
-    public static final SuggestionProvider<CommandSourceStack> ADMIN_TEAM_SUGGESTION_PROVIDER = (context, builder) -> {
-        Collection<String> names = CadmusSaveData.getAllAdminTeamNames(context.getSource().getServer());
-        return SharedSuggestionProvider.suggest(names, builder);
-    };
+    private static final SuggestionProvider<CommandSourceStack> SETTING_SUGGESTIONS = (context, builder) ->
+        SharedSuggestionProvider.suggest(SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).keySet(), builder);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
-            .requires(source -> source.hasPermission(2))
             .then(Commands.literal("adminclaim")
+                .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("claim")
                     .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                         .executes(context -> {
@@ -51,13 +47,31 @@ public class AdminClaimCommands {
                         return 1;
                     }))
                 .then(Commands.literal("settings")
-                    .executes(context -> openSettings(context.getSource())))
-.then(Commands.literal("adminmode")
+                    .executes(context -> openSettings(context.getSource()))
+                    .then(Commands.literal("list")
+                        .executes(context -> {
+                            list(context.getSource());
+                            return 1;
+                        }))
+                    .then(Commands.literal("set")
+                        .then(Commands.argument("setting", StringArgumentType.word()).suggests(SETTING_SUGGESTIONS)
+                            .then(Commands.argument("value", StringArgumentType.greedyString())
+                                .suggests(SettingCommandSupport.valueSuggestions(SettingScope.ADMIN_CLAIM))
+                                .executes(context -> {
+                                    set(context.getSource(), StringArgumentType.getString(context, "setting"), StringArgumentType.getString(context, "value"));
+                                    return 1;
+                                }))))
+                    .then(Commands.literal("reset")
+                        .then(Commands.argument("setting", StringArgumentType.word()).suggests(SETTING_SUGGESTIONS)
+                            .executes(context -> {
+                                reset(context.getSource(), StringArgumentType.getString(context, "setting"));
+                                return 1;
+                            }))))
+                .then(Commands.literal("adminmode")
                     .executes(context -> toggleAdminMode(context.getSource()))
                     .then(Commands.argument("player", EntityArgument.player())
                         .executes(context -> toggleAdminMode(context.getSource(), EntityArgument.getPlayer(context, "player")))))
-            )
-        );
+            ));
     }
 
     private static void claimFixed(CommandSourceStack source, ChunkPos pos) throws CommandSyntaxException {
@@ -74,10 +88,32 @@ public class AdminClaimCommands {
         return 1;
     }
 
-public static void sendSettings(ServerPlayer player) {
+    private static void set(CommandSourceStack source, String id, String input) throws CommandSyntaxException {
+        requireAdmin(source);
+        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM), id);
+        SettingCommandSupport.set(source.getServer(), adminTeam(), definition, SettingCommandSupport.parse(definition, input));
+        SettingCommandSupport.send(source, "command.cadmus.setting.set", id, input);
+    }
+
+    private static void reset(CommandSourceStack source, String id) throws CommandSyntaxException {
+        requireAdmin(source);
+        var definition = SettingCommandSupport.find(SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM), id);
+        CadmusSaveData.resetSettingValue(source.getServer(), adminTeam(), definition);
+        SettingCommandSupport.send(source, "command.cadmus.setting.reset", id);
+    }
+
+    private static void list(CommandSourceStack source) throws CommandSyntaxException {
+        requireAdmin(source);
+        SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) ->
+            SettingCommandSupport.send(source, "command.cadmus.setting.get", id,
+                SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(source.getServer(), adminTeam(), definition)))
+        );
+    }
+
+    public static void sendSettings(ServerPlayer player) {
         AdminTeamProvider.ensureAdminTeam(player.getServer());
         TeamId id = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
-        var settings = new java.util.HashMap<String, String>();
+        var settings = new HashMap<String, String>();
         SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((setting, definition) ->
             settings.put(setting, SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, definition))));
         NetworkHandler.CHANNEL.sendToPlayer(new OpenAdminClaimSettingsPacket(
@@ -89,11 +125,15 @@ public static void sendSettings(ServerPlayer player) {
         ), player);
     }
 
+    private static TeamId adminTeam() {
+        return TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
+    }
+
     private static void requireAdmin(CommandSourceStack source) throws CommandSyntaxException {
         if (!source.hasPermission(2)) throw new SimpleCommandExceptionType(ConstantComponents.NO_PERMISSION_ROLE).create();
     }
 
-private static int toggleAdminMode(CommandSourceStack source) throws CommandSyntaxException {
+    private static int toggleAdminMode(CommandSourceStack source) throws CommandSyntaxException {
         requireAdmin(source);
         return toggleAdminMode(source, source.getPlayerOrException());
     }
@@ -108,5 +148,4 @@ private static int toggleAdminMode(CommandSourceStack source) throws CommandSynt
         ), false);
         return 1;
     }
-
 }

@@ -8,6 +8,7 @@ import com.teamresourceful.resourcefullib.common.network.base.NetworkHandle;
 import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
+import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.common.camps.CampManager;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,7 +25,8 @@ public record CampActionPacket(ChunkPos pos, boolean claim) implements Packet<Ca
         NetworkHandle.handle((packet, player) -> {
             if (!(player instanceof ServerPlayer serverPlayer)) return;
             if (packet.claim()) {
-                CampManager.create(serverPlayer, packet.pos());
+                String error = CampManager.create(serverPlayer, packet.pos());
+                if (error != null) NotificationApi.notify(serverPlayer, error);
             } else {
                 CampManager.remove(serverPlayer);
             }

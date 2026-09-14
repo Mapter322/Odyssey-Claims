@@ -23,6 +23,7 @@ import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -37,38 +38,42 @@ public record RequestClaimSettingsPacket(ClaimSettingsTarget target) implements 
             RequestClaimSettingsPacket::new
         ),
         NetworkHandle.handle((packet, player) -> {
-            MinecraftServer server = player.getServer();
-            if (server == null) return;
-            if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, packet.target().team())) return;
-
-            UUID townId = packet.target().townId().orElse(null);
-            if (townId != null && TownManager.getTown(server, townId).filter(town -> town.team().equals(packet.target().team())).isEmpty()) return;
-
-            Map<String, String> values = new HashMap<>();
-            Map<String, String> inherited = new HashMap<>();
-            SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
-                if (definition.target() != SettingTarget.GLOBAL) return;
-                if (definition.access() == SettingAccess.ADMIN && !player.hasPermissions(2)) return;
-
-                if (townId == null) {
-                    SettingValue<?> value = explicit(server, packet.target(), null, definition);
-                    if (value == null) value = Settings.defaults(packet.target().team(), definition);
-                    values.put(id, SettingCommandSupport.valueToString(value));
-                } else {
-                    SettingValue<?> value = explicit(server, packet.target(), townId, definition);
-                    if (value != null) values.put(id, SettingCommandSupport.valueToString(value));
-                    inherited.put(id, SettingCommandSupport.valueToString(
-                        Settings.resolveInherited(server, packet.target().team(), townId, definition)));
-                }
-            });
-
-            String name = townId == null
-                ? TeamApi.API.getName(server, packet.target().team()).getString()
-                : TownManager.getTown(server, townId).map(town -> town.name()).orElse("");
-            boolean canEdit = player.hasPermissions(2) || TeamApi.API.canModifySettings(player, packet.target().team());
-            NetworkHandler.CHANNEL.sendToPlayer(new SyncClaimSettingsPacket(packet.target(), name, canEdit, values, inherited), player);
+            if (player instanceof ServerPlayer serverPlayer) send(serverPlayer, packet.target());
         })
     );
+
+    public static void send(ServerPlayer player, ClaimSettingsTarget target) {
+        MinecraftServer server = player.getServer();
+        if (server == null) return;
+        if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, target.team())) return;
+
+        UUID townId = target.townId().orElse(null);
+        if (townId != null && TownManager.getTown(server, townId).filter(town -> town.team().equals(target.team())).isEmpty()) return;
+
+        Map<String, String> values = new HashMap<>();
+        Map<String, String> inherited = new HashMap<>();
+        SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
+            if (definition.target() != SettingTarget.GLOBAL) return;
+            if (definition.access() == SettingAccess.ADMIN && !player.hasPermissions(2)) return;
+
+            if (townId == null) {
+                SettingValue<?> value = explicit(server, target, null, definition);
+                if (value == null) value = Settings.defaults(target.team(), definition);
+                values.put(id, SettingCommandSupport.valueToString(value));
+            } else {
+                SettingValue<?> value = explicit(server, target, townId, definition);
+                if (value != null) values.put(id, SettingCommandSupport.valueToString(value));
+                inherited.put(id, SettingCommandSupport.valueToString(
+                    Settings.resolveInherited(server, target.team(), townId, definition)));
+            }
+        });
+
+        String name = townId == null
+            ? TeamApi.API.getName(server, target.team()).getString()
+            : TownManager.getTown(server, townId).map(town -> town.name()).orElse("");
+        boolean canEdit = player.hasPermissions(2) || TeamApi.API.canModifySettings(player, target.team());
+        NetworkHandler.CHANNEL.sendToPlayer(new SyncClaimSettingsPacket(target, name, canEdit, values, inherited), player);
+    }
 
     public RequestClaimSettingsPacket(TeamId id) {
         this(new ClaimSettingsTarget(id));

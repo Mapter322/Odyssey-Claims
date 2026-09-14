@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,23 +33,15 @@ public final class CampManager {
         CadmusEvents.ClearClaimsEvent.register((level, id) -> onClaimRemoved(level, id));
     }
 
-    public static void create(ServerPlayer player, ChunkPos pos) {
+    @Nullable
+    public static String create(ServerPlayer player, ChunkPos pos) {
         MinecraftServer server = player.server;
         CampSaveData data = CampSaveData.read(server);
-        if (data.camps().containsKey(player.getUUID())) {
-            NotificationApi.notify(player, "cadmus.camp.already_active");
-            return;
-        }
+        if (data.camps().containsKey(player.getUUID())) return "cadmus.camp.already_active";
 
         ServerLevel level = player.serverLevel();
-        if (ClaimApi.API.getClaim(level, pos).isPresent()) {
-            NotificationApi.notify(player, TownManager.ERR_CHUNK_CLAIMED);
-            return;
-        }
-        if (isTooCloseToOtherClaims(level, pos)) {
-            NotificationApi.notify(player, ERR_TOO_CLOSE);
-            return;
-        }
+        if (ClaimApi.API.getClaim(level, pos).isPresent()) return TownManager.ERR_CHUNK_CLAIMED;
+        if (isTooCloseToOtherClaims(level, pos)) return ERR_TOO_CLOSE;
 
         TeamId camp = CampTeamProvider.teamId(player.getUUID());
         ClaimApi.API.claim(level, camp, pos, false);
@@ -57,6 +50,7 @@ public final class CampManager {
         data.camps().put(player.getUUID(), new CampSaveData.CampEntry(level.dimension().location(), pos, expiresAt));
         data.setDirty();
         sync(server);
+        return null;
     }
 
     public static void remove(ServerPlayer player) {

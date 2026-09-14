@@ -1,8 +1,12 @@
 package earth.terrarium.cadmus.common.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import earth.terrarium.cadmus.common.commands.admin.*;
-import earth.terrarium.cadmus.common.commands.claims.*;
+import earth.terrarium.cadmus.common.commands.admin.AdminClaimCommands;
+import earth.terrarium.cadmus.common.commands.claims.CampCommand;
+import earth.terrarium.cadmus.common.commands.claims.ClaimInfoCommand;
+import earth.terrarium.cadmus.common.commands.claims.ClaimSettingsCommand;
+import earth.terrarium.cadmus.common.commands.claims.UnclaimAreaCommand;
+import earth.terrarium.cadmus.common.commands.claims.UnclaimCommand;
 import earth.terrarium.cadmus.common.commands.towns.TownCommand;
 import net.minecraft.commands.CommandSourceStack;
 
@@ -13,10 +17,9 @@ public class CadmusCommands {
         UnclaimCommand.register(dispatcher);
         UnclaimAreaCommand.register(dispatcher);
         ClaimSettingsCommand.register(dispatcher);
+        CampCommand.register(dispatcher);
         TownCommand.register(dispatcher);
 
-AdminCommands.register(dispatcher);
-        AdminSettingsCommand.register(dispatcher);
         AdminClaimCommands.register(dispatcher);
     }
 }

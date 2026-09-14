@@ -3,14 +3,19 @@ package earth.terrarium.cadmus.common.commands.claims;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
+import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
+import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -32,6 +37,7 @@ public class ClaimSettingsCommand {
         dispatcher.register(Commands.literal("cadmus")
             .then(Commands.literal("claim")
                 .then(Commands.literal("settings")
+                    .executes(context -> openSettings(context.getSource()))
                     .then(Commands.argument("setting", StringArgumentType.word()).suggests(SETTING_SUGGESTIONS)
                         .then(Commands.literal("set")
                             .then(Commands.argument("value", StringArgumentType.greedyString())
@@ -105,8 +111,17 @@ public class ClaimSettingsCommand {
 
     private static void get(CommandSourceStack source, TeamId id, String idString) throws CommandSyntaxException {
         var definition = SettingCommandSupport.findGlobal(SettingDefinitions.forScope(SettingScope.TOWN), idString);
-        var value = CadmusSaveData.getSettingValue(source.getServer(), id, definition);
+        var value = Settings.resolve(source.getServer(), id, null, definition);
         SettingCommandSupport.send(source, "command.cadmus.setting.get", idString, SettingCommandSupport.valueToString(value));
+    }
+
+    private static int openSettings(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElseThrow(() ->
+            new SimpleCommandExceptionType(ConstantComponents.TEAM_DOES_NOT_EXIST).create());
+        SettingCommandSupport.checkTeamPermission(player, team);
+        RequestClaimSettingsPacket.send(player, new ClaimSettingsTarget(team));
+        return 1;
     }
 
     private static TeamId currentTeam(CommandSourceStack source) throws CommandSyntaxException {

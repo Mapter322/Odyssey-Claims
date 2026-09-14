@@ -17,6 +17,9 @@
   "command.cadmus.info.claimed_chunks_area": "§7Claimed chunks from §b[%s, %s]§7 to §b[%s, %s] §6(%s/%s)",
   "command.cadmus.info.unclaimed_chunks_area": "§7Unclaimed chunks from §b[%s, %s]§7 to §b[%s, %s] §6(%s/%s)",
   "command.cadmus.info.chunk_loaded_chunks_area": "§7Chunk loaded chunks from §b[%s, %s]§7 to §b[%s, %s] §6(%s/%s)",
+  "command.cadmus.info.town_created": "§7Created town §b%s",
+  "command.cadmus.info.town_expanded": "§7Expanded town §b%s",
+  "command.cadmus.info.camp_created": "§7Camp created",
 
   "command.cadmus.info.admin_clear": "§7Cleared all claims for every team",
   "command.cadmus.info.claimed_admin_chunk_at": "§7Claimed admin chunk at §b[%s, %s]",

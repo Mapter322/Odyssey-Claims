@@ -33,7 +33,7 @@ public final class TownManager {
     public static final String ERR_TOWN_NAME = "command.cadmus.exception.town.invalid_name";
     public static final String ERR_TOWN_NAME_TAKEN = "command.cadmus.exception.town.name_taken";
 
-    private static final Set<String> RESERVED_NAMES = Set.of("create", "add");
+    private static final Set<String> RESERVED_NAMES = Set.of("create");
 
     private TownManager() {}
 
@@ -51,6 +51,14 @@ public final class TownManager {
     public static Town getTownAt(MinecraftServer server, TeamId team, ChunkPos pos) {
         for (Town town : CadmusSaveData.read(server).towns().values()) {
             if (town.team().equals(team) && town.chunks().contains(pos)) return town;
+        }
+        return null;
+    }
+
+    @Nullable
+    public static Town getTownByName(MinecraftServer server, TeamId team, String name) {
+        for (Town town : getTowns(server, team)) {
+            if (town.name().equalsIgnoreCase(name)) return town;
         }
         return null;
     }

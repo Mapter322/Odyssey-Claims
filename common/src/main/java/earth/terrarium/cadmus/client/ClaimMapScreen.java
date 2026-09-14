@@ -841,7 +841,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> sendCampAction(player.chunkPosition(), false));
             return;
         }
-        DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, selectedTeam(), selectedTeam().asArg()));
+        DeleteConfirmModal.open(ConstantComponents.UNCLAIM_MODAL_TITLE, ConstantComponents.UNCLAIM_MODAL_DESCRIPTION, ConstantComponents.UNCLAIM_MODAL_CONFIRM, () -> CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, selectedTeam(), ""));
     }
 
 private static void update() {
