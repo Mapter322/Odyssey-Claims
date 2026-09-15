@@ -205,6 +205,29 @@ public interface TeamApi {
     }
 
     /**
+     * Checks if the player can manage the team's claims.
+     *
+     * @param level  The level.
+     * @param player The player.
+     * @param id     The team's ID.
+     * @return true if the player can manage the team's claims, false otherwise.
+     */
+    default boolean canManageClaims(Level level, GameProfile player, TeamId id) {
+        return getProvider(id.provider()).canManageClaims(level, id.id(), player);
+    }
+
+    /**
+     * Checks if the player can manage the team's claims.
+     *
+     * @param player The player.
+     * @param id     The team's ID.
+     * @return true if the player can manage the team's claims, false otherwise.
+     */
+    default boolean canManageClaims(@NotNull Player player, TeamId id) {
+        return canManageClaims(player.level(), player.getGameProfile(), id);
+    }
+
+    /**
      * Gets the maximum amount of towns the team can own.
      *
      * @param level The level.

@@ -72,7 +72,7 @@ public final class TownManager {
     public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end, String name) {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
         if (team == null) return Component.translatable(ERR_NO_GUILD);
-        if (!TeamApi.API.canModifySettings(player, team)) return Component.translatable(ERR_NO_PERMISSION);
+        if (!TeamApi.API.canManageClaims(player, team)) return Component.translatable(ERR_NO_PERMISSION);
         name = name == null ? "" : name.strip();
         if (!isValidTownName(name)) return Component.translatable(ERR_TOWN_NAME);
         Collection<Town> towns = getTowns(player.server, team);
@@ -103,7 +103,7 @@ public final class TownManager {
 
     public static Component add(ServerPlayer player, UUID townId, ChunkPos start, ChunkPos end) {
         Town town = getTown(player.server, townId).orElse(null);
-        if (town == null || !TeamApi.API.canModifySettings(player, town.team())) return Component.translatable(town == null ? ERR_TOWN_NOT_FOUND : ERR_NO_PERMISSION);
+        if (town == null || !TeamApi.API.canManageClaims(player, town.team())) return Component.translatable(town == null ? ERR_TOWN_NOT_FOUND : ERR_NO_PERMISSION);
         Set<ChunkPos> positions = positions(start, end);
         positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
         if (positions.isEmpty()) return null;

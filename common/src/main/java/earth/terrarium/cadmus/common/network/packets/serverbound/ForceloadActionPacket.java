@@ -12,6 +12,7 @@ import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
+import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,9 +43,15 @@ public record ForceloadActionPacket(ChunkPos pos, boolean state) implements Pack
         TeamId team = claim.get().team();
         if (team.isAdmin()) {
             if (!player.hasPermissions(2)) return;
-        } else if (!ClaimApi.API.getOwnedClaims(player).map(claims -> claims.containsKey(pos)).orElse(false)) {
-            NotificationApi.notify(player, "command.cadmus.exception.not_owner");
-            return;
+        } else {
+            if (!ClaimApi.API.getOwnedClaims(player).map(claims -> claims.containsKey(pos)).orElse(false)) {
+                NotificationApi.notify(player, "command.cadmus.exception.not_owner");
+                return;
+            }
+            if (!TeamApi.API.canManageClaims(player, team)) {
+                NotificationApi.notify(player, "command.cadmus.exception.no_claim_permission");
+                return;
+            }
         }
 
         if (state && !claim.get().isChunkLoaded()

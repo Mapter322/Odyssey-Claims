@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
+import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.argonauts.api.util.ModUtils;
@@ -19,7 +20,7 @@ import net.minecraft.world.level.ChunkPos;
 public class UnclaimCommand {
 
     public static final SimpleCommandExceptionType NOT_CLAIMED = new SimpleCommandExceptionType(ConstantComponents.NOT_CLAIMED);
-    private static final SimpleCommandExceptionType NOT_OWNER = new SimpleCommandExceptionType(ConstantComponents.NOT_OWNER);
+    private static final SimpleCommandExceptionType NO_CLAIM_PERMISSION = new SimpleCommandExceptionType(ConstantComponents.NO_CLAIM_PERMISSION);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
@@ -55,10 +56,7 @@ public class UnclaimCommand {
         ServerPlayer player = source.getPlayerOrException();
         var claim = ClaimApi.API.getClaim(source.getLevel(), pos);
         if (claim.isEmpty()) throw NOT_CLAIMED.create();
-        else {
-            var claims = ClaimApi.API.getOwnedClaims(player).orElse(null);
-            if (claims == null || !claims.containsKey(pos)) throw NOT_OWNER.create();
-        }
+        if (!TeamApi.API.canManageClaims(player, claim.get().team())) throw NO_CLAIM_PERMISSION.create();
 
         ClaimApi.API.getClaim(source.getLevel(), pos).ifPresent(team -> {
             ClaimApi.API.unclaim(source.getLevel(), team.team(), pos);
@@ -85,6 +83,7 @@ public class UnclaimCommand {
 
     private static void unclaimAll(CommandSourceStack source, TeamId id) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
+        if (!TeamApi.API.canManageClaims(player, id)) throw NO_CLAIM_PERMISSION.create();
         int oldClaimsCount = ClaimCommand.getClaimsCount(player, false);
         ClaimApi.API.clear(source.getLevel(), id);
         int diff = oldClaimsCount - ClaimCommand.getClaimsCount(player, false);

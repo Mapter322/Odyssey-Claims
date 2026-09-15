@@ -100,7 +100,7 @@ public interface ClaimApi {
         Set<TeamId> teams = new HashSet<>();
         positions.forEach(position -> getClaim(level, position).map(ClaimData::team).ifPresent(teams::add));
         teams.forEach(id -> {
-            if (TeamApi.API.isMember(level, player, id)) unclaim(level, id, positions);
+            if (TeamApi.API.canManageClaims(level, player, id)) unclaim(level, id, positions);
         });
     }
 

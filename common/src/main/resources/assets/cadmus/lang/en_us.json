@@ -38,6 +38,7 @@
   "command.cadmus.exception.not_enough_claims": "You don't have enough claims available §6(%s/%s)",
   "command.cadmus.exception.not_claimed": "This chunk is not claimed",
   "command.cadmus.exception.not_owner": "You do not own this claim",
+  "command.cadmus.exception.no_claim_permission": "You don't have permission to manage claims",
   "command.cadmus.exception.not_admin_claim": "This chunk is not an admin claim",
   "command.cadmus.exception.forceload_limit": "You don't have enough forceload slots available",
   "command.cadmus.exception.area_too_large": "The area is too large §6(%s/%s)",

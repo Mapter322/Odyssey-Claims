@@ -8,6 +8,7 @@ import earth.terrarium.argonauts.api.util.ModUtils;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
+import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import net.minecraft.commands.CommandSourceStack;
@@ -20,6 +21,7 @@ public class ForceloadCommand {
 
     public static final SimpleCommandExceptionType NOT_CLAIMED = new SimpleCommandExceptionType(ConstantComponents.NOT_CLAIMED);
     public static final SimpleCommandExceptionType NOT_OWNER = new SimpleCommandExceptionType(ConstantComponents.NOT_OWNER);
+    public static final SimpleCommandExceptionType NO_CLAIM_PERMISSION = new SimpleCommandExceptionType(ConstantComponents.NO_CLAIM_PERMISSION);
     public static final SimpleCommandExceptionType FORCELOAD_LIMIT = new SimpleCommandExceptionType(ConstantComponents.FORCELOAD_LIMIT);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -61,6 +63,7 @@ public class ForceloadCommand {
 
         var owned = ClaimApi.API.getOwnedClaims(player).orElse(null);
         if (owned == null || !owned.containsKey(pos)) throw NOT_OWNER.create();
+        if (!TeamApi.API.canManageClaims(player, claim.get().team())) throw NO_CLAIM_PERMISSION.create();
 
         set(source, pos, state, claim.get().team());
     }

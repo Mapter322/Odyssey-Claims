@@ -110,6 +110,18 @@ public interface TeamProvider {
     }
 
     /**
+     * Checks if the player can manage the team's claims.
+     *
+     * @param level  The level.
+     * @param teamId the team to check.
+     * @param player The player profile.
+     * @return true if the player can manage the team's claims, false otherwise.
+     */
+    default boolean canManageClaims(Level level, UUID teamId, GameProfile player) {
+        return canModifySettings(level, teamId, player);
+    }
+
+    /**
      * Gets the maximum amount of towns the team can own.
      *
      * @param level The level.

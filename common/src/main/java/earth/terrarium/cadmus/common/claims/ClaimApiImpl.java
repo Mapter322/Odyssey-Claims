@@ -98,7 +98,7 @@ public class ClaimApiImpl implements ClaimApi {
     @Override
     public void unclaim(Level level, GameProfile player, ChunkPos pos) {
         var claim = getClaim(level, pos);
-        if (claim.isEmpty() || !TeamApi.API.isMember(level, player, claim.get().team())) return;
+        if (claim.isEmpty() || !TeamApi.API.canManageClaims(level, player, claim.get().team())) return;
         unclaim(level, claim.get().team(), pos);
     }
 
@@ -172,7 +172,9 @@ public class ClaimApiImpl implements ClaimApi {
 
     @Override
     public void clear(Level level, GameProfile player) {
-        TeamApi.API.getTeamsList(level, player).forEach(team -> clear(level, team));
+        TeamApi.API.getTeamsList(level, player).stream()
+            .filter(team -> TeamApi.API.canManageClaims(level, player, team))
+            .forEach(team -> clear(level, team));
     }
 
     @Override
