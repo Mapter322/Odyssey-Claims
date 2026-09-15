@@ -587,19 +587,15 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
 
     private void paintChunk(ChunkPos pos, int button) {
         if (button == 0) {
+            if (this.claims.containsKey(pos)) return;
             if (isAdminSelected()) {
-                if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
-                else sendAdminAction(pos, pos, true);
+                sendAdminAction(pos, pos, true);
             } else if (isCampSelected()) {
-                if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
-                else sendCampAction(pos, true);
+                sendCampAction(pos, true);
             } else if (isCreateTownSelected()) {
-                if (this.claims.containsKey(pos)) showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
-                else openCreateTownModal(pos, pos);
+                openCreateTownModal(pos, pos);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
-            } else if (this.claims.containsKey(pos)) {
-                showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
             } else {
                 CadmusClient.sendTownAdd(selected.get(), pos, pos);
             }
@@ -751,18 +747,13 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         if (startX == 0 && startZ == 0) return;
         ChunkPos startPos = new ChunkPos(startX, startZ);
         ChunkPos endPos = new ChunkPos(endX, endZ);
+        boolean singleClaimed = startPos.equals(endPos) && this.claims.containsKey(startPos);
         if (button == 0) {
             if (isAdminSelected()) {
-                if (startPos.equals(endPos) && this.claims.containsKey(startPos)) {
-                    showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
-                } else {
-                    sendAdminAction(startPos, endPos, true);
-                }
+                if (!singleClaimed) sendAdminAction(startPos, endPos, true);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
-            } else if (startPos.equals(endPos) && this.claims.containsKey(startPos)) {
-                showNotification(Component.translatable(TownManager.ERR_CHUNK_CLAIMED));
-            } else {
+            } else if (!singleClaimed) {
                 CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             }
         } else if (button == 2) {

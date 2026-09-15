@@ -24,6 +24,7 @@ public final class TownManager {
     public static final int MAX_TOWN_NAME_LENGTH = 32;
 
     public static final String ERR_NO_PERMISSION = "command.cadmus.exception.town.no_permission";
+    public static final String ERR_NO_GUILD = "command.cadmus.exception.town.no_guild";
     public static final String ERR_MAX_TOWNS = "command.cadmus.exception.town.max_towns";
     public static final String ERR_CHUNK_CLAIMED = "command.cadmus.exception.town.chunk_claimed";
     public static final String ERR_CLAIM_LIMIT = "command.cadmus.exception.town.claim_limit";
@@ -71,7 +72,8 @@ public final class TownManager {
 
     public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end, String name) {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
-        if (team == null || !TeamApi.API.canModifySettings(player, team)) return Component.translatable(ERR_NO_PERMISSION);
+        if (team == null) return Component.translatable(ERR_NO_GUILD);
+        if (!TeamApi.API.canModifySettings(player, team)) return Component.translatable(ERR_NO_PERMISSION);
         name = name == null ? "" : name.strip();
         if (!isValidTownName(name)) return Component.translatable(ERR_TOWN_NAME);
         Collection<Town> towns = getTowns(player.server, team);
@@ -81,7 +83,8 @@ public final class TownManager {
         if (towns.size() >= MAX_TOWNS_PER_TEAM) return Component.translatable(ERR_MAX_TOWNS);
 
         Set<ChunkPos> positions = positions(start, end);
-        if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return Component.translatable(ERR_CHUNK_CLAIMED);
+        positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
+        if (positions.isEmpty()) return null;
         int current = ClaimApi.API.getOwnedClaims(player.level(), team).map(Map::size).orElse(0);
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return Component.translatable(ERR_CLAIM_LIMIT);
         if (isTooCloseToOtherTowns(player.server, positions, null)) return Component.translatable(ERR_TOO_CLOSE);
@@ -103,7 +106,8 @@ public final class TownManager {
         Town town = getTown(player.server, townId).orElse(null);
         if (town == null || !TeamApi.API.canModifySettings(player, town.team())) return Component.translatable(town == null ? ERR_TOWN_NOT_FOUND : ERR_NO_PERMISSION);
         Set<ChunkPos> positions = positions(start, end);
-        if (positions.isEmpty() || positions.stream().anyMatch(pos -> ClaimApi.API.isClaimed(player.level(), pos))) return Component.translatable(ERR_CHUNK_CLAIMED);
+        positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
+        if (positions.isEmpty()) return null;
         Set<ChunkPos> reachable = new HashSet<>(town.chunks());
         boolean changed;
         do {

@@ -48,6 +48,7 @@
   "command.cadmus.exception.team_does_not_exist": "This team does not exist.",
 
   "command.cadmus.exception.town.no_permission": "You do not have permission to manage this town.",
+  "command.cadmus.exception.town.no_guild": "Create a guild first",
   "command.cadmus.exception.town.max_towns": "You have reached the maximum amount of towns",
   "command.cadmus.exception.town.chunk_claimed": "This chunk is already claimed",
   "command.cadmus.exception.town.claim_limit": "You don't have enough claims available",

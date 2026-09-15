@@ -9,10 +9,8 @@ import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
-import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,10 +34,8 @@ public record AdminClaimActionPacket(ChunkPos start, ChunkPos end, boolean claim
             TeamId admin = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
             Set<ChunkPos> positions = ChunkPos.rangeClosed(packet.start(), packet.end()).collect(java.util.stream.Collectors.toSet());
             if (packet.claim()) {
-                if (positions.stream().anyMatch(pos -> ClaimApi.API.getClaim(serverPlayer.level(), pos).isPresent())) {
-                    notify(serverPlayer, TownManager.ERR_CHUNK_CLAIMED);
-                    return;
-                }
+                positions.removeIf(pos -> ClaimApi.API.getClaim(serverPlayer.level(), pos).isPresent());
+                if (positions.isEmpty()) return;
                 var claims = new Object2BooleanArrayMap<ChunkPos>();
                 positions.forEach(pos -> claims.put(pos, false));
                 ClaimApi.API.claim(serverPlayer.level(), admin, claims);
@@ -52,10 +48,6 @@ public record AdminClaimActionPacket(ChunkPos start, ChunkPos end, boolean claim
             }
         })
     );
-
-    private static void notify(ServerPlayer player, String key) {
-        NotificationApi.notify(player, key);
-    }
 
     @Override
     public PacketType<AdminClaimActionPacket> type() {
