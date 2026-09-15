@@ -25,6 +25,7 @@ import earth.terrarium.cadmus.common.network.packets.serverbound.RequestAdminCla
 import earth.terrarium.cadmus.common.teams.TeamInfo;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.teams.CampTeamProvider;
+import earth.terrarium.cadmus.common.teams.IndividualTeamProvider;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import earth.terrarium.olympus.client.components.Widgets;
@@ -49,9 +50,11 @@ import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.client.gui.screens.Screen;
@@ -629,7 +632,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 claim.southWest, claim.northWest);
 
             if (isHovering(mouseX, mouseY, x, y)) {
-                ScreenUtils.setTooltip(CampTeamProvider.ID.equals(claim.team().provider()) ? campName(claim.team().id()) : claim.name);
+                ScreenUtils.setTooltip(tooltip(claim.team(), pos));
             }
         });
     }
@@ -674,7 +677,6 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 if (claim.isEmpty()) continue;
                 TeamId id = claim.get().team();
 
-                Component name = getName(id, pos, claim.get().isChunkLoaded());
                 int color = color(CadmusClient.TEAM_INFO.getOrDefault(id, new TeamInfo("", Color.DEFAULT)).color(), 127);
 
                 boolean north = checkSide(i, j, 0, -1);
@@ -687,7 +689,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 boolean southWest = checkSide(i, j, -1, 1);
                 boolean northWest = checkSide(i, j, -1, -1);
 
-                this.claims.put(pos, new ClaimTile(id, name, color, pos, i, j, north, east, south, west, northEast, southEast, southWest, northWest));
+                this.claims.put(pos, new ClaimTile(id, color, pos, i, j, north, east, south, west, northEast, southEast, southWest, northWest));
             }
         }
     }
@@ -795,27 +797,84 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         return (color & 0x00FFFFFF) | (alpha << 24);
     }
 
-    private Component getName(TeamId id, ChunkPos pos, boolean chunkLoad) {
+    private List<Component> tooltip(TeamId id, ChunkPos pos) {
+        List<Component> lines = new ArrayList<>();
+        Color color = CadmusClient.TEAM_INFO.getOrDefault(id, new TeamInfo("", Color.DEFAULT)).color();
+
         if (CampTeamProvider.ID.equals(id.provider())) {
-            return campName(id.id());
+            lines.add(Component.translatable("gui.cadmus.claim_map.personal_camp").withStyle(ChatFormatting.WHITE));
+            lines.add(ownerLine(id));
+            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.camp")));
+            CadmusClient.ClientCamp camp = CadmusClient.CAMPS.get(id.id());
+            if (camp != null) {
+                long remaining = Math.max(0L, camp.expiresAt() - level.getGameTime());
+                lines.add(Component.translatable("gui.cadmus.claim_map.tooltip.expires",
+                    Component.literal(ModUtils.formatTime(remaining)).withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.GRAY));
+            }
+            return lines;
         }
-        String townName = CadmusClient.TOWNS.values().stream()
-            .filter(town -> town.chunks().contains(pos))
-            .map(town -> town.displayName().getString())
-            .findFirst().orElse(TeamApi.API.getName(level, id).getString());
-        return Component.literal(townName).withStyle(ChatFormatting.GRAY)
-            .append(CommonComponents.SPACE)
-            .append(chunkLoad ?
-                Component.translatable("text.cadmus.chunk_loaded").withStyle(ChatFormatting.GOLD) :
-                CommonComponents.EMPTY
-            );
+
+        if (id.isAdmin()) {
+            lines.add(ownerName(id).copy().withStyle(color.getAsStyle()));
+            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.admin")));
+            return lines;
+        }
+
+        CadmusClient.ClientTown town = townAt(pos);
+        if (town != null) {
+            lines.add(town.displayName().copy().withStyle(color.getAsStyle()));
+            lines.add(ownerLine(id));
+            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.town")));
+        } else {
+            lines.add(ownerLine(id));
+            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.claim")));
+        }
+
+        lines.add(Component.translatable("gui.cadmus.claim_map.tooltip.forceload",
+            Component.translatable(isChunkLoaded(pos)
+                ? "gui.cadmus.claim_map.yes"
+                : "gui.cadmus.claim_map.no").withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.GRAY));
+        return lines;
     }
 
-    private Component campName(UUID owner) {
-        CadmusClient.ClientCamp camp = CadmusClient.CAMPS.get(owner);
-        if (camp == null) return Component.translatable("gui.cadmus.claim_map.personal_camp");
-        long remaining = Math.max(0L, camp.expiresAt() - level.getGameTime());
-        return Component.translatable("text.cadmus.camp.name", camp.name(), ModUtils.formatTime(remaining));
+    private Component ownerLine(TeamId id) {
+        MutableComponent owner = ownerName(id).copy();
+        if (isPlayer(id)) {
+            owner = owner.withStyle(ChatFormatting.WHITE);
+        } else {
+            owner = owner.withStyle(CadmusClient.TEAM_INFO.getOrDefault(id, new TeamInfo("", Color.DEFAULT)).color().getAsStyle());
+        }
+        return Component.translatable("gui.cadmus.claim_map.tooltip.owner", owner).withStyle(ChatFormatting.GRAY);
+    }
+
+    private Component typeLine(Component type) {
+        return Component.translatable("gui.cadmus.claim_map.tooltip.type",
+            type.copy().withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.GRAY);
+    }
+
+    private Component ownerName(TeamId id) {
+        if (CampTeamProvider.ID.equals(id.provider())) {
+            CadmusClient.ClientCamp camp = CadmusClient.CAMPS.get(id.id());
+            if (camp != null && !camp.name().isBlank()) return Component.literal(camp.name());
+        }
+        Component name = TeamApi.API.getName(level, id);
+        if (name.getString().equals(ConstantComponents.UNKNOWN.getString())) {
+            var connection = Minecraft.getInstance().getConnection();
+            PlayerInfo info = connection == null ? null : connection.getPlayerInfo(id.id());
+            if (info != null) return Component.literal(info.getProfile().getName());
+        }
+        return name;
+    }
+
+    private boolean isPlayer(TeamId id) {
+        return CampTeamProvider.ID.equals(id.provider()) || IndividualTeamProvider.ID.equals(id.provider());
+    }
+
+    @Nullable
+    private CadmusClient.ClientTown townAt(ChunkPos pos) {
+        return CadmusClient.TOWNS.values().stream()
+            .filter(town -> town.chunks().contains(pos))
+            .findFirst().orElse(null);
     }
 
     private int getScaledRenderDistance() {
@@ -892,7 +951,6 @@ private static void update() {
 
     private record ClaimTile(
         TeamId team,
-        Component name,
         int color,
         ChunkPos pos,
         int x, int y,

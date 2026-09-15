@@ -15,6 +15,7 @@ import earth.terrarium.cadmus.common.network.packets.clientbound.SyncAllTeamInfo
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTeamInfo;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.argonauts.api.util.ModUtils;
+import earth.terrarium.cadmus.common.towns.Town;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -173,9 +174,8 @@ public class TeamApiImpl implements TeamApi {
         if (player == null) return;
         Component message = ClaimApi.API.getClaim(player.level(), player.chunkPosition()).map(claim -> {
             String greeting = Settings.getAt(player.serverLevel(), player.chunkPosition(), SettingDefinitions.GREETING);
-            return greeting.isBlank() ?
-                getName(player.level(), claim.team()) :
-                Component.literal(greeting).withStyle(ChatFormatting.GOLD);
+            if (!greeting.isBlank()) return Component.literal(greeting).withStyle(ChatFormatting.GOLD);
+            return claimName(player.level(), claim.team(), player.chunkPosition());
         }).orElseGet(() -> {
             String farewell = Settings.getAt(player.serverLevel(), pos, SettingDefinitions.FAREWELL);
             return farewell.isBlank() ?
@@ -186,6 +186,20 @@ public class TeamApiImpl implements TeamApi {
         if (message.equals(LAST_MESSAGE.get(player))) return;
         LAST_MESSAGE.put(player, message);
         player.displayClientMessage(message, true);
+    }
+
+    private Component claimName(Level level, TeamId team, ChunkPos pos) {
+        MinecraftServer server = level.getServer();
+        if (server != null && !team.isAdmin() && !CampTeamProvider.ID.equals(team.provider())) {
+            Town town = TownManager.getTownAt(server, team, pos);
+            if (town != null) {
+                return Component.literal(town.name()).withStyle(getColor(level, team).getAsStyle())
+                    .append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
+                    .append(getName(level, team))
+                    .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
+            }
+        }
+        return getName(level, team);
     }
 
     @Override
