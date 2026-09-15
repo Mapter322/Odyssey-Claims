@@ -252,6 +252,7 @@ public class AdminClaimSettingsScreen extends BaseScreen {
     @Override
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+        this.renderBlurredBackground(partialTick);
         this.renderBg(graphics, partialTick, mouseX, mouseY);
         RenderSystem.disableDepthTest();
         try (var pose = new CloseablePoseStack(graphics)) {
@@ -259,6 +260,11 @@ public class AdminClaimSettingsScreen extends BaseScreen {
             this.renderLabels(graphics, mouseX, mouseY);
         }
         RenderSystem.enableDepthTest();
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     @Override
