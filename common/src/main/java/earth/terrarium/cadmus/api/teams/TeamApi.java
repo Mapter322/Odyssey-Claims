@@ -205,6 +205,17 @@ public interface TeamApi {
     }
 
     /**
+     * Gets the maximum amount of towns the team can own.
+     *
+     * @param level The level.
+     * @param id    The team's ID.
+     * @return The maximum amount of towns.
+     */
+    default int getMaxTowns(Level level, TeamId id) {
+        return getProvider(id.provider()).getMaxTowns(level, id.id());
+    }
+
+    /**
      * Removes the team. Clears all the team's chunks and settings.
      *
      * @param server The server.

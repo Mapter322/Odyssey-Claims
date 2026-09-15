@@ -18,6 +18,8 @@ import java.util.UUID;
 
 public interface TeamProvider {
 
+    int DEFAULT_MAX_TOWNS = 3;
+
     ResourceLocation id();
 
     /**
@@ -105,6 +107,17 @@ public interface TeamProvider {
      */
     default boolean canModifySettings(UUID teamId, Player player) {
         return canModifySettings(player.level(), teamId, player.getGameProfile());
+    }
+
+    /**
+     * Gets the maximum amount of towns the team can own.
+     *
+     * @param level The level.
+     * @param id    The ID of the team.
+     * @return The maximum amount of towns.
+     */
+    default int getMaxTowns(Level level, UUID id) {
+        return DEFAULT_MAX_TOWNS;
     }
 
     /**

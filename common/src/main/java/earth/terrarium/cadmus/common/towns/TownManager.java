@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public final class TownManager {
-    public static final int MAX_TOWNS_PER_TEAM = 3;
     public static final int MAX_TOWN_NAME_LENGTH = 32;
 
     public static final String ERR_NO_PERMISSION = "command.cadmus.exception.town.no_permission";
@@ -80,7 +79,7 @@ public final class TownManager {
         for (Town town : towns) {
             if (town.name().equalsIgnoreCase(name)) return Component.translatable(ERR_TOWN_NAME_TAKEN);
         }
-        if (towns.size() >= MAX_TOWNS_PER_TEAM) return Component.translatable(ERR_MAX_TOWNS);
+        if (towns.size() >= TeamApi.API.getMaxTowns(player.level(), team)) return Component.translatable(ERR_MAX_TOWNS);
 
         Set<ChunkPos> positions = positions(start, end);
         positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
