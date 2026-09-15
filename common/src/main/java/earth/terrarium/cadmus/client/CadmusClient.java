@@ -10,6 +10,7 @@ import earth.terrarium.cadmus.common.compat.argonauts.CadmusRoleTargets;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.ForceloadActionPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
@@ -128,6 +129,10 @@ public class CadmusClient {
 
     public static void sendTownAdd(UUID town, ChunkPos start, ChunkPos end) {
         NetworkHandler.CHANNEL.sendToServer(new TownActionPacket(ClaimCommandType.TOWN_ADD, town.toString(), start, end));
+    }
+
+    public static void sendForceload(ChunkPos pos, boolean state) {
+        NetworkHandler.CHANNEL.sendToServer(new ForceloadActionPacket(pos, state));
     }
 
     public static void showNotification(Component message) {

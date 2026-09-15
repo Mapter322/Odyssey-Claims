@@ -38,6 +38,8 @@ public class ConstantComponents {
     public static final Component SAVE = Component.translatable("gui.cadmus.claim_map.save");
     public static final Component CLAIM = Component.translatable("gui.cadmus.claim_map.claim");
     public static final Component UNCLAIM = Component.translatable("gui.cadmus.claim_map.unclaim");
+    public static final Component FORCELOAD = Component.translatable("gui.cadmus.claim_map.forceload");
+    public static final Component UNFORCELOAD = Component.translatable("gui.cadmus.claim_map.unforceload");
     public static final Component NO_TOWNS = Component.translatable("gui.cadmus.claim_map.no_towns");
     public static final Component CREATE_TOWN = Component.translatable("gui.cadmus.claim_map.create_town");
     public static final Component ADMIN_CLAIM = Component.translatable("gui.cadmus.claim_map.admin_claim");

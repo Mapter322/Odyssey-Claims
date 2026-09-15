@@ -487,6 +487,13 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             unclaimWithConfirmation(startPos, endPos);
             clearSelection();
         }, canUnclaim);
+        ClaimTile tile = singleChunk ? this.claims.get(startPos) : null;
+        boolean canForceload = tile != null && (teams.containsKey(tile.team()) || (tile.team().isAdmin() && player.hasPermissions(2)));
+        boolean forceloaded = singleChunk && isChunkLoaded(startPos);
+        contextMenu.addItem(forceloaded ? ConstantComponents.UNFORCELOAD : ConstantComponents.FORCELOAD, () -> {
+            CadmusClient.sendForceload(startPos, !forceloaded);
+            clearSelection();
+        }, canForceload);
         contextMenu.open(mouseX, mouseY);
     }
 
@@ -576,6 +583,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             }
         }
         return false;
+    }
+
+    private boolean isChunkLoaded(ChunkPos pos) {
+        return ClaimApi.API.getClaim(level, pos).map(ClaimData::isChunkLoaded).orElse(false);
     }
 
     private void clearSelection() {
