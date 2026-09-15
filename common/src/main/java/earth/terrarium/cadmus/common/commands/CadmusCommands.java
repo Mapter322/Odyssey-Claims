@@ -5,6 +5,7 @@ import earth.terrarium.cadmus.common.commands.admin.AdminClaimCommands;
 import earth.terrarium.cadmus.common.commands.claims.CampCommand;
 import earth.terrarium.cadmus.common.commands.claims.ClaimInfoCommand;
 import earth.terrarium.cadmus.common.commands.claims.ClaimSettingsCommand;
+import earth.terrarium.cadmus.common.commands.claims.ForceloadCommand;
 import earth.terrarium.cadmus.common.commands.claims.UnclaimAreaCommand;
 import earth.terrarium.cadmus.common.commands.claims.UnclaimCommand;
 import earth.terrarium.cadmus.common.commands.towns.TownCommand;
@@ -17,6 +18,7 @@ public class CadmusCommands {
         UnclaimCommand.register(dispatcher);
         UnclaimAreaCommand.register(dispatcher);
         ClaimSettingsCommand.register(dispatcher);
+        ForceloadCommand.register(dispatcher);
         CampCommand.register(dispatcher);
         TownCommand.register(dispatcher);
 

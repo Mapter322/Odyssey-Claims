@@ -34,6 +34,16 @@ public interface ClaimApi {
     void claim(Level level, TeamId id, ChunkPos pos, boolean chunkLoad);
 
     /**
+     * Changes the chunk load state of a claim.
+     *
+     * @param level     The level where the claim is.
+     * @param id        The team ID.
+     * @param pos       The chunk position to change.
+     * @param chunkLoad If the chunk should be chunk loaded.
+     */
+    void setChunkLoaded(Level level, TeamId id, ChunkPos pos, boolean chunkLoad);
+
+    /**
      * Claims a set of chunks.
      *
      * @param level     The level to claim.

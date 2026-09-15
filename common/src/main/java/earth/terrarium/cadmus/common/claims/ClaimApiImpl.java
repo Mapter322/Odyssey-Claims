@@ -44,6 +44,32 @@ public class ClaimApiImpl implements ClaimApi {
     }
 
     @Override
+    public void setChunkLoaded(Level level, TeamId id, ChunkPos pos, boolean chunkLoad) {
+        var claim = getClaim(level, pos);
+        if (claim.isEmpty() || !claim.get().team().equals(id) || claim.get().isChunkLoaded() == chunkLoad) return;
+
+        if (chunkLoad) {
+            level.getChunkSource().updateChunkForced(pos, true);
+            Cadmus.FORCE_LOADED_CHUNK_COUNT++;
+        } else {
+            level.getChunkSource().updateChunkForced(pos, false);
+            Cadmus.FORCE_LOADED_CHUNK_COUNT--;
+        }
+
+        var data = ClaimSaveData.read(level);
+        data.claims().put(pos, ObjectBooleanPair.of(id, chunkLoad));
+        data.claimsById().computeIfAbsent(id, uuid -> new Object2BooleanOpenHashMap<>()).put(pos, chunkLoad);
+
+        if (level instanceof ServerLevel serverLevel) {
+            data.setDirty();
+            NetworkHandler.sendToAllClientPlayers(new AddClaimPacket(id, pos, chunkLoad), serverLevel.getServer());
+            TeamApi.API.displayTeamNameToAll(serverLevel.getServer());
+            TeamApi.API.syncTeamInfo(serverLevel.getServer(), id, false);
+        }
+        CadmusEvents.AddClaimsEvent.fire(level, id, Object2BooleanMaps.singleton(pos, chunkLoad));
+    }
+
+    @Override
     public void claim(Level level, TeamId id, Object2BooleanMap<ChunkPos> positions) {
         positions.forEach((pos, chunkLoad) -> {
             if (chunkLoad) {
