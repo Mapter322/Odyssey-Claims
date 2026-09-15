@@ -470,6 +470,7 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         contextMenu.clearItems();
         boolean canClaim = hasUnclaimedChunk(startPos, endPos);
         boolean canUnclaim = hasOwnedClaim(startPos, endPos);
+        boolean canManage = isAdminSelected() || isCampSelected() || canManageClaims(selectedTeam());
         boolean hasTeam = (selected.get() != null && !isCreateTownSelected()) || isAdminSelected();
         boolean singleChunk = startPos.equals(endPos);
         contextMenu.addItem(ConstantComponents.CLAIM, () -> {
@@ -485,13 +486,15 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             }
             clearSelection();
-        }, canClaim && hasTeam && (!isCampSelected() || singleChunk));
+        }, canClaim && hasTeam && canManage && (!isCampSelected() || singleChunk));
         contextMenu.addItem(ConstantComponents.UNCLAIM, () -> {
             unclaimWithConfirmation(startPos, endPos);
             clearSelection();
-        }, canUnclaim);
+        }, canUnclaim && canManage);
         ClaimTile tile = singleChunk ? this.claims.get(startPos) : null;
-        boolean canForceload = tile != null && (teams.containsKey(tile.team()) || (tile.team().isAdmin() && player.hasPermissions(2)));
+        boolean canForceload = tile != null && (tile.team().isAdmin()
+            ? player.hasPermissions(2)
+            : teams.containsKey(tile.team()) && canManageClaims(tile.team()));
         boolean forceloaded = singleChunk && isChunkLoaded(startPos);
         contextMenu.addItem(forceloaded ? ConstantComponents.UNFORCELOAD : ConstantComponents.FORCELOAD, () -> {
             CadmusClient.sendForceload(startPos, !forceloaded);
@@ -592,6 +595,10 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         return ClaimApi.API.getClaim(level, pos).map(ClaimData::isChunkLoaded).orElse(false);
     }
 
+    private boolean canManageClaims(TeamId team) {
+        return team != null && TeamApi.API.canManageClaims(player, team);
+    }
+
     private void clearSelection() {
         this.selectionStartX = 0;
         this.selectionStartZ = 0;
@@ -607,14 +614,25 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             } else if (isCampSelected()) {
                 sendCampAction(pos, true);
             } else if (isCreateTownSelected()) {
+                if (!canManageClaims(selectedTeam())) {
+                    showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
+                    return;
+                }
                 openCreateTownModal(pos, pos);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
+            } else if (!canManageClaims(selectedTeam())) {
+                showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
             } else {
                 CadmusClient.sendTownAdd(selected.get(), pos, pos);
             }
         } else if (button == 2) {
-            if (this.claims.get(pos) != null && selectedTeam() != null && this.claims.get(pos).team().equals(selectedTeam())) {
+            ClaimTile claim = this.claims.get(pos);
+            if (claim != null && claim.team().equals(selectedTeam())) {
+                if (!isAdminSelected() && !canManageClaims(claim.team())) {
+                    showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
+                    return;
+                }
                 unclaimWithConfirmation(pos, pos);
             }
         }
@@ -766,14 +784,23 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 if (!singleClaimed) sendAdminAction(startPos, endPos, true);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
+            } else if (!canManageClaims(selectedTeam())) {
+                showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
             } else if (!singleClaimed) {
                 CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             }
         } else if (button == 2) {
             if (startPos.equals(endPos)) {
-                if (this.claims.containsKey(startPos) && selectedTeam() != null && this.claims.get(startPos).team().equals(selectedTeam())) {
-                    unclaimWithConfirmation(startPos, startPos);
+                ClaimTile claim = this.claims.get(startPos);
+                if (claim != null && claim.team().equals(selectedTeam())) {
+                    if (!isAdminSelected() && !canManageClaims(claim.team())) {
+                        showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
+                    } else {
+                        unclaimWithConfirmation(startPos, startPos);
+                    }
                 }
+            } else if (!isAdminSelected() && !isCampSelected() && !canManageClaims(selectedTeam())) {
+                showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
             } else {
                 unclaimWithConfirmation(startPos, endPos);
             }
