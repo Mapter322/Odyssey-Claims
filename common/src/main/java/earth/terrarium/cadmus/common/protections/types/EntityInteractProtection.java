@@ -6,6 +6,7 @@ import earth.terrarium.cadmus.api.settings.EntityCondition;
 import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
+import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
@@ -32,6 +33,7 @@ public final class EntityInteractProtection implements Protection {
 
     public boolean canInteractWithEntity(Level level, GameProfile player, Entity entity) {
         if (level.isClientSide()) return true;
+        if (CadmusConfig.get().isPublicEntityInteraction(entity.getType())) return true;
         return getId(level, entity.chunkPosition())
             .map(id -> isPlayerAllowed(level, player, id, specific(entity, Settings.scopeOf(id))))
             .orElse(true);
