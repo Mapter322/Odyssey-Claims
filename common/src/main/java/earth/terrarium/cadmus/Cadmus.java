@@ -38,8 +38,8 @@ public class Cadmus {
 
     public static final String MOD_ID = "cadmus";
 
-    public static final int DEFAULT_MAX_CLAIMS = CadmusConfig.get().defaultMaxClaims;
-    public static final int DEFAULT_MAX_CHUNK_LOADED_CLAIMS = CadmusConfig.get().defaultMaxChunkLoadedClaims;
+    public static final int DEFAULT_MAX_CLAIMS = Integer.MAX_VALUE;
+    public static final int DEFAULT_MAX_CHUNK_LOADED_CLAIMS = Integer.MAX_VALUE;
 
     public static int FORCE_LOADED_CHUNK_COUNT;
 
@@ -91,6 +91,7 @@ public class Cadmus {
             CadmusRoleTargets.prune(server);
         }
         AdminTeamProvider.ensureAdminTeam(server);
+        CadmusConfig.get();
         AdminClaimDefaultsConfig.ensureLoaded();
         AdminClaimTargets.registerAll(server);
         WildernessDefaultsConfig.ensureLoaded();

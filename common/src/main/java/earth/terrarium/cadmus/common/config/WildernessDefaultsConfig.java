@@ -1,8 +1,8 @@
 package earth.terrarium.cadmus.common.config;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.electronwill.nightconfig.core.CommentedConfig;
+import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.toml.TomlParser;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -39,7 +40,7 @@ public final class WildernessDefaultsConfig {
     }
 
     private static Path configPath() {
-        return CadmusConfig.configFolder().resolve(Cadmus.MOD_ID).resolve("wildernessdefaults.json");
+        return CadmusConfig.defaultFolder().resolve("wilderness.toml");
     }
 
     private static Map<String, Boolean> load() {
@@ -75,47 +76,40 @@ public final class WildernessDefaultsConfig {
 
     private static Map<String, Boolean> parse(String text) {
         Map<String, Boolean> values = new LinkedHashMap<>();
-        JsonObject root = JsonParser.parseString(stripComments(text)).getAsJsonObject();
-        JsonElement element = root.get("settings");
-        if (element == null || !element.isJsonObject()) {
-            LOGGER.warn("Wilderness defaults have no 'settings' object, using built-in defaults");
-            return generate();
-        }
-        JsonObject settings = element.getAsJsonObject();
-        for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
-            String parent = entry.getKey();
-            JsonElement value = entry.getValue();
-            if (value.isJsonObject()) {
-                JsonObject object = value.getAsJsonObject();
-                if (object.has("value")) {
-                    Boolean state = parseState(parent, object.get("value"));
-                    if (state != null) values.put(parent, state);
-                }
-                for (Map.Entry<String, JsonElement> child : object.entrySet()) {
-                    if (child.getKey().equals("value")) continue;
-                    Boolean state = parseState(parent + "/" + child.getKey(), child.getValue());
-                    if (state != null) values.put(parent + "/" + child.getKey(), state);
-                }
+        CommentedConfig root = new TomlParser().parse(new StringReader(text));
+        root.valueMap().forEach((key, value) -> {
+            if (value instanceof Config table) {
+                table.valueMap().forEach((childKey, childValue) -> {
+                    String name = String.valueOf(childKey);
+                    if (name.equals("value")) {
+                        Boolean state = parseState(key, childValue);
+                        if (state != null) values.put(key, state);
+                    } else {
+                        Boolean state = parseState(key + "/" + name, childValue);
+                        if (state != null) values.put(key + "/" + name, state);
+                    }
+                });
             } else {
-                Boolean state = parseState(parent, value);
-                if (state != null) values.put(parent, state);
+                Boolean state = parseState(key, value);
+                if (state != null) values.put(key, state);
             }
-        }
+        });
         return values;
     }
 
     @Nullable
-    private static Boolean parseState(String key, JsonElement element) {
-        if (element == null || !element.isJsonPrimitive()) {
+    private static Boolean parseState(String key, Object element) {
+        if (element instanceof Boolean bool) return bool;
+        if (!(element instanceof String string)) {
             LOGGER.warn("Invalid value for wilderness default '{}', skipping", key);
             return null;
         }
-        return switch (element.getAsString().toLowerCase(Locale.ROOT)) {
+        return switch (string.toLowerCase(Locale.ROOT)) {
             case "allow", "true" -> true;
             case "deny", "false" -> false;
             case "inherit", "undefined" -> null;
             default -> {
-                LOGGER.warn("Unknown wilderness default value '{}' for '{}', skipping", element.getAsString(), key);
+                LOGGER.warn("Unknown wilderness default value '{}' for '{}', skipping", string, key);
                 yield null;
             }
         };
@@ -123,33 +117,25 @@ public final class WildernessDefaultsConfig {
 
     private static String write(Map<String, Boolean> values) {
         StringBuilder sb = new StringBuilder();
-        sb.append("// Cadmus wilderness defaults.\n");
-        sb.append("// Values: allow, deny, inherit; inherit falls back to the parent setting.\n");
-        sb.append("// Applied to wilderness settings in place of the built-in defaults.\n");
-        sb.append("{\n");
-        sb.append("  \"settings\": {");
+        sb.append("# Cadmus wilderness defaults.\n");
+        sb.append("# Values: allow, deny, inherit; inherit falls back to the parent setting.\n");
+        sb.append("# Applied to wilderness settings in place of the built-in defaults.\n");
 
-        boolean first = true;
-        for (Map.Entry<String, Entry> group : group(values).entrySet()) {
-            sb.append(first ? "\n" : ",\n");
-            first = false;
-            Entry entry = group.getValue();
-            if (entry.children.isEmpty()) {
-                sb.append("    \"").append(group.getKey()).append("\": \"").append(stateName(entry.value)).append("\"");
-                continue;
-            }
-            sb.append("    \"").append(group.getKey()).append("\": {\n");
-            if (entry.value != null) {
-                sb.append("      \"value\": \"").append(stateName(entry.value)).append("\",\n");
-            }
-            int index = 0;
-            for (Map.Entry<String, Boolean> child : entry.children.entrySet()) {
-                sb.append("      \"").append(child.getKey()).append("\": \"").append(stateName(child.getValue())).append("\"");
-                sb.append(++index < entry.children.size() ? ",\n" : "\n");
-            }
-            sb.append("    }");
+        Map<String, Entry> groups = group(values);
+        for (Map.Entry<String, Entry> group : groups.entrySet()) {
+            if (!group.getValue().children.isEmpty()) continue;
+            sb.append(quote(group.getKey())).append(" = \"").append(stateName(group.getValue().value)).append("\"\n");
         }
-        sb.append("\n  }\n}\n");
+        for (Map.Entry<String, Entry> group : groups.entrySet()) {
+            Entry entry = group.getValue();
+            if (entry.children.isEmpty()) continue;
+            sb.append("\n[").append(quote(group.getKey())).append("]\n");
+            if (entry.value != null) {
+                sb.append("value = \"").append(stateName(entry.value)).append("\"\n");
+            }
+            entry.children.forEach((key, value) ->
+                sb.append(quote(key)).append(" = \"").append(stateName(value)).append("\"\n"));
+        }
         return sb.toString();
     }
 
@@ -172,13 +158,8 @@ public final class WildernessDefaultsConfig {
         return value == null || value ? "allow" : "deny";
     }
 
-    private static String stripComments(String text) {
-        StringBuilder sb = new StringBuilder();
-        for (String line : text.split("\n")) {
-            int index = line.indexOf("//");
-            sb.append(index < 0 ? line : line.substring(0, index)).append('\n');
-        }
-        return sb.toString();
+    private static String quote(String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
     private static final class Entry {

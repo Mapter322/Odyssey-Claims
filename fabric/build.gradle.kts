@@ -34,6 +34,9 @@ dependencies {
     modApi(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "$fabricApiVersion+$minecraftVersion")
     include(modImplementation(group = "eu.pb4", name = "common-protection-api", version = commonProtectionApiVersion))
 
+    include("com.electronwill.night-config:toml:3.8.0")
+    include("com.electronwill.night-config:core:3.8.0")
+
     // modLocalRuntime(group = "maven.modrinth", name = "xaeros-world-map", version = "fabric-1.21.1-1.44.2")
     // modLocalRuntime(group = "maven.modrinth", name = "xaeros-minimap", version = "fabric-1.21.1-26.4.2")
 }

@@ -84,6 +84,8 @@ subprojects {
 
         "modCompileOnly"(group = "info.journeymap", name = "journeymap-api-$modLoader", version = journeymapApiVersion)
 
+        "compileOnly"(group = "com.electronwill.night-config", name = "toml", version = "3.8.0")
+
         if (!isCommon) {
             "include"(olympus)
 
