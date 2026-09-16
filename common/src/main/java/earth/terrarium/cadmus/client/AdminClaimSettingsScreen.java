@@ -4,27 +4,34 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.teamresourceful.resourcefullib.client.CloseablePoseStack;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
+import earth.terrarium.argonauts.client.Modals;
 import earth.terrarium.argonauts.client.screens.BaseScreen;
 import earth.terrarium.argonauts.client.widget.LabelledEntry;
+import earth.terrarium.argonauts.client.widget.SettingCategoryEntry;
 import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
+import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.BulkClaimSettingsPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.ModifyAdminClaimConditionPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.UpdateAdminClaimInfoPacket;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.TargetConditions;
 import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.base.ListWidget;
+import earth.terrarium.olympus.client.components.buttons.Button;
 import earth.terrarium.olympus.client.components.compound.radio.RadioState;
 import earth.terrarium.olympus.client.components.renderers.WidgetRenderers;
 import earth.terrarium.olympus.client.constants.MinecraftColors;
 import earth.terrarium.olympus.client.ui.OverlayAlignment;
 import earth.terrarium.olympus.client.ui.UIConstants;
+import earth.terrarium.olympus.client.ui.UIIcons;
 import earth.terrarium.olympus.client.utils.State;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,14 +40,18 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class AdminClaimSettingsScreen extends BaseScreen {
 
@@ -52,12 +63,16 @@ public class AdminClaimSettingsScreen extends BaseScreen {
     private static final int SAVE_W = 80;
     private static final int SAVE_H = 16;
 
-    private final OpenAdminClaimSettingsPacket packet;
+    private OpenAdminClaimSettingsPacket packet;
     private final Map<String, RadioState<TriState>> booleanStates = new LinkedHashMap<>();
     private final Map<String, State<String>> textStates = new LinkedHashMap<>();
+    private final Set<String> expandedCategories = new HashSet<>();
     private final State<String> name;
     private final State<String> motd;
     private final State<Color> color;
+
+    private ListWidget list;
+    private Integer pendingScroll;
 
     public AdminClaimSettingsScreen(OpenAdminClaimSettingsPacket packet) {
         super(Component.translatable("gui.cadmus.admin_claim.settings"), 280, 280);
@@ -65,18 +80,29 @@ public class AdminClaimSettingsScreen extends BaseScreen {
         this.name = State.of(packet.name());
         this.motd = State.of(packet.motd());
         this.color = State.of(packet.color());
+        this.buildStates();
+    }
 
+    public boolean matches(TeamId id) {
+        return this.packet.id().equals(id);
+    }
+
+    public void refresh(OpenAdminClaimSettingsPacket packet) {
+        this.packet = packet;
+        this.name.set(packet.name());
+        this.motd.set(packet.motd());
+        this.color.set(packet.color());
+        this.buildStates();
+        if (this.list != null) this.pendingScroll = this.list.getScroll();
+        this.rebuildWidgets();
+    }
+
+    private void buildStates() {
+        this.booleanStates.clear();
+        this.textStates.clear();
         SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
             if (IDENTITY_SETTINGS.contains(id)) return;
-            String value = packet.settings().get(id);
-            if (value == null && definition.hasParent()) {
-                SettingDefinition<?> parent = SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).get(definition.parent());
-                if (parent != null) {
-                    value = packet.settings().get(parent.id());
-                    if (value == null) value = SettingCommandSupport.valueToString(parent.defaultValue());
-                }
-            }
-            if (value == null) value = SettingCommandSupport.valueToString(definition.defaultValue());
+            String value = this.valueFor(id, definition.hasParent() ? definition.parent() : null);
             if (definition.defaultValue() instanceof BooleanSetting) {
                 TriState tri = Boolean.parseBoolean(value) ? TriState.TRUE : TriState.FALSE;
                 this.booleanStates.put(id, RadioState.of(tri, tri == TriState.TRUE ? 0 : 2));
@@ -84,6 +110,26 @@ public class AdminClaimSettingsScreen extends BaseScreen {
                 this.textStates.put(id, State.of(value));
             }
         });
+        for (String condition : this.packet.conditions()) {
+            if (this.booleanStates.containsKey(condition) || this.textStates.containsKey(condition)) continue;
+            String value = this.valueFor(condition, TargetConditions.parentOf(condition));
+            TriState tri = Boolean.parseBoolean(value) ? TriState.TRUE : TriState.FALSE;
+            this.booleanStates.put(condition, RadioState.of(tri, tri == TriState.TRUE ? 0 : 2));
+        }
+    }
+
+    private String valueFor(String id, @Nullable String parentId) {
+        String value = this.packet.settings().get(id);
+        if (value == null && parentId != null) {
+            value = this.packet.settings().get(parentId);
+            if (value == null) {
+                SettingDefinition<?> parent = SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).get(parentId);
+                if (parent != null) value = SettingCommandSupport.valueToString(parent.defaultValue());
+            }
+        }
+        if (value != null) return value;
+        SettingDefinition<?> definition = SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).get(id);
+        return definition == null ? "true" : SettingCommandSupport.valueToString(definition.defaultValue());
     }
 
     @Override
@@ -109,9 +155,10 @@ public class AdminClaimSettingsScreen extends BaseScreen {
         int footerTop = this.topPos + this.imageHeight - FOOTER_TOTAL;
         int listHeight = footerTop - listY - 4;
 
-        ListWidget list = new ListWidget(listWidth, listHeight);
+        SettingsListWidget list = new SettingsListWidget(listWidth, listHeight);
         list.withGap(3);
         list.setPosition(this.leftPos + SIDE_PADDING, listY);
+        this.list = list;
 
         AbstractWidget nameBox = Widgets.textInput(this.name).withMaxLength(32).withPlaceholder("Admin Claim").withSize(116, 16);
         AbstractWidget motdBox = Widgets.textInput(this.motd).withMaxLength(64).withPlaceholder("MOTD").withSize(116, 16);
@@ -132,29 +179,50 @@ public class AdminClaimSettingsScreen extends BaseScreen {
             .setDrawDivider(true));
 
         for (SettingTarget target : SettingTarget.values()) {
-            Consumer<TriState> apply = hasBooleanSettings(target) ? value -> this.applyTarget(target, value) : null;
-            list.add(new SettingSectionHeader(this.font, targetLabel(target), () -> this.aggregateState(target), apply));
+            list.add(new SettingSectionHeader(this.font, targetLabel(target)));
 
+            Map<String, List<ChildEntry>> children = new LinkedHashMap<>();
+            List<SettingDefinition<?>> roots = new ArrayList<>();
             SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
                 if (IDENTITY_SETTINGS.contains(id) || definition.target() != target) return;
-                RadioState<TriState> state = this.booleanStates.get(id);
-                if (state != null) {
-                    list.add(new LabelledEntry(this.font, settingLabel(definition), Widgets.tristate(state))
-                        .setLockedWidth()
-                        .setColor(MinecraftColors.GRAY.getValue())
-                        .setDrawDivider(true));
+                if (definition.hasParent()) {
+                    children.computeIfAbsent(definition.parent(), ignored -> new ArrayList<>())
+                        .add(new ChildEntry(id, conditionLabel(definition), false));
                 } else {
-                    State<String> textState = this.textStates.get(id);
-                    if (textState != null) {
-                        AbstractWidget input = Widgets.textInput(textState).withMaxLength(64).withSize(100, 16);
-                        list.add(new LabelledEntry(this.font, settingLabel(definition), input)
-                            .setLockedWidth()
-                            .setEntryYOffset(-2)
-                            .setColor(MinecraftColors.GRAY.getValue())
-                            .setDrawDivider(true));
-                    }
+                    roots.add(definition);
                 }
             });
+            if (target == SettingTarget.PLAYER) {
+                for (String condition : this.packet.conditions()) {
+                    if (SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).containsKey(condition)) continue;
+                    String parent = TargetConditions.parentOf(condition);
+                    String key = TargetConditions.keyOf(condition);
+                    if (parent == null || key == null) continue;
+                    children.computeIfAbsent(parent, ignored -> new ArrayList<>())
+                        .add(new ChildEntry(condition, Component.literal(key), true));
+                }
+            }
+
+            for (SettingDefinition<?> root : roots) {
+                List<ChildEntry> group = children.get(root.id());
+                if (group == null || group.isEmpty()) {
+                    addSettingRow(list, root.id(), Component.translatable("cadmus.setting." + root.id()), false, false);
+                    continue;
+                }
+                list.add(categoryRow(root));
+                if (!this.expandedCategories.contains(root.id())) continue;
+                for (ChildEntry child : group) {
+                    addSettingRow(list, child.id(), child.label(), true, child.dynamic());
+                }
+                if (TargetConditions.isValidParent(root.id())) {
+                    list.add(addConditionButton(root.id()));
+                }
+            }
+        }
+
+        if (this.pendingScroll != null) {
+            list.restoreScroll(this.pendingScroll);
+            this.pendingScroll = null;
         }
 
         FrameLayout footer = new FrameLayout(listWidth, FOOTER_TOTAL);
@@ -199,49 +267,141 @@ public class AdminClaimSettingsScreen extends BaseScreen {
         }
     }
 
-    private boolean hasBooleanSettings(SettingTarget target) {
-        for (var entry : SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).entrySet()) {
-            if (IDENTITY_SETTINGS.contains(entry.getKey())) continue;
-            if (entry.getValue().target() == target && this.booleanStates.containsKey(entry.getKey())) return true;
+    private void addSettingRow(ListWidget list, String id, Component label, boolean child, boolean dynamic) {
+        RadioState<TriState> state = this.booleanStates.get(id);
+        if (state != null) {
+            AbstractWidget value = dynamic ? dynamicToggle(state, id) : Widgets.tristate(state);
+            LabelledEntry entry = new LabelledEntry(this.font, label, value)
+                .setLockedWidth()
+                .setColor(MinecraftColors.GRAY.getValue())
+                .setDrawDivider(true);
+            if (child) entry.setLeftPadding(14);
+            list.add(entry);
+            return;
         }
-        return false;
+        State<String> textState = this.textStates.get(id);
+        if (textState == null) return;
+        AbstractWidget input = Widgets.textInput(textState).withMaxLength(64).withSize(100, 16);
+        LabelledEntry entry = new LabelledEntry(this.font, label, input)
+            .setLockedWidth()
+            .setEntryYOffset(-2)
+            .setColor(MinecraftColors.GRAY.getValue())
+            .setDrawDivider(true);
+        if (child) entry.setLeftPadding(14);
+        list.add(entry);
     }
 
-    private TriState aggregateState(SettingTarget target) {
-        boolean anyTrue = false;
-        boolean anyFalse = false;
-        for (var entry : SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).entrySet()) {
-            if (IDENTITY_SETTINGS.contains(entry.getKey()) || entry.getValue().target() != target) continue;
-            RadioState<TriState> state = this.booleanStates.get(entry.getKey());
-            if (state == null) continue;
-            if (state.get() == TriState.TRUE) anyTrue = true;
-            else if (state.get() == TriState.FALSE) anyFalse = true;
-        }
-        if (anyTrue && !anyFalse) return TriState.TRUE;
-        if (anyFalse && !anyTrue) return TriState.FALSE;
-        return TriState.UNDEFINED;
-    }
-
-    private void applyTarget(SettingTarget target, TriState value) {
-        SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) -> {
-            RadioState<TriState> state = this.booleanStates.get(id);
-            if (IDENTITY_SETTINGS.contains(id) || definition.target() != target || state == null) return;
-            state.set(value);
-            state.setIndex(switch (value) {
-                case TRUE -> 0;
-                case UNDEFINED -> 1;
-                case FALSE -> 2;
+    private AbstractWidget dynamicToggle(RadioState<TriState> state, String id) {
+        return Widgets.carousel(widget -> {
+            widget.withSize(80, 20);
+            widget.withContents(layout -> {
+                layout.withChild(Widgets.tristate(state));
+                layout.withChild(Widgets.button(button -> {
+                    button.withSize(20);
+                    button.withTexture(null);
+                    button.withRenderer(WidgetRenderers.icon(UIIcons.TRASH).withColor(MinecraftColors.RED));
+                    button.withTooltip(Component.translatable("gui.cadmus.claim_settings.remove_condition", id));
+                    button.withCallback(() -> NetworkHandler.CHANNEL.sendToServer(new ModifyAdminClaimConditionPacket(id, false)));
+                }));
             });
         });
     }
 
-    private static Component settingLabel(SettingDefinition<?> definition) {
-        String label = definition.id().contains("/") ? definition.id().substring(definition.id().indexOf('/') + 1) : definition.id();
-        return Component.literal("   ").append(Component.translatable("cadmus.setting." + label));
+    private Button addConditionButton(String parent) {
+        return Widgets.button(button -> {
+            button.withSize(1, 16);
+            button.withTexture(UIConstants.DARK_BUTTON);
+            button.withRenderer(WidgetRenderers.text(Component.translatable("gui.cadmus.claim_settings.add_condition")).withColor(MinecraftColors.WHITE));
+            button.withCallback(() -> this.openConditionModal(parent));
+        });
+    }
+
+    private void openConditionModal(String parent) {
+        Modals.input(
+            Component.translatable("gui.cadmus.claim_settings.add_condition"),
+            Component.translatable("gui.cadmus.claim_settings.add_condition.description"),
+            Component.translatable("gui.cadmus.claim_settings.add_condition.placeholder"),
+            64,
+            Component.translatable("gui.cadmus.claim_settings.add_condition"),
+            input -> this.normalizeCondition(parent, input) != null,
+            input -> {
+                String condition = this.normalizeCondition(parent, input);
+                if (condition != null) {
+                    NetworkHandler.CHANNEL.sendToServer(new ModifyAdminClaimConditionPacket(condition, true));
+                }
+            }
+        );
+    }
+
+    @Nullable
+    private String normalizeCondition(String parent, String input) {
+        if (!TargetConditions.isValidParent(parent)) return null;
+        String value = input.strip();
+        if (value.isEmpty()) return null;
+        int index = value.indexOf('/');
+        if (index >= 0) {
+            if (!value.substring(0, index).equals(parent)) return null;
+            value = value.substring(index + 1);
+            if (value.isEmpty()) return null;
+        }
+        if (TargetConditions.create(parent, value) == null) return null;
+        String condition = parent + "/" + value;
+        if (SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).containsKey(condition)) return null;
+        if (this.packet.conditions().contains(condition)) return null;
+        return condition;
+    }
+
+    private void toggleCategory(String key) {
+        if (!this.expandedCategories.remove(key)) this.expandedCategories.add(key);
+        if (this.list != null) this.pendingScroll = this.list.getScroll();
+        this.rebuildWidgets();
+    }
+
+    private SettingCategoryEntry categoryRow(SettingDefinition<?> definition) {
+        RadioState<TriState> state = this.booleanStates.get(definition.id());
+        Supplier<TriState> value = state == null ? () -> TriState.UNDEFINED : state::get;
+        Consumer<TriState> apply = state == null ? null : newValue -> {
+            state.set(newValue);
+            state.setIndex(switch (newValue) {
+                case TRUE -> 0;
+                case UNDEFINED -> 1;
+                case FALSE -> 2;
+            });
+        };
+        return new SettingCategoryEntry(
+            this.font,
+            Component.translatable("cadmus.setting." + definition.id()),
+            () -> this.expandedCategories.contains(definition.id()),
+            value,
+            () -> this.toggleCategory(definition.id()),
+            apply,
+            true
+        );
+    }
+
+    private static Component conditionLabel(SettingDefinition<?> definition) {
+        if (definition.hasConditions()) {
+            return Component.literal(definition.conditions().get(0).display());
+        }
+        return Component.literal(definition.id());
     }
 
     private static Component targetLabel(SettingTarget target) {
         return Component.translatable("cadmus.setting.target." + target.name().toLowerCase(Locale.ROOT));
+    }
+
+    private record ChildEntry(String id, Component label, boolean dynamic) {
+    }
+
+    private static class SettingsListWidget extends ListWidget {
+
+        SettingsListWidget(int width, int height) {
+            super(width, height);
+        }
+
+        void restoreScroll(int scroll) {
+            this.scroll = Math.max(0, Math.min(scroll, Math.max(0, this.getContentHeight() - this.getHeight())));
+        }
     }
 
     @Override

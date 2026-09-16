@@ -16,6 +16,7 @@ import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.argonauts.api.util.ModUtils;
@@ -142,7 +143,7 @@ public class AdminClaimCommands {
         requireAdmin(source);
         SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((id, definition) ->
             SettingCommandSupport.send(source, "command.cadmus.setting.get", id,
-                SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(source.getServer(), adminTeam(), definition)))
+                String.valueOf(Settings.getForTeam(source.getServer(), adminTeam(), definition)))
         );
     }
 
@@ -151,13 +152,14 @@ public class AdminClaimCommands {
         TeamId id = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
         var settings = new HashMap<String, String>();
         SettingDefinitions.forScope(SettingScope.ADMIN_CLAIM).forEach((setting, definition) ->
-            settings.put(setting, SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, definition))));
+            settings.put(setting, String.valueOf(Settings.getForTeam(player.getServer(), id, definition))));
         NetworkHandler.CHANNEL.sendToPlayer(new OpenAdminClaimSettingsPacket(
             id,
             SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, SettingDefinitions.DISPLAY_NAME)),
             CadmusSaveData.getSettingValue(player.getServer(), id, SettingDefinitions.COLOR).value(),
             SettingCommandSupport.valueToString(CadmusSaveData.getSettingValue(player.getServer(), id, SettingDefinitions.MOTD)),
-            settings
+            settings,
+            CadmusSaveData.getConditions(player.getServer(), id)
         ), player);
     }
 

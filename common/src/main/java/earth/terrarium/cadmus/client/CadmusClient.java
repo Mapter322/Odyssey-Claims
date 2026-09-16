@@ -120,7 +120,12 @@ public class CadmusClient {
     }
 
     public static void openAdminClaimSettings(OpenAdminClaimSettingsPacket packet) {
-        Minecraft.getInstance().setScreen(new AdminClaimSettingsScreen(packet));
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof AdminClaimSettingsScreen screen && screen.matches(packet.id())) {
+            screen.refresh(packet);
+        } else {
+            minecraft.setScreen(new AdminClaimSettingsScreen(packet));
+        }
     }
 
     public static void sendTownCreate(String name, ChunkPos start, ChunkPos end) {

@@ -8,10 +8,12 @@ import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
 import earth.terrarium.cadmus.common.claims.limit.VanillaClaimLimiter;
 import earth.terrarium.cadmus.common.camps.CampManager;
+import earth.terrarium.cadmus.common.config.AdminClaimDefaultsConfig;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.protections.Protections;
 import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
+import earth.terrarium.cadmus.common.settings.AdminClaimTargets;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.teams.CampTeamProvider;
 import earth.terrarium.cadmus.common.teams.IndividualTeamProvider;
@@ -85,6 +87,8 @@ public class Cadmus {
             CadmusRoleTargets.prune(server);
         }
         AdminTeamProvider.ensureAdminTeam(server);
+        AdminClaimDefaultsConfig.ensureLoaded();
+        AdminClaimTargets.registerAll(server);
         CampManager.prune(server);
         FORCE_LOADED_CHUNK_COUNT = 0;
         server.getAllLevels().forEach(level ->

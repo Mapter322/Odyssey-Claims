@@ -38,6 +38,7 @@ public class CadmusSaveData extends SaveHandler {
     private final Map<TeamId, Color> teamColors = new HashMap<>();
     private final Set<UUID> uniquePlayers = new HashSet<>();
     private final Map<UUID, Town> towns = new HashMap<>();
+    private final Map<TeamId, Set<String>> teamConditions = new HashMap<>();
 
     @Override
     public void loadData(CompoundTag tag) {
@@ -71,6 +72,13 @@ UUID id = UUID.fromString(idString);
         CompoundTag adminTeamsTag = tag.getCompound("adminTeams");
         adminTeamsTag.getAllKeys().forEach(name ->
             adminTeams.put(UUID.fromString(adminTeamsTag.getString(name)), name));
+
+        CompoundTag conditionsTag = tag.getCompound("teamConditions");
+        conditionsTag.getAllKeys().forEach(teamName -> {
+            Set<String> conditions = new HashSet<>();
+            conditionsTag.getCompound(teamName).getAllKeys().forEach(conditions::add);
+            if (!conditions.isEmpty()) teamConditions.put(parseTeamId(teamName), conditions);
+        });
 
         loadSettingValues(tag.getCompound("settingValues"));
         loadTownSettingValues(tag.getCompound("townSettings"));
@@ -108,6 +116,14 @@ tag.put("towns", townsTag);
         adminTeams.forEach((id, name) -> adminTeamsTag.putString(name, id.toString()));
         tag.put("adminTeams", adminTeamsTag);
 
+        CompoundTag conditionsTag = new CompoundTag();
+        teamConditions.forEach((team, conditions) -> {
+            CompoundTag teamTag = new CompoundTag();
+            conditions.forEach(condition -> teamTag.putBoolean(condition, true));
+            conditionsTag.put(teamKey(team), teamTag);
+        });
+        tag.put("teamConditions", conditionsTag);
+
         tag.put("settingValues", saveSettingValues());
         tag.put("townSettings", saveTownSettingValues());
         tag.put("playerSettingOverrides", savePlayerSettingOverrides());
@@ -144,6 +160,31 @@ public static CadmusSaveData read(MinecraftServer server) {
 
     public static Collection<String> getAllAdminTeamNames(MinecraftServer server) {
         return read(server).adminTeams.values();
+    }
+
+    public static Set<String> getConditions(MinecraftServer server, TeamId id) {
+        return Set.copyOf(read(server).teamConditions.getOrDefault(id, Set.of()));
+    }
+
+    public static Set<String> getAllConditions(MinecraftServer server) {
+        Set<String> result = new HashSet<>();
+        read(server).teamConditions.values().forEach(result::addAll);
+        return result;
+    }
+
+    public static void addCondition(MinecraftServer server, TeamId id, String condition) {
+        var data = read(server);
+        data.teamConditions.computeIfAbsent(id, ignored -> new HashSet<>()).add(condition);
+        data.setDirty();
+    }
+
+    public static void removeCondition(MinecraftServer server, TeamId id, String condition) {
+        var data = read(server);
+        Set<String> conditions = data.teamConditions.get(id);
+        if (conditions == null) return;
+        conditions.remove(condition);
+        if (conditions.isEmpty()) data.teamConditions.remove(id);
+        data.setDirty();
     }
 
     public static boolean canBypass(MinecraftServer server, UUID player) {
@@ -273,6 +314,7 @@ public static CadmusSaveData read(MinecraftServer server) {
         var data = read(server);
         data.settingValues.values().forEach(values -> values.remove(id));
         data.playerSettingOverrides.values().forEach(values -> values.remove(id));
+        data.teamConditions.remove(id);
         data.setDirty();
     }
 
@@ -282,6 +324,7 @@ public static CadmusSaveData read(MinecraftServer server) {
         data.townSettingValues.clear();
         data.playerSettingOverrides.clear();
         data.adminTeams.clear();
+        data.teamConditions.clear();
         data.setDirty();
     }
 

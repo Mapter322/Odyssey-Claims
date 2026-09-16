@@ -11,6 +11,7 @@ import earth.terrarium.cadmus.api.settings.SettingValue;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.config.AdminClaimDefaultsConfig;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.towns.Town;
 import earth.terrarium.cadmus.common.towns.TownManager;
@@ -103,6 +104,10 @@ public final class Settings {
 
     @Nullable
     private static SettingValue<?> configValue(SettingDefinition<?> definition) {
+        if (definition.scope() == SettingScope.ADMIN_CLAIM) {
+            Boolean value = AdminClaimDefaultsConfig.get(definition.id());
+            return value == null ? null : new BooleanSetting(value);
+        }
         Map<String, Boolean> defaults = CadmusConfig.get().defaultClaimSettings;
         if (defaults == null || !(definition.defaultValue() instanceof BooleanSetting)) return null;
         Boolean value = defaults.get(definition.id());
@@ -126,7 +131,7 @@ public final class Settings {
     }
 
     public static boolean isPlayerAllowed(Level level, UUID player, TeamId team, @Nullable ChunkPos pos, SettingDefinition<Boolean> definition) {
-        if (definition.target() != SettingTarget.PLAYER) {
+        if (definition.target() != SettingTarget.PLAYER || (!level.isClientSide() && team.isAdmin())) {
             return pos == null ? getForTeam(level.getServer(), team, definition) : getAt(level, pos, definition);
         }
         if (!level.isClientSide()) {

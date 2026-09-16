@@ -12,8 +12,9 @@ import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.client.CadmusClient;
 
 import java.util.Map;
+import java.util.Set;
 
-public record OpenAdminClaimSettingsPacket(TeamId id, String name, Color color, String motd, Map<String, String> settings) implements Packet<OpenAdminClaimSettingsPacket> {
+public record OpenAdminClaimSettingsPacket(TeamId id, String name, Color color, String motd, Map<String, String> settings, Set<String> conditions) implements Packet<OpenAdminClaimSettingsPacket> {
     public static final ClientboundPacketType<OpenAdminClaimSettingsPacket> TYPE = CodecPacketType.Client.create(
         Cadmus.id("open_admin_claim_settings"),
         ObjectByteCodec.create(
@@ -22,6 +23,7 @@ public record OpenAdminClaimSettingsPacket(TeamId id, String name, Color color, 
             Color.BYTE_CODEC.fieldOf(OpenAdminClaimSettingsPacket::color),
             ByteCodec.STRING.fieldOf(OpenAdminClaimSettingsPacket::motd),
             ByteCodec.mapOf(ByteCodec.STRING, ByteCodec.STRING).fieldOf(OpenAdminClaimSettingsPacket::settings),
+            ByteCodec.STRING.setOf().fieldOf(OpenAdminClaimSettingsPacket::conditions),
             OpenAdminClaimSettingsPacket::new
         ),
         NetworkHandle.handle(CadmusClient::openAdminClaimSettings)

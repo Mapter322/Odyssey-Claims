@@ -58,7 +58,8 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void apply(BulkClaimSettingsPacket packet, Player player, SettingScope scope, TeamId teamId, @Nullable UUID townId, String setting, String value) {
         SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
-        if (definition == null || definition.target() != SettingTarget.GLOBAL || !canModify(player, definition, teamId)) return;
+        if (definition == null || !canModify(player, definition, teamId)) return;
+        if (definition.target() != SettingTarget.GLOBAL && !teamId.isAdmin()) return;
         try {
             SettingValue<?> parsed = SettingCommandSupport.parse(definition, value);
             if (townId == null) {
@@ -72,7 +73,8 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
 
     private static void reset(BulkClaimSettingsPacket packet, Player player, SettingScope scope, TeamId teamId, @Nullable UUID townId, String setting) {
         SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
-        if (definition == null || definition.target() != SettingTarget.GLOBAL || !canModify(player, definition, teamId)) return;
+        if (definition == null || !canModify(player, definition, teamId)) return;
+        if (definition.target() != SettingTarget.GLOBAL && !teamId.isAdmin()) return;
         if (townId == null) {
             CadmusSaveData.resetSettingValue(player.getServer(), teamId, definition);
         } else {
