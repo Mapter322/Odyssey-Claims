@@ -32,6 +32,7 @@ public final class TownManager {
     public static final String ERR_TOWN_NOT_FOUND = "command.cadmus.exception.town.not_found";
     public static final String ERR_TOWN_NAME = "command.cadmus.exception.town.invalid_name";
     public static final String ERR_TOWN_NAME_TAKEN = "command.cadmus.exception.town.name_taken";
+    public static final String ERR_DIMENSION_BLOCKED = "command.cadmus.exception.dimension_blocked";
 
     private static final Set<String> RESERVED_NAMES = Set.of("create");
 
@@ -73,6 +74,7 @@ public final class TownManager {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
         if (team == null) return Component.translatable(ERR_NO_GUILD);
         if (!TeamApi.API.canManageClaims(player, team)) return Component.translatable(ERR_NO_PERMISSION);
+        if (!CadmusConfig.get().isClaimingAllowed(player.level())) return Component.translatable(ERR_DIMENSION_BLOCKED);
         name = name == null ? "" : name.strip();
         if (!isValidTownName(name)) return Component.translatable(ERR_TOWN_NAME);
         Collection<Town> towns = getTowns(player.server, team);
@@ -104,6 +106,7 @@ public final class TownManager {
     public static Component add(ServerPlayer player, UUID townId, ChunkPos start, ChunkPos end) {
         Town town = getTown(player.server, townId).orElse(null);
         if (town == null || !TeamApi.API.canManageClaims(player, town.team())) return Component.translatable(town == null ? ERR_TOWN_NOT_FOUND : ERR_NO_PERMISSION);
+        if (!CadmusConfig.get().isClaimingAllowed(player.level())) return Component.translatable(ERR_DIMENSION_BLOCKED);
         Set<ChunkPos> positions = positions(start, end);
         positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
         if (positions.isEmpty()) return null;

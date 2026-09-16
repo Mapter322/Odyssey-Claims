@@ -40,6 +40,7 @@ public final class CampManager {
         if (data.camps().containsKey(player.getUUID())) return "cadmus.camp.already_active";
 
         ServerLevel level = player.serverLevel();
+        if (!CadmusConfig.get().isClaimingAllowed(level)) return "cadmus.camp.dimension_blocked";
         if (ClaimApi.API.getClaim(level, pos).isPresent()) return TownManager.ERR_CHUNK_CLAIMED;
         if (isTooCloseToOtherClaims(level, pos)) return ERR_TOO_CLOSE;
 

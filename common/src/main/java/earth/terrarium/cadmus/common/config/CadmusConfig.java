@@ -9,11 +9,15 @@ import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.settings.SettingTarget;
 import earth.terrarium.cadmus.api.settings.types.BooleanSetting;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CadmusConfig {
@@ -22,7 +26,12 @@ public class CadmusConfig {
 
     public int minChunksBetweenTowns = 10;
     public int personalCampDurationSeconds = 86400;
+    public List<String> blockedClaimDimensions = new ArrayList<>();
     public Map<String, Boolean> defaultClaimSettings = createDefaultClaimSettings();
+
+    public boolean isClaimingAllowed(Level level) {
+        return !blockedClaimDimensions.contains(level.dimension().location().toString());
+    }
 
     private static Map<String, Boolean> createDefaultClaimSettings() {
         Map<String, Boolean> defaults = new LinkedHashMap<>();
@@ -67,6 +76,16 @@ public class CadmusConfig {
                 CommentedConfig root = new TomlParser().parse(reader);
                 config.minChunksBetweenTowns = root.getIntOrElse("claims.min-chunks-between-towns", config.minChunksBetweenTowns);
                 config.personalCampDurationSeconds = root.getIntOrElse("camps.camp-duration-seconds", config.personalCampDurationSeconds);
+                Object blocked = root.get("claims.blocked-dimensions");
+                if (blocked instanceof List<?> list) {
+                    List<String> dimensions = new ArrayList<>();
+                    list.forEach(value -> {
+                        if (value instanceof String string && ResourceLocation.tryParse(string) != null) {
+                            dimensions.add(string);
+                        }
+                    });
+                    config.blockedClaimDimensions = dimensions;
+                }
                 Object settings = root.get("town-settings");
                 if (settings instanceof Config table && !table.isEmpty()) {
                     Map<String, Boolean> defaults = new LinkedHashMap<>();
@@ -90,6 +109,14 @@ public class CadmusConfig {
         sb.append("[claims]\n");
         sb.append("# Minimum distance in chunks between towns and camps.\n");
         sb.append("min-chunks-between-towns = ").append(minChunksBetweenTowns).append("\n\n");
+        sb.append("# Dimensions where claiming chunks is disabled; claiming is allowed everywhere else.\n");
+        sb.append("# Example: blocked-dimensions = [\"minecraft:the_end\"]\n");
+        sb.append("blocked-dimensions = [");
+        for (int i = 0; i < blockedClaimDimensions.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(quote(blockedClaimDimensions.get(i)));
+        }
+        sb.append("]\n\n");
 
         sb.append("[camps]\n");
         sb.append("# Lifetime of a personal camp in seconds (86400 = 24 hours).\n");

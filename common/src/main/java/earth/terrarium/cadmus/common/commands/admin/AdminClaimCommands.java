@@ -6,12 +6,14 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import earth.terrarium.argonauts.api.util.ModUtils;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
 import earth.terrarium.cadmus.common.commands.claims.ForceloadCommand;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
+import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
@@ -19,12 +21,12 @@ import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
-import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
@@ -105,6 +107,9 @@ public class AdminClaimCommands {
 
     private static void claimFixed(CommandSourceStack source, ChunkPos pos) throws CommandSyntaxException {
         requireAdmin(source);
+        if (!CadmusConfig.get().isClaimingAllowed(source.getLevel())) {
+            throw new SimpleCommandExceptionType(Component.translatable("command.cadmus.exception.dimension_blocked")).create();
+        }
         AdminTeamProvider.ensureAdminTeam(source.getServer());
         ClaimCommand.checkClaimed(source.getLevel(), pos);
         ClaimApi.API.claim(source.getLevel(), TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID), pos, false);

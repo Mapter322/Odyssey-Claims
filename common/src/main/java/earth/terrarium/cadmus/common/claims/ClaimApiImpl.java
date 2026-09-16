@@ -9,6 +9,7 @@ import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.*;
+import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import it.unimi.dsi.fastutil.objects.*;
@@ -25,6 +26,8 @@ public class ClaimApiImpl implements ClaimApi {
 
     @Override
     public void claim(Level level, TeamId id, ChunkPos pos, boolean chunkLoad) {
+        if (!level.isClientSide() && !CadmusConfig.get().isClaimingAllowed(level)) return;
+
         if (chunkLoad) {
             level.getChunkSource().updateChunkForced(pos, true);
             Cadmus.FORCE_LOADED_CHUNK_COUNT++;
@@ -71,6 +74,8 @@ public class ClaimApiImpl implements ClaimApi {
 
     @Override
     public void claim(Level level, TeamId id, Object2BooleanMap<ChunkPos> positions) {
+        if (!level.isClientSide() && !CadmusConfig.get().isClaimingAllowed(level)) return;
+
         positions.forEach((pos, chunkLoad) -> {
             if (chunkLoad) {
                 level.getChunkSource().updateChunkForced(pos, true);

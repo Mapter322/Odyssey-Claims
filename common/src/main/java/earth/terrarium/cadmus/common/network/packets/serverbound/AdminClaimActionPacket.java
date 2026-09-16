@@ -8,9 +8,11 @@ import com.teamresourceful.resourcefullib.common.network.base.NetworkHandle;
 import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
+import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,6 +32,10 @@ public record AdminClaimActionPacket(ChunkPos start, ChunkPos end, boolean claim
         ),
         NetworkHandle.handle((packet, player) -> {
             if (!(player instanceof ServerPlayer serverPlayer) || !serverPlayer.hasPermissions(2)) return;
+            if (packet.claim() && !CadmusConfig.get().isClaimingAllowed(serverPlayer.level())) {
+                NotificationApi.notify(serverPlayer, "command.cadmus.exception.dimension_blocked");
+                return;
+            }
 
             TeamId admin = TeamId.ofAdmin(AdminTeamProvider.ADMIN_ID);
             Set<ChunkPos> positions = ChunkPos.rangeClosed(packet.start(), packet.end()).collect(java.util.stream.Collectors.toSet());
