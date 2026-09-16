@@ -39,15 +39,17 @@ public final class EntityDamageProtection implements Protection {
         if (entity.getType().is(ModEntityTypeTags.ALLOWS_CLAIM_DAMAGE_ENTITIES)) return true;
         if (level.isClientSide()) return true;
         return getId(level, entity.chunkPosition()).map(team ->
-            checkFlags(level.getServer(), entity, team, specific(entity, team.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN))
-                && isPlayerAllowed(level, player, team, specific(entity, team.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN))).orElse(true);
+            checkFlags(level.getServer(), entity, team, specific(entity, Settings.scopeOf(team)))
+                && isPlayerAllowed(level, player, team, specific(entity, Settings.scopeOf(team)))).orElse(true);
     }
 
     @SuppressWarnings("unchecked")
     private static SettingDefinition<Boolean> specific(Entity entity, SettingScope scope) {
-        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
-            ? SettingDefinitions.ADMIN_ENTITY_DAMAGE
-            : SettingDefinitions.ENTITY_DAMAGE;
+        SettingDefinition<Boolean> best = switch (scope) {
+            case ADMIN_CLAIM -> SettingDefinitions.ADMIN_ENTITY_DAMAGE;
+            case WILDERNESS -> SettingDefinitions.WILDERNESS_ENTITY_DAMAGE;
+            case TOWN -> SettingDefinitions.ENTITY_DAMAGE;
+        };
         int bestPriority = 0;
         for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "entity-damage")) {
             for (SettingCondition<?> condition : definition.conditions()) {
@@ -61,7 +63,7 @@ public final class EntityDamageProtection implements Protection {
     }
 
     private boolean checkFlags(MinecraftServer server, Entity entity, TeamId team, SettingDefinition<Boolean> definition) {
-        if (!team.isAdmin()) return true;
+        if (!team.isAdmin() && !team.isWilderness()) return true;
 
         if (entity instanceof Player) return Settings.getForTeam(server, team, SettingDefinitions.PVP);
 

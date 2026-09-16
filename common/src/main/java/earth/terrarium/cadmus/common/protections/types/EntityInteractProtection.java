@@ -7,6 +7,7 @@ import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -32,15 +33,17 @@ public final class EntityInteractProtection implements Protection {
     public boolean canInteractWithEntity(Level level, GameProfile player, Entity entity) {
         if (level.isClientSide()) return true;
         return getId(level, entity.chunkPosition())
-            .map(id -> isPlayerAllowed(level, player, id, specific(entity, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)))
+            .map(id -> isPlayerAllowed(level, player, id, specific(entity, Settings.scopeOf(id))))
             .orElse(true);
     }
 
     @SuppressWarnings("unchecked")
     private static SettingDefinition<Boolean> specific(Entity entity, SettingScope scope) {
-        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
-            ? SettingDefinitions.ADMIN_ENTITY_INTERACTIONS
-            : SettingDefinitions.ENTITY_INTERACTIONS;
+        SettingDefinition<Boolean> best = switch (scope) {
+            case ADMIN_CLAIM -> SettingDefinitions.ADMIN_ENTITY_INTERACTIONS;
+            case WILDERNESS -> SettingDefinitions.WILDERNESS_ENTITY_INTERACTIONS;
+            case TOWN -> SettingDefinitions.ENTITY_INTERACTIONS;
+        };
         int bestPriority = 0;
         for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "entity-interactions")) {
             for (SettingCondition<?> condition : definition.conditions()) {

@@ -131,10 +131,12 @@
   "gui.cadmus.claim_map.no_town_selected": "Create a town first",
   "gui.cadmus.claim_map.save": "Save",
   "gui.cadmus.claim_map.color": "Color",
-"gui.cadmus.admin_claim.settings": "Admin Claim Settings",
+  "gui.cadmus.admin_claim.settings": "Admin Claim Settings",
   "gui.cadmus.admin_claim.name": "Name",
   "gui.cadmus.admin_claim.color": "Color",
   "gui.cadmus.admin_claim.motd": "MOTD",
+
+  "gui.cadmus.wilderness.settings": "Wilderness Settings",
 
   "cadmus.setting.target.global": "Global rules",
   "cadmus.setting.target.player": "Player actions",

@@ -7,6 +7,7 @@ import earth.terrarium.cadmus.api.settings.SettingCondition;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -30,7 +31,7 @@ public final class BlockBreakProtection implements Protection {
         if (level.isClientSide()) return true;
         BlockState state = level.getBlockState(pos);
         return getId(level, pos)
-            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)))
+            .map(id -> isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id))))
             .orElse(true);
     }
 
@@ -40,9 +41,11 @@ public final class BlockBreakProtection implements Protection {
 
     @SuppressWarnings("unchecked")
     private static SettingDefinition<Boolean> specific(BlockState state, SettingScope scope) {
-        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
-            ? SettingDefinitions.ADMIN_BLOCK_BREAK
-            : SettingDefinitions.BLOCK_BREAK;
+        SettingDefinition<Boolean> best = switch (scope) {
+            case ADMIN_CLAIM -> SettingDefinitions.ADMIN_BLOCK_BREAK;
+            case WILDERNESS -> SettingDefinitions.WILDERNESS_BLOCK_BREAK;
+            case TOWN -> SettingDefinitions.BLOCK_BREAK;
+        };
         int bestPriority = 0;
         for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "block-break")) {
             for (SettingCondition<?> condition : definition.conditions()) {

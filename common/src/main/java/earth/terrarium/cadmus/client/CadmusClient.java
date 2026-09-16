@@ -14,6 +14,7 @@ import earth.terrarium.cadmus.common.network.packets.serverbound.ForceloadAction
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
+import earth.terrarium.cadmus.common.network.packets.clientbound.OpenWildernessSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncMemberSettingsPacket;
 import earth.terrarium.cadmus.common.teams.TeamInfo;
@@ -125,6 +126,15 @@ public class CadmusClient {
             screen.refresh(packet);
         } else {
             minecraft.setScreen(new AdminClaimSettingsScreen(packet));
+        }
+    }
+
+    public static void openWildernessSettings(OpenWildernessSettingsPacket packet) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof WildernessSettingsScreen screen) {
+            screen.refresh(packet);
+        } else {
+            minecraft.setScreen(new WildernessSettingsScreen(packet));
         }
     }
 

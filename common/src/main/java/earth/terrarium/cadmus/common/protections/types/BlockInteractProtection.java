@@ -8,6 +8,7 @@ import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import net.minecraft.core.BlockPos;
@@ -36,15 +37,17 @@ public final class BlockInteractProtection implements Protection {
         if (state.is(ModBlockTags.ALLOWS_CLAIM_INTERACTIONS)) return true;
         if (level.isClientSide()) return true;
         return getId(level, pos)
-            .map(id -> isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)))
+            .map(id -> isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id))))
             .orElse(true);
     }
 
     @SuppressWarnings("unchecked")
     private static SettingDefinition<Boolean> specific(BlockState state, SettingScope scope) {
-        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
-            ? SettingDefinitions.ADMIN_BLOCK_INTERACTIONS
-            : SettingDefinitions.BLOCK_INTERACTIONS;
+        SettingDefinition<Boolean> best = switch (scope) {
+            case ADMIN_CLAIM -> SettingDefinitions.ADMIN_BLOCK_INTERACTIONS;
+            case WILDERNESS -> SettingDefinitions.WILDERNESS_BLOCK_INTERACTIONS;
+            case TOWN -> SettingDefinitions.BLOCK_INTERACTIONS;
+        };
         int bestPriority = 0;
         for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "block-interactions")) {
             for (SettingCondition<?> condition : definition.conditions()) {

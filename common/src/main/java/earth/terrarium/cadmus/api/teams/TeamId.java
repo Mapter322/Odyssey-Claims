@@ -8,6 +8,7 @@ import com.teamresourceful.bytecodecs.base.ByteCodec;
 import com.teamresourceful.bytecodecs.base.object.ObjectByteCodec;
 import com.teamresourceful.resourcefullib.common.bytecodecs.ExtraByteCodecs;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
+import earth.terrarium.cadmus.common.teams.WildernessTeamProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.UUIDUtil;
@@ -65,8 +66,16 @@ public record TeamId(ResourceLocation provider, UUID id) {
         return new TeamId(AdminTeamProvider.ID, id);
     }
 
+    public static TeamId ofWilderness() {
+        return WildernessTeamProvider.team();
+    }
+
     public boolean isAdmin() {
         return AdminTeamProvider.ID.equals(provider);
+    }
+
+    public boolean isWilderness() {
+        return WildernessTeamProvider.ID.equals(provider);
     }
 
     public String asArg() {

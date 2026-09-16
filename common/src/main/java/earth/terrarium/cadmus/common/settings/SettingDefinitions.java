@@ -99,6 +99,53 @@ public final class SettingDefinitions {
         "color", SettingScope.ADMIN_CLAIM, SettingTarget.GLOBAL, SettingAccess.ADMIN, new ColorSetting(Color.DEFAULT)
     ));
 
+    public static final SettingDefinition<Boolean> WILDERNESS_BLOCK_BREAK = wildernessBoolean("block-break", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_DIRT = wildernessCondition("block-break/minecraft:dirt", SettingTarget.PLAYER, "block-break", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
+    public static final SettingDefinition<Boolean> WILDERNESS_BLOCK_PLACE = wildernessBoolean("block-place", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_PLACE_DIRT = wildernessCondition("block-place/minecraft:dirt", SettingTarget.PLAYER, "block-place", new BlockValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
+    public static final SettingDefinition<Boolean> WILDERNESS_BLOCK_INTERACTIONS = wildernessBoolean("block-interactions", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_DOORS = wildernessCondition("block-interactions/minecraft:doors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.DOORS));
+    public static final SettingDefinition<Boolean> WILDERNESS_TRAPDOORS = wildernessCondition("block-interactions/minecraft:trapdoors", SettingTarget.PLAYER, "block-interactions", new BlockTagCondition(BlockTags.TRAPDOORS));
+    public static final SettingDefinition<Boolean> WILDERNESS_BLOCK_EXPLOSIONS = wildernessBoolean("block-explosions", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ENTITY_EXPLOSIONS = wildernessBoolean("entity-explosions", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ENTITY_INTERACTIONS = wildernessBoolean("entity-interactions", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_BOATS = wildernessCondition("entity-interactions/minecraft:boat", SettingTarget.PLAYER, "entity-interactions",
+        new EntityValueCondition(EntityType.BOAT.builtInRegistryHolder().key().location()),
+        new EntityValueCondition(EntityType.CHEST_BOAT.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> WILDERNESS_HORSES = wildernessCondition("entity-interactions/minecraft:horse", SettingTarget.PLAYER, "entity-interactions", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> WILDERNESS_ENTITY_DAMAGE = wildernessBoolean("entity-damage", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_DAMAGE_HORSES = wildernessCondition("entity-damage/minecraft:horse", SettingTarget.PLAYER, "entity-damage", new EntityValueCondition(EntityType.HORSE.builtInRegistryHolder().key().location()));
+    public static final SettingDefinition<Boolean> WILDERNESS_MOB_GRIEFING = wildernessBoolean("mob-griefing", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ITEM_PICKUP = wildernessBoolean("item-pickup", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_DIRT_ITEM = wildernessCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
+    public static final SettingDefinition<Boolean> WILDERNESS_NON_PLAYERS_PLACE = wildernessBoolean("non-players-place", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_PVP = wildernessBoolean("pvp", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_MONSTER_DAMAGE = wildernessBoolean("monster-damage", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_CREATURE_DAMAGE = wildernessBoolean("creature-damage", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_FIRE_SPREAD = wildernessBoolean("fire-spread", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ALLOW_ENTRY = wildernessBoolean("allow-entry", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ALLOW_EXIT = wildernessBoolean("allow-exit", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_USE = wildernessBoolean("use", SettingTarget.PLAYER);
+    public static final SettingDefinition<Boolean> WILDERNESS_FOOD = wildernessCondition("use/c:foods", SettingTarget.PLAYER, "use", new ItemTagCondition(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "foods"))));
+    public static final SettingDefinition<Boolean> WILDERNESS_POTIONS = wildernessCondition("use/minecraft:potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("potion")));
+    public static final SettingDefinition<Boolean> WILDERNESS_SPLASH_POTIONS = wildernessCondition("use/minecraft:splash_potion", SettingTarget.PLAYER, "use", new ItemValueCondition(ResourceLocation.withDefaultNamespace("splash_potion")));
+
+    public static final SettingDefinition<Boolean> WILDERNESS_SNOW_FALL = wildernessBoolean("snow-fall", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_SNOW_MELT = wildernessBoolean("snow-melt", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ICE_FORM = wildernessBoolean("ice-form", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_ICE_MELT = wildernessBoolean("ice-melt", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_LEAF_DECAY = wildernessBoolean("leaf-decay", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_LIGHTNING = wildernessBoolean("lightning", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_MONSTER_SPAWNING = wildernessBoolean("monster-spawning", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_CREATURE_SPAWNING = wildernessBoolean("creature-spawning", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_KEEP_INVENTORY = wildernessBoolean("keep-inventory", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Float> WILDERNESS_HEAL_RATE = wildernessFloat("heal-rate", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Float> WILDERNESS_FEED_RATE = wildernessFloat("feed-rate", SettingTarget.GLOBAL);
+    public static final SettingDefinition<String> WILDERNESS_ENTRY_DENY_MESSAGE = wildernessString("entry-deny-message", SettingTarget.GLOBAL);
+    public static final SettingDefinition<String> WILDERNESS_EXIT_DENY_MESSAGE = wildernessString("exit-deny-message", SettingTarget.GLOBAL);
+    public static final SettingDefinition<String> WILDERNESS_FAREWELL = wildernessString("farewell", SettingTarget.GLOBAL);
+    public static final SettingDefinition<String> WILDERNESS_GREETING = wildernessString("greeting", SettingTarget.GLOBAL);
+
     private SettingDefinitions() {
     }
 
@@ -146,6 +193,22 @@ public final class SettingDefinitions {
 
     private static SettingDefinition<String> adminString(String id, SettingTarget target) {
         return register(new SettingDefinition<>(id, SettingScope.ADMIN_CLAIM, target, SettingAccess.ADMIN, new StringSetting("")));
+    }
+
+    private static SettingDefinition<Boolean> wildernessBoolean(String id, SettingTarget target) {
+        return register(new SettingDefinition<>(id, SettingScope.WILDERNESS, target, SettingAccess.ADMIN, new BooleanSetting(true)));
+    }
+
+    private static SettingDefinition<Boolean> wildernessCondition(String id, SettingTarget target, String parent, SettingCondition<?>... conditions) {
+        return register(new SettingDefinition<>(id, SettingScope.WILDERNESS, target, SettingAccess.ADMIN, new BooleanSetting(true), parent, List.of(conditions)));
+    }
+
+    private static SettingDefinition<Float> wildernessFloat(String id, SettingTarget target) {
+        return register(new SettingDefinition<>(id, SettingScope.WILDERNESS, target, SettingAccess.ADMIN, new FloatSetting(0.0f)));
+    }
+
+    private static SettingDefinition<String> wildernessString(String id, SettingTarget target) {
+        return register(new SettingDefinition<>(id, SettingScope.WILDERNESS, target, SettingAccess.ADMIN, new StringSetting("")));
     }
 
     public static <T> SettingDefinition<T> register(SettingDefinition<T> definition) {

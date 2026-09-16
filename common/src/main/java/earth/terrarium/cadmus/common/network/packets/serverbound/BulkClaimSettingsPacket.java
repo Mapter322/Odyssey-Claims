@@ -19,6 +19,7 @@ import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.settings.SettingCommandSupport;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import net.minecraft.server.MinecraftServer;
@@ -45,7 +46,7 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
             UUID townId = packet.target().townId().orElse(null);
             if (townId != null && TownManager.getTown(server, townId).filter(town -> town.team().equals(teamId)).isEmpty()) return;
 
-            SettingScope scope = teamId.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN;
+            SettingScope scope = Settings.scopeOf(teamId);
             packet.values().forEach((setting, value) -> apply(packet, player, scope, teamId, townId, setting, value));
             packet.resets().forEach(setting -> reset(packet, player, scope, teamId, townId, setting));
         })
@@ -59,7 +60,7 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
     private static void apply(BulkClaimSettingsPacket packet, Player player, SettingScope scope, TeamId teamId, @Nullable UUID townId, String setting, String value) {
         SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
         if (definition == null || !canModify(player, definition, teamId)) return;
-        if (definition.target() != SettingTarget.GLOBAL && !teamId.isAdmin()) return;
+        if (definition.target() != SettingTarget.GLOBAL && !teamId.isAdmin() && !teamId.isWilderness()) return;
         try {
             SettingValue<?> parsed = SettingCommandSupport.parse(definition, value);
             if (townId == null) {
@@ -74,7 +75,7 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
     private static void reset(BulkClaimSettingsPacket packet, Player player, SettingScope scope, TeamId teamId, @Nullable UUID townId, String setting) {
         SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
         if (definition == null || !canModify(player, definition, teamId)) return;
-        if (definition.target() != SettingTarget.GLOBAL && !teamId.isAdmin()) return;
+        if (definition.target() != SettingTarget.GLOBAL && !teamId.isAdmin() && !teamId.isWilderness()) return;
         if (townId == null) {
             CadmusSaveData.resetSettingValue(player.getServer(), teamId, definition);
         } else {

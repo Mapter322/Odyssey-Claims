@@ -37,7 +37,7 @@ public final class BlockPlaceProtection implements Protection {
         if (id == null) return true;
 
         return entity instanceof Player player ?
-            isPlayerAllowed(entity.level(), player.getGameProfile(), id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN)) :
+            isPlayerAllowed(entity.level(), player.getGameProfile(), id, specific(state, Settings.scopeOf(id))) :
             isEntityAllowed(entity, id);
     }
 
@@ -46,7 +46,7 @@ public final class BlockPlaceProtection implements Protection {
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
 
-        return isPlayerAllowed(level, player, id, specific(state, id.isAdmin() ? SettingScope.ADMIN_CLAIM : SettingScope.TOWN));
+        return isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id)));
     }
 
     public boolean canPlaceBlock(Level level, BlockPos pos, BlockState state) {
@@ -58,9 +58,11 @@ public final class BlockPlaceProtection implements Protection {
 
     @SuppressWarnings("unchecked")
     private static SettingDefinition<Boolean> specific(BlockState state, SettingScope scope) {
-        SettingDefinition<Boolean> best = scope == SettingScope.ADMIN_CLAIM
-            ? SettingDefinitions.ADMIN_BLOCK_PLACE
-            : SettingDefinitions.BLOCK_PLACE;
+        SettingDefinition<Boolean> best = switch (scope) {
+            case ADMIN_CLAIM -> SettingDefinitions.ADMIN_BLOCK_PLACE;
+            case WILDERNESS -> SettingDefinitions.WILDERNESS_BLOCK_PLACE;
+            case TOWN -> SettingDefinitions.BLOCK_PLACE;
+        };
         int bestPriority = 0;
         for (SettingDefinition<?> definition : SettingDefinitions.childrenOf(scope, "block-place")) {
             for (SettingCondition<?> condition : definition.conditions()) {

@@ -10,14 +10,17 @@ import earth.terrarium.cadmus.common.claims.limit.VanillaClaimLimiter;
 import earth.terrarium.cadmus.common.camps.CampManager;
 import earth.terrarium.cadmus.common.config.AdminClaimDefaultsConfig;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
+import earth.terrarium.cadmus.common.config.WildernessDefaultsConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.protections.Protections;
 import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
 import earth.terrarium.cadmus.common.settings.AdminClaimTargets;
+import earth.terrarium.cadmus.common.settings.WildernessTargets;
 import earth.terrarium.cadmus.common.teams.AdminTeamProvider;
 import earth.terrarium.cadmus.common.teams.CampTeamProvider;
 import earth.terrarium.cadmus.common.teams.IndividualTeamProvider;
 import earth.terrarium.cadmus.common.teams.VanillaTeamProvider;
+import earth.terrarium.cadmus.common.teams.WildernessTeamProvider;
 import earth.terrarium.cadmus.common.utils.AdminUtils;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.ModUtils;
@@ -58,6 +61,7 @@ public class Cadmus {
         }
         TeamApi.API.register(AdminTeamProvider.ID, new AdminTeamProvider());
         TeamApi.API.register(CampTeamProvider.ID, new CampTeamProvider());
+        TeamApi.API.register(WildernessTeamProvider.ID, new WildernessTeamProvider());
         CampManager.init();
         ClaimLimitApi.API.register(new VanillaClaimLimiter());
     }
@@ -89,6 +93,8 @@ public class Cadmus {
         AdminTeamProvider.ensureAdminTeam(server);
         AdminClaimDefaultsConfig.ensureLoaded();
         AdminClaimTargets.registerAll(server);
+        WildernessDefaultsConfig.ensureLoaded();
+        WildernessTargets.registerAll(server);
         CampManager.prune(server);
         FORCE_LOADED_CHUNK_COUNT = 0;
         server.getAllLevels().forEach(level ->

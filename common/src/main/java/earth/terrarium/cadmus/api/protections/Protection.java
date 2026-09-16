@@ -7,6 +7,7 @@ import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.settings.Settings;
+import earth.terrarium.cadmus.common.teams.WildernessTeamProvider;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -42,7 +43,8 @@ public interface Protection {
     }
 
     default Optional<TeamId> getId(Level level, ChunkPos pos) {
-        return ClaimApi.API.getClaim(level, pos).map(ClaimData::team);
+        return ClaimApi.API.getClaim(level, pos).map(ClaimData::team)
+            .or(() -> Optional.of(WildernessTeamProvider.team()));
     }
 
     default boolean isPlayerAllowed(Player player, TeamId id) {
@@ -56,7 +58,7 @@ public interface Protection {
     default boolean isPlayerAllowed(Level level, GameProfile player, TeamId id, SettingDefinition<Boolean> definition) {
         if (CadmusSaveData.canBypass(level.getServer(), player.getId())) return true;
 
-        if (id.isAdmin()) return Settings.getForTeam(level.getServer(), id, definition);
+        if (id.isAdmin() || id.isWilderness()) return Settings.getForTeam(level.getServer(), id, definition);
 
         if (gameRuleEnabled(level)) return true;
 
@@ -70,7 +72,7 @@ public interface Protection {
     default boolean isPlayerAllowed(Level level, GameProfile player, TeamId id, ChunkPos pos, SettingDefinition<Boolean> definition) {
         if (CadmusSaveData.canBypass(level.getServer(), player.getId())) return true;
 
-        if (id.isAdmin()) return Settings.getAt(level, pos, definition);
+        if (id.isAdmin() || id.isWilderness()) return Settings.getAt(level, pos, definition);
 
         if (gameRuleEnabled(level)) return true;
 
@@ -78,7 +80,7 @@ public interface Protection {
     }
 
     default boolean isEntityAllowed(Entity entity, TeamId id) {
-        if (id.isAdmin()) return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
+        if (id.isAdmin() || id.isWilderness()) return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
         if (gameRuleEnabled(entity.level())) return true;
         return Settings.getAt(entity.level(), entity.chunkPosition(), setting());
     }
