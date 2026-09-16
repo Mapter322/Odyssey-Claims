@@ -831,7 +831,6 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         if (CampTeamProvider.ID.equals(id.provider())) {
             lines.add(Component.translatable("gui.cadmus.claim_map.personal_camp").withStyle(ChatFormatting.WHITE));
             lines.add(ownerLine(id));
-            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.camp")));
             CadmusClient.ClientCamp camp = CadmusClient.CAMPS.get(id.id());
             if (camp != null) {
                 long remaining = Math.max(0L, camp.expiresAt() - level.getGameTime());
@@ -843,18 +842,17 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
 
         if (id.isAdmin()) {
             lines.add(ownerName(id).copy().withStyle(color.getAsStyle()));
-            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.admin")));
             return lines;
         }
 
         CadmusClient.ClientTown town = townAt(pos);
         if (town != null) {
-            lines.add(town.displayName().copy().withStyle(color.getAsStyle()));
+            lines.add(Component.translatable("gui.cadmus.claim_map.type.town").withStyle(ChatFormatting.WHITE)
+                .append(" ")
+                .append(town.displayName().copy().withStyle(color.getAsStyle())));
             lines.add(ownerLine(id));
-            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.town")));
         } else {
             lines.add(ownerLine(id));
-            lines.add(typeLine(Component.translatable("gui.cadmus.claim_map.type.claim")));
         }
 
         lines.add(Component.translatable("gui.cadmus.claim_map.tooltip.forceload",
@@ -872,11 +870,6 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             owner = owner.withStyle(CadmusClient.TEAM_INFO.getOrDefault(id, new TeamInfo("", Color.DEFAULT)).color().getAsStyle());
         }
         return Component.translatable("gui.cadmus.claim_map.tooltip.owner", owner).withStyle(ChatFormatting.GRAY);
-    }
-
-    private Component typeLine(Component type) {
-        return Component.translatable("gui.cadmus.claim_map.tooltip.type",
-            type.copy().withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.GRAY);
     }
 
     private Component ownerName(TeamId id) {

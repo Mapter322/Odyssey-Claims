@@ -107,7 +107,6 @@
   "gui.cadmus.claim_map.forceload": "Forceload",
   "gui.cadmus.claim_map.unforceload": "Unforceload",
   "gui.cadmus.claim_map.tooltip.owner": "Owner: %s",
-  "gui.cadmus.claim_map.tooltip.type": "Type: %s",
   "gui.cadmus.claim_map.tooltip.expires": "Expires in: %s",
   "gui.cadmus.claim_map.tooltip.forceload": "Forceload: %s",
   "gui.cadmus.claim_map.yes": "Yes",
