@@ -71,6 +71,7 @@
 "message.cadmus.wilderness": "Wilderness",
 
   "text.cadmus.claimed_by": "Claimed by %s",
+  "text.cadmus.no_access": "Access denied",
   "text.cadmus.chunk_loaded": "[Forceloaded]",
 
   "gamerule.maxClaims": "Max Claims",

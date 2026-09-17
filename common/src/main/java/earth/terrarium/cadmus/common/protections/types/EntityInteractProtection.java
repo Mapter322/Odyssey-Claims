@@ -10,6 +10,7 @@ import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
@@ -34,9 +35,11 @@ public final class EntityInteractProtection implements Protection {
     public boolean canInteractWithEntity(Level level, GameProfile player, Entity entity) {
         if (level.isClientSide()) return true;
         if (CadmusConfig.get().isPublicEntityInteraction(entity.getType())) return true;
-        return getId(level, entity.chunkPosition())
+        boolean allowed = getId(level, entity.chunkPosition())
             .map(id -> isPlayerAllowed(level, player, id, specific(entity, Settings.scopeOf(id))))
             .orElse(true);
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     @SuppressWarnings("unchecked")

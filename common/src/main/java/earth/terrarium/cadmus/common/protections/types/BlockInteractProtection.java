@@ -12,6 +12,7 @@ import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
@@ -38,9 +39,11 @@ public final class BlockInteractProtection implements Protection {
         if (state.is(ModBlockTags.ALLOWS_CLAIM_INTERACTIONS)) return true;
         if (level.isClientSide()) return true;
         if (CadmusConfig.get().isPublicBlockInteraction(state)) return true;
-        return getId(level, pos)
+        boolean allowed = getId(level, pos)
             .map(id -> isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id))))
             .orElse(true);
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     @SuppressWarnings("unchecked")

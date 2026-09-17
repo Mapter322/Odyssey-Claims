@@ -8,6 +8,7 @@ import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -32,9 +33,11 @@ public final class ItemUseProtection implements Protection {
 
     public boolean canUseItem(Level level, GameProfile player, ChunkPos pos, ItemStack stack) {
         if (level.isClientSide()) return true;
-        return getId(level, pos)
+        boolean allowed = getId(level, pos)
             .map(id -> isPlayerAllowed(level, player, id, specific(stack, Settings.scopeOf(id))))
             .orElse(true);
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     @SuppressWarnings("unchecked")

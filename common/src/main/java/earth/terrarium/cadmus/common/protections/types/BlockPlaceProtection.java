@@ -11,6 +11,7 @@ import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModBlockTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -36,9 +37,12 @@ public final class BlockPlaceProtection implements Protection {
         TeamId id = getId(entity.level(), pos).orElse(null);
         if (id == null) return true;
 
-        return entity instanceof Player player ?
-            isPlayerAllowed(entity.level(), player.getGameProfile(), id, specific(state, Settings.scopeOf(id))) :
-            isEntityAllowed(entity, id);
+        if (entity instanceof Player player) {
+            boolean allowed = isPlayerAllowed(entity.level(), player.getGameProfile(), id, specific(state, Settings.scopeOf(id)));
+            if (!allowed) CadmusNotifications.noAccess(entity.level(), player.getGameProfile());
+            return allowed;
+        }
+        return isEntityAllowed(entity, id);
     }
 
     public boolean canPlaceBlock(Level level, GameProfile player, BlockPos pos, BlockState state) {
@@ -46,7 +50,9 @@ public final class BlockPlaceProtection implements Protection {
         TeamId id = getId(level, pos).orElse(null);
         if (id == null) return true;
 
-        return isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id)));
+        boolean allowed = isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id)));
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     public boolean canPlaceBlock(Level level, BlockPos pos, BlockState state) {

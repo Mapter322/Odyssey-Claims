@@ -9,6 +9,7 @@ import earth.terrarium.cadmus.api.settings.SettingScope;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
@@ -30,9 +31,11 @@ public final class BlockBreakProtection implements Protection {
     public boolean canBreakBlock(Level level, GameProfile player, BlockPos pos) {
         if (level.isClientSide()) return true;
         BlockState state = level.getBlockState(pos);
-        return getId(level, pos)
+        boolean allowed = getId(level, pos)
             .map(id -> isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id))))
             .orElse(true);
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     public boolean canBreakBlock(Player player, BlockPos pos) {

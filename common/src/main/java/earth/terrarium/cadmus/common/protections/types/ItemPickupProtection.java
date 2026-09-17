@@ -10,6 +10,7 @@ import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModItemTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import earth.terrarium.cadmus.mixins.common.ItemEntityAccessor;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -38,8 +39,10 @@ public final class ItemPickupProtection implements Protection {
         if (item.getItem().is(ModItemTags.ALLOWS_CLAIM_PICKUP)) return true;
         if (Objects.equals(((ItemEntityAccessor) item).getThrower(), player.getId())) return true;
         if (level.isClientSide()) return true;
-        return getId(level, item.chunkPosition()).map(id ->
+        boolean allowed = getId(level, item.chunkPosition()).map(id ->
             isPlayerAllowed(level, player, id, specific(item, Settings.scopeOf(id)))).orElse(true);
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     @SuppressWarnings("unchecked")

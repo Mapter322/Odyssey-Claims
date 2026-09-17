@@ -11,6 +11,7 @@ import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.tags.ModEntityTypeTags;
 import earth.terrarium.cadmus.common.utils.CadmusGameRules;
+import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -38,9 +39,11 @@ public final class EntityDamageProtection implements Protection {
     public boolean canDamageEntity(Level level, GameProfile player, Entity entity) {
         if (entity.getType().is(ModEntityTypeTags.ALLOWS_CLAIM_DAMAGE_ENTITIES)) return true;
         if (level.isClientSide()) return true;
-        return getId(level, entity.chunkPosition()).map(team ->
+        boolean allowed = getId(level, entity.chunkPosition()).map(team ->
             checkFlags(level.getServer(), entity, team, specific(entity, Settings.scopeOf(team)))
                 && isPlayerAllowed(level, player, team, specific(entity, Settings.scopeOf(team)))).orElse(true);
+        if (!allowed) CadmusNotifications.noAccess(level, player);
+        return allowed;
     }
 
     @SuppressWarnings("unchecked")
