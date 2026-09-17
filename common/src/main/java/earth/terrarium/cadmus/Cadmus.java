@@ -12,6 +12,7 @@ import earth.terrarium.cadmus.common.config.AdminClaimDefaultsConfig;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.config.WildernessDefaultsConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
+import earth.terrarium.cadmus.common.outposts.OutpostManager;
 import earth.terrarium.cadmus.common.protections.Protections;
 import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
 import earth.terrarium.cadmus.common.settings.AdminClaimTargets;
@@ -63,6 +64,7 @@ public class Cadmus {
         TeamApi.API.register(CampTeamProvider.ID, new CampTeamProvider());
         TeamApi.API.register(WildernessTeamProvider.ID, new WildernessTeamProvider());
         CampManager.init();
+        OutpostManager.init();
         ClaimLimitApi.API.register(new VanillaClaimLimiter());
     }
 
@@ -77,6 +79,7 @@ public class Cadmus {
         AdminTeamProvider.ensureAdminTeam(player.server);
         ModUtils.sendJoinPackets(player);
         CampManager.sync(player);
+        OutpostManager.sync(player);
         if (ModInfoUtils.isModLoaded("argonauts")) CadmusRoleTargets.sync(player);
         TeamApi.API.syncAllTeamInfo(player);
         TownManager.sync(player.server);
@@ -97,6 +100,7 @@ public class Cadmus {
         WildernessDefaultsConfig.ensureLoaded();
         WildernessTargets.registerAll(server);
         CampManager.prune(server);
+        OutpostManager.prune(server);
         FORCE_LOADED_CHUNK_COUNT = 0;
         server.getAllLevels().forEach(level ->
             ClaimApi.API.getAllClaims(level).forEach((pos, claim) -> {

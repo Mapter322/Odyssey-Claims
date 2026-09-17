@@ -7,10 +7,13 @@ import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTownsPacket;
+import earth.terrarium.cadmus.common.outposts.Outpost;
+import earth.terrarium.cadmus.common.outposts.OutpostSaveData;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -88,7 +91,7 @@ public final class TownManager {
         if (positions.isEmpty()) return null;
         int current = ClaimApi.API.getOwnedClaims(player.level(), team).map(Map::size).orElse(0);
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return Component.translatable(ERR_CLAIM_LIMIT);
-        if (isTooCloseToOtherTowns(player.server, positions, null)) return Component.translatable(ERR_TOO_CLOSE);
+        if (isTooCloseToOtherTowns(player.server, player.serverLevel(), positions, null)) return Component.translatable(ERR_TOO_CLOSE);
 
         Town town = new Town(UUID.randomUUID(), team, name);
         town.chunks().addAll(positions);
@@ -119,7 +122,7 @@ public final class TownManager {
         if (!reachable.containsAll(positions)) return Component.translatable(ERR_NOT_ADJACENT);
         int current = ClaimApi.API.getOwnedClaims(player.level(), town.team()).map(Map::size).orElse(0);
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(town.team())) return Component.translatable(ERR_CLAIM_LIMIT);
-        if (isTooCloseToOtherTowns(player.server, positions, townId)) return Component.translatable(ERR_TOO_CLOSE);
+        if (isTooCloseToOtherTowns(player.server, player.serverLevel(), positions, townId)) return Component.translatable(ERR_TOO_CLOSE);
 
         town.chunks().addAll(positions);
         CadmusSaveData.read(player.server).setDirty();
@@ -134,13 +137,21 @@ public final class TownManager {
         return ChunkPos.rangeClosed(start, end).collect(Collectors.toSet());
     }
 
-    private static boolean isTooCloseToOtherTowns(MinecraftServer server, Set<ChunkPos> positions, UUID excludeTownId) {
+    private static boolean isTooCloseToOtherTowns(MinecraftServer server, ServerLevel level, Set<ChunkPos> positions, UUID excludeTownId) {
         int minDistance = CadmusConfig.get().minChunksBetweenTowns;
         if (minDistance <= 1) return false;
         for (Town other : CadmusSaveData.read(server).towns().values()) {
             if (other.id().equals(excludeTownId)) continue;
             for (ChunkPos pos : positions) {
                 for (ChunkPos otherPos : other.chunks()) {
+                    if (Math.max(Math.abs(pos.x - otherPos.x), Math.abs(pos.z - otherPos.z)) < minDistance) return true;
+                }
+            }
+        }
+        for (Outpost outpost : OutpostSaveData.read(server).outposts().values()) {
+            if (!outpost.dimension().equals(level.dimension().location())) continue;
+            for (ChunkPos pos : positions) {
+                for (ChunkPos otherPos : outpost.chunks()) {
                     if (Math.max(Math.abs(pos.x - otherPos.x), Math.abs(pos.z - otherPos.z)) < minDistance) return true;
                 }
             }

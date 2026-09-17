@@ -26,6 +26,7 @@ public class NetworkHandler {
         CHANNEL.register(SyncTeamInfo.TYPE);
         CHANNEL.register(SyncTownsPacket.TYPE);
         CHANNEL.register(SyncCampsPacket.TYPE);
+        CHANNEL.register(SyncOutpostsPacket.TYPE);
         CHANNEL.register(OpenAdminClaimSettingsPacket.TYPE);
         CHANNEL.register(OpenWildernessSettingsPacket.TYPE);
 
@@ -34,6 +35,7 @@ public class NetworkHandler {
         CHANNEL.register(RequestClaimSettingsPacket.TYPE);
         CHANNEL.register(RequestAdminClaimSettingsPacket.TYPE);
         CHANNEL.register(TownActionPacket.TYPE);
+        CHANNEL.register(OutpostActionPacket.TYPE);
         CHANNEL.register(AdminClaimActionPacket.TYPE);
         CHANNEL.register(CampActionPacket.TYPE);
         CHANNEL.register(ForceloadActionPacket.TYPE);

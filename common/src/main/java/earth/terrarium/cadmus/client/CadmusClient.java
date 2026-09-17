@@ -11,6 +11,7 @@ import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ForceloadActionPacket;
+import earth.terrarium.cadmus.common.network.packets.serverbound.OutpostActionPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.RequestClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.TownActionPacket;
 import earth.terrarium.cadmus.common.network.packets.clientbound.OpenAdminClaimSettingsPacket;
@@ -43,6 +44,7 @@ public class CadmusClient {
 
     public static final Map<TeamId, TeamInfo> TEAM_INFO = new HashMap<>();
     public static final Map<UUID, ClientTown> TOWNS = new HashMap<>();
+    public static final Map<TeamId, Set<ChunkPos>> OUTPOSTS = new HashMap<>();
     public static final Map<UUID, ClientCamp> CAMPS = new HashMap<>();
     public static final Map<MemberSettingKey, Map<String, String>> MEMBER_SETTINGS = new HashMap<>();
 
@@ -63,6 +65,7 @@ public class CadmusClient {
         ClaimSaveData.clearClientClaims();
         TEAM_INFO.clear();
         TOWNS.clear();
+        OUTPOSTS.clear();
         CAMPS.clear();
         MEMBER_SETTINGS.clear();
         CadmusRoleTargets.clearClient();
@@ -146,6 +149,10 @@ public class CadmusClient {
         NetworkHandler.CHANNEL.sendToServer(new TownActionPacket(ClaimCommandType.TOWN_ADD, town.toString(), start, end));
     }
 
+    public static void sendOutpostClaim(ChunkPos start, ChunkPos end) {
+        NetworkHandler.CHANNEL.sendToServer(new OutpostActionPacket(start, end));
+    }
+
     public static void sendForceload(ChunkPos pos, boolean state) {
         NetworkHandler.CHANNEL.sendToServer(new ForceloadActionPacket(pos, state));
     }
@@ -181,6 +188,28 @@ public class CadmusClient {
     public record ClientTown(UUID id, TeamId team, String name, Set<ChunkPos> chunks) {
         public Component displayName() {
             return Component.literal(name.isBlank() ? "Town " + id : name);
+        }
+    }
+
+    public static void updateOutposts(String encoded) {
+        OUTPOSTS.clear();
+        if (encoded.isBlank()) return;
+        for (String outpostValue : encoded.split("/")) {
+            String[] fields = outpostValue.split("\\|", 3);
+            if (fields.length != 3) continue;
+            try {
+                TeamId team = new TeamId(ResourceLocation.parse(fields[0]), UUID.fromString(fields[1]));
+                Set<ChunkPos> chunks = new HashSet<>();
+                if (!fields[2].isBlank()) {
+                    for (String chunk : fields[2].split(";")) {
+                        String[] position = chunk.split(",", 2);
+                        chunks.add(new ChunkPos(Integer.parseInt(position[0]), Integer.parseInt(position[1])));
+                    }
+                }
+                OUTPOSTS.computeIfAbsent(team, ignored -> new HashSet<>()).addAll(chunks);
+            } catch (RuntimeException ignored) {
+                // Ignore malformed data from an incompatible server.
+            }
         }
     }
 

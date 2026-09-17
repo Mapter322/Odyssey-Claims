@@ -239,6 +239,17 @@ public interface TeamApi {
     }
 
     /**
+     * Gets the maximum amount of outpost chunks the team can own.
+     *
+     * @param level The level.
+     * @param id    The team's ID.
+     * @return The maximum amount of outpost chunks.
+     */
+    default int getMaxOutpostChunks(Level level, TeamId id) {
+        return getProvider(id.provider()).getMaxOutpostChunks(level, id.id());
+    }
+
+    /**
      * Removes the team. Clears all the team's chunks and settings.
      *
      * @param server The server.

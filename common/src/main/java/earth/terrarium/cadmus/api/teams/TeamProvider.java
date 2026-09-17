@@ -133,6 +133,18 @@ public interface TeamProvider {
     }
 
     /**
+     * Gets the maximum amount of outpost chunks the team can own.
+     * A value of 0 or less means the team cannot create outposts.
+     *
+     * @param level The level.
+     * @param id    The ID of the team.
+     * @return The maximum amount of outpost chunks.
+     */
+    default int getMaxOutpostChunks(Level level, UUID id) {
+        return 0;
+    }
+
+    /**
      * Gets all teams for the given server.
      *
      * @param server The server.
