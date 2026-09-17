@@ -90,6 +90,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
     private static final UUID ADMIN_SELECTION = new UUID(0L, 0L);
     private static final UUID CAMP_SELECTION = new UUID(1L, 0L);
     private static final UUID CREATE_TOWN_SELECTION = new UUID(2L, 0L);
+    private static final UUID CREATE_OUTPOST_SELECTION = new UUID(3L, 0L);
 
     private float chunkScale;
     private float pixelScale;
@@ -133,7 +134,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
             .filter(town -> teams.containsKey(town.team()))
             .map(CadmusClient.ClientTown::id)
             .toList();
-        if (selected.get() == null || (!isAdminSelected() && !isCampSelected() && !isCreateTownSelected() && !this.availableTowns.contains(selected.get()))) {
+        if (selected.get() == null || (!isAdminSelected() && !isCampSelected() && !isCreateTownSelected() && !isCreateOutpostSelected() && !this.availableTowns.contains(selected.get()))) {
             selected.set(this.availableTowns.isEmpty() ? null : this.availableTowns.get(0));
         }
 
@@ -216,6 +217,8 @@ public class ClaimMapScreen extends BaseCursorScreen {
                         NetworkHandler.CHANNEL.sendToServer(new RequestAdminClaimSettingsPacket());
                     } else if (isTownSelected()) {
                         NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(new ClaimSettingsTarget(selectedTeam(), selected.get())));
+                    } else if (isCreateOutpostSelected()) {
+                        NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(new ClaimSettingsTarget(selectedTeam())));
                     }
                 })
                 .withSize(MAP_SIZE / 2, BUTTON_HEIGHT)
@@ -278,6 +281,11 @@ settingsButton.active = isAdminSelected() || isTownSelected();
                 .withRenderer(WidgetRenderers.text(ConstantComponents.CREATE_TOWN).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
                 .withSize(MAP_SIZE / 2, 20)
                 .withCallback(() -> select(CREATE_TOWN_SELECTION)));
+            ctx.add(() -> Widgets.button()
+                .withTexture(UIConstants.LIST_ENTRY)
+                .withRenderer(WidgetRenderers.text(ConstantComponents.OUTPOST).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                .withSize(MAP_SIZE / 2, 20)
+                .withCallback(() -> select(CREATE_OUTPOST_SELECTION)));
         });
     }
 
@@ -285,6 +293,7 @@ settingsButton.active = isAdminSelected() || isTownSelected();
         if (ADMIN_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.admin_claim");
         if (CAMP_SELECTION.equals(townId)) return Component.translatable("gui.cadmus.claim_map.personal_camp");
         if (CREATE_TOWN_SELECTION.equals(townId)) return ConstantComponents.CREATE_TOWN;
+        if (CREATE_OUTPOST_SELECTION.equals(townId)) return ConstantComponents.OUTPOST;
         return Optional.ofNullable(CadmusClient.TOWNS.get(townId))
             .map(CadmusClient.ClientTown::displayName)
             .orElse(ConstantComponents.NO_TOWNS.copy());
@@ -482,6 +491,8 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                 } else {
                     showNotification(Component.translatable("gui.cadmus.claim_map.camp_single_chunk"));
                 }
+            } else if (isCreateOutpostSelected()) {
+                CadmusClient.sendOutpostClaim(startPos, endPos);
             } else {
                 CadmusClient.sendTownAdd(selected.get(), startPos, endPos);
             }
@@ -619,6 +630,12 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
                     return;
                 }
                 openCreateTownModal(pos, pos);
+            } else if (isCreateOutpostSelected()) {
+                if (!canManageClaims(selectedTeam())) {
+                    showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
+                    return;
+                }
+                CadmusClient.sendOutpostClaim(pos, pos);
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
             } else if (!canManageClaims(selectedTeam())) {
@@ -782,6 +799,12 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
         if (button == 0) {
             if (isAdminSelected()) {
                 if (!singleClaimed) sendAdminAction(startPos, endPos, true);
+            } else if (isCreateOutpostSelected()) {
+                if (!canManageClaims(selectedTeam())) {
+                    showNotification(Component.translatable("command.cadmus.exception.no_claim_permission"));
+                } else if (!singleClaimed) {
+                    CadmusClient.sendOutpostClaim(startPos, endPos);
+                }
             } else if (selected.get() == null) {
                 showNotification(Component.translatable("gui.cadmus.claim_map.no_town_selected"));
             } else if (!canManageClaims(selectedTeam())) {
@@ -845,14 +868,19 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             return lines;
         }
 
-        CadmusClient.ClientTown town = townAt(pos);
-        if (town != null) {
-            lines.add(Component.translatable("gui.cadmus.claim_map.type.town").withStyle(ChatFormatting.WHITE)
-                .append(" ")
-                .append(town.displayName().copy().withStyle(color.getAsStyle())));
+        if (isOutpost(id, pos)) {
+            lines.add(Component.translatable("gui.cadmus.claim_map.type.outpost").withStyle(ChatFormatting.WHITE));
             lines.add(ownerLine(id));
         } else {
-            lines.add(ownerLine(id));
+            CadmusClient.ClientTown town = townAt(pos);
+            if (town != null) {
+                lines.add(Component.translatable("gui.cadmus.claim_map.type.town").withStyle(ChatFormatting.WHITE)
+                    .append(" ")
+                    .append(town.displayName().copy().withStyle(color.getAsStyle())));
+                lines.add(ownerLine(id));
+            } else {
+                lines.add(ownerLine(id));
+            }
         }
 
         lines.add(Component.translatable("gui.cadmus.claim_map.tooltip.forceload",
@@ -950,6 +978,14 @@ private static void update() {
         return CREATE_TOWN_SELECTION.equals(selected.get());
     }
 
+    private boolean isCreateOutpostSelected() {
+        return CREATE_OUTPOST_SELECTION.equals(selected.get());
+    }
+
+    private boolean isOutpost(TeamId id, ChunkPos pos) {
+        return CadmusClient.OUTPOSTS.getOrDefault(id, Set.of()).contains(pos);
+    }
+
     private boolean isTownSelected() {
         return selected.get() != null && CadmusClient.TOWNS.containsKey(selected.get());
     }
@@ -965,7 +1001,7 @@ private static void update() {
     private void select(UUID value) {
         selected.set(value);
         if (settingsButton != null) {
-            settingsButton.active = isAdminSelected() || isTownSelected();
+            settingsButton.active = isAdminSelected() || isTownSelected() || isCreateOutpostSelected();
         }
     }
 
