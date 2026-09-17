@@ -3,8 +3,12 @@ package earth.terrarium.cadmus.common.commands.claims;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
+import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.claims.ClaimGroups;
+import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -12,7 +16,9 @@ import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,17 +52,25 @@ public class UnclaimAreaCommand {
             )).create();
         }
 
-        Set<ChunkPos> finalPositions = new HashSet<>();
+        Map<TeamId, Set<ChunkPos>> byTeam = new HashMap<>();
         Set<ChunkPos> positions = ChunkPos.rangeClosed(startPos, endPos).collect(Collectors.toUnmodifiableSet());
 
         positions.forEach(pos ->
             ClaimApi.API.getClaim(source.getLevel(), pos).ifPresent(claim -> {
                 if (TeamApi.API.canManageClaims(player, claim.team())) {
-                    finalPositions.add(pos);
+                    byTeam.computeIfAbsent(claim.team(), ignored -> new HashSet<>()).add(pos);
                 }
             })
         );
 
+        for (var entry : byTeam.entrySet()) {
+            if (!ClaimGroups.canRemove(source.getLevel(), entry.getKey(), entry.getValue())) {
+                NotificationApi.notify(player, ConstantComponents.CANNOT_DISCONNECT);
+                throw new SimpleCommandExceptionType(ConstantComponents.CANNOT_DISCONNECT).create();
+            }
+        }
+
+        Set<ChunkPos> finalPositions = byTeam.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
         ClaimApi.API.unclaim(player, finalPositions);
 
         int claimsCount = ClaimCommand.getClaimsCount(player, false);

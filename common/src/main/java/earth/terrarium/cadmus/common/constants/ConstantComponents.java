@@ -19,6 +19,7 @@ public class ConstantComponents {
     public static final Component NO_CLAIM_PERMISSION = CommonUtils.serverTranslatable("command.cadmus.exception.no_claim_permission").copy().withStyle(ChatFormatting.RED);
     public static final Component FORCELOAD_LIMIT = CommonUtils.serverTranslatable("command.cadmus.exception.forceload_limit").copy().withStyle(ChatFormatting.RED);
     public static final Component NOT_ADMIN_CLAIM = CommonUtils.serverTranslatable("command.cadmus.exception.not_admin_claim").copy().withStyle(ChatFormatting.RED);
+    public static final Component CANNOT_DISCONNECT = CommonUtils.serverTranslatable("command.cadmus.exception.claim_disconnect").copy().withStyle(ChatFormatting.RED);
 
     public static final Component NO_PERMISSION_TEAM = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_team");
     public static final Component NO_PERMISSION_ROLE = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_role");

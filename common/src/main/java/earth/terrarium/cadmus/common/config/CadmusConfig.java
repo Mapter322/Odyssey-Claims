@@ -30,6 +30,7 @@ public class CadmusConfig {
     private static CadmusConfig INSTANCE;
 
     public int minChunksBetweenTowns = 10;
+    public int maxTownSize = 0;
     public int maxOutpostSize = 4;
     public int personalCampDurationSeconds = 86400;
     public List<String> blockedClaimDimensions = new ArrayList<>();
@@ -109,6 +110,7 @@ public class CadmusConfig {
             try (Reader reader = Files.newBufferedReader(path)) {
                 CommentedConfig root = new TomlParser().parse(reader);
                 config.minChunksBetweenTowns = root.getIntOrElse("claims.min-chunks-between-towns", config.minChunksBetweenTowns);
+                config.maxTownSize = root.getIntOrElse("claims.max-town-size", config.maxTownSize);
                 config.maxOutpostSize = root.getIntOrElse("claims.max-outpost-size", config.maxOutpostSize);
                 config.personalCampDurationSeconds = root.getIntOrElse("camps.camp-duration-seconds", config.personalCampDurationSeconds);
                 Object blocked = root.get("claims.blocked-dimensions");
@@ -164,6 +166,8 @@ public class CadmusConfig {
         sb.append("[claims]\n");
         sb.append("# Minimum distance in chunks between towns, outposts and camps.\n");
         sb.append("min-chunks-between-towns = ").append(minChunksBetweenTowns).append("\n\n");
+        sb.append("# Maximum number of chunks a single town can contain (0 = unlimited).\n");
+        sb.append("max-town-size = ").append(maxTownSize).append("\n\n");
         sb.append("# Maximum number of chunks a single outpost can contain.\n");
         sb.append("max-outpost-size = ").append(maxOutpostSize).append("\n\n");
         sb.append("# Dimensions where claiming chunks is disabled; claiming is allowed everywhere else.\n");

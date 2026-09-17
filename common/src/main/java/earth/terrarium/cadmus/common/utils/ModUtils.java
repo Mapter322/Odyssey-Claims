@@ -14,6 +14,10 @@ import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Contract;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class ModUtils {
@@ -33,6 +37,28 @@ public class ModUtils {
     public static String formatTime(long ticks) {
         long seconds = Math.max(0L, ticks) / 20L;
         return "%d:%02d".formatted(seconds / 60L, seconds % 60L);
+    }
+
+    public static boolean isConnected(Set<ChunkPos> chunks) {
+        if (chunks.size() <= 1) return true;
+        ChunkPos start = chunks.iterator().next();
+        Set<ChunkPos> visited = new HashSet<>();
+        Deque<ChunkPos> queue = new ArrayDeque<>();
+        visited.add(start);
+        queue.add(start);
+        while (!queue.isEmpty()) {
+            ChunkPos current = queue.poll();
+            addNeighbour(chunks, visited, queue, current.x + 1, current.z);
+            addNeighbour(chunks, visited, queue, current.x - 1, current.z);
+            addNeighbour(chunks, visited, queue, current.x, current.z + 1);
+            addNeighbour(chunks, visited, queue, current.x, current.z - 1);
+        }
+        return visited.size() == chunks.size();
+    }
+
+    private static void addNeighbour(Set<ChunkPos> chunks, Set<ChunkPos> visited, Deque<ChunkPos> queue, int x, int z) {
+        ChunkPos next = new ChunkPos(x, z);
+        if (chunks.contains(next) && visited.add(next)) queue.add(next);
     }
 
     /**

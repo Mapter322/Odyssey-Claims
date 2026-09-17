@@ -9,6 +9,7 @@ import earth.terrarium.cadmus.common.config.CadmusConfig;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncOutpostsPacket;
 import earth.terrarium.cadmus.common.towns.TownManager;
+import earth.terrarium.cadmus.common.utils.ModUtils;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -70,6 +71,24 @@ public final class OutpostManager {
         return getOutposts(server, team).stream().mapToInt(outpost -> outpost.chunks().size()).sum();
     }
 
+    public static boolean canRemove(MinecraftServer server, ResourceLocation dimension, TeamId team, Set<ChunkPos> positions) {
+        for (Outpost outpost : OutpostSaveData.read(server).outposts().values()) {
+            if (!outpost.team().equals(team) || !outpost.dimension().equals(dimension)) continue;
+            boolean affected = false;
+            for (ChunkPos pos : positions) {
+                if (outpost.chunks().contains(pos)) {
+                    affected = true;
+                    break;
+                }
+            }
+            if (!affected) continue;
+            Set<ChunkPos> remaining = new HashSet<>(outpost.chunks());
+            remaining.removeAll(positions);
+            if (!ModUtils.isConnected(remaining)) return false;
+        }
+        return true;
+    }
+
     public static Component claim(ServerPlayer player, ChunkPos start, ChunkPos end) {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
         if (team == null) return Component.translatable(TownManager.ERR_NO_GUILD);
@@ -123,7 +142,7 @@ public final class OutpostManager {
         for (Outpost outpost : OutpostSaveData.read(server).outposts().values()) {
             if (!outpost.team().equals(team) || !outpost.dimension().equals(dimension)) continue;
             for (ChunkPos other : outpost.chunks()) {
-                if (Math.max(Math.abs(pos.x - other.x), Math.abs(pos.z - other.z)) <= 1) return outpost;
+                if (Math.abs(pos.x - other.x) + Math.abs(pos.z - other.z) == 1) return outpost;
             }
         }
         return null;

@@ -109,6 +109,7 @@ public class ClaimApiImpl implements ClaimApi {
 
     @Override
     public void unclaim(Level level, TeamId id, ChunkPos pos) {
+        if (!ClaimGroups.canRemove(level, id, Set.of(pos))) return;
         if (getClaim(level, pos).map(ClaimData::isChunkLoaded).orElse(false)) {
             level.getChunkSource().updateChunkForced(pos, false);
             Cadmus.FORCE_LOADED_CHUNK_COUNT--;
@@ -130,6 +131,7 @@ public class ClaimApiImpl implements ClaimApi {
 
     @Override
     public void unclaim(Level level, TeamId id, Set<ChunkPos> positions) {
+        if (!ClaimGroups.canRemove(level, id, positions)) return;
         for (var pos : positions) {
             if (getClaim(level, pos).map(ClaimData::isChunkLoaded).orElse(false)) {
                 level.getChunkSource().updateChunkForced(pos, false);

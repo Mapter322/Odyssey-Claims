@@ -10,6 +10,7 @@ import earth.terrarium.cadmus.common.network.packets.clientbound.SyncTownsPacket
 import earth.terrarium.cadmus.common.outposts.Outpost;
 import earth.terrarium.cadmus.common.outposts.OutpostSaveData;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
+import earth.terrarium.cadmus.common.utils.ModUtils;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -31,6 +32,7 @@ public final class TownManager {
     public static final String ERR_CHUNK_CLAIMED = "command.cadmus.exception.town.chunk_claimed";
     public static final String ERR_CLAIM_LIMIT = "command.cadmus.exception.town.claim_limit";
     public static final String ERR_TOO_CLOSE = "command.cadmus.exception.town.too_close";
+    public static final String ERR_TOO_LARGE = "command.cadmus.exception.town.too_large";
     public static final String ERR_NOT_ADJACENT = "command.cadmus.exception.town.not_adjacent";
     public static final String ERR_TOWN_NOT_FOUND = "command.cadmus.exception.town.not_found";
     public static final String ERR_TOWN_NAME = "command.cadmus.exception.town.invalid_name";
@@ -57,6 +59,26 @@ public final class TownManager {
             if (town.team().equals(team) && town.chunks().contains(pos)) return town;
         }
         return null;
+    }
+
+    /**
+     * Checks if removing the given positions from the team's towns keeps every town's remaining chunks connected.
+     */
+    public static boolean canRemove(MinecraftServer server, TeamId team, Set<ChunkPos> positions) {
+        for (Town town : getTowns(server, team)) {
+            boolean affected = false;
+            for (ChunkPos pos : positions) {
+                if (town.chunks().contains(pos)) {
+                    affected = true;
+                    break;
+                }
+            }
+            if (!affected) continue;
+            Set<ChunkPos> remaining = new HashSet<>(town.chunks());
+            remaining.removeAll(positions);
+            if (!ModUtils.isConnected(remaining)) return false;
+        }
+        return true;
     }
 
     @Nullable
@@ -89,6 +111,7 @@ public final class TownManager {
         Set<ChunkPos> positions = positions(start, end);
         positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
         if (positions.isEmpty()) return null;
+        if (isTooLarge(0, positions.size())) return Component.translatable(ERR_TOO_LARGE);
         int current = ClaimApi.API.getOwnedClaims(player.level(), team).map(Map::size).orElse(0);
         if (current + positions.size() > ClaimLimitApi.API.getMaxClaims(team)) return Component.translatable(ERR_CLAIM_LIMIT);
         if (isTooCloseToOtherTowns(player.server, player.serverLevel(), positions, null)) return Component.translatable(ERR_TOO_CLOSE);
@@ -113,6 +136,7 @@ public final class TownManager {
         Set<ChunkPos> positions = positions(start, end);
         positions.removeIf(pos -> ClaimApi.API.isClaimed(player.level(), pos));
         if (positions.isEmpty()) return null;
+        if (isTooLarge(town.chunks().size(), positions.size())) return Component.translatable(ERR_TOO_LARGE);
         Set<ChunkPos> reachable = new HashSet<>(town.chunks());
         boolean changed;
         do {
@@ -135,6 +159,11 @@ public final class TownManager {
 
     private static Set<ChunkPos> positions(ChunkPos start, ChunkPos end) {
         return ChunkPos.rangeClosed(start, end).collect(Collectors.toSet());
+    }
+
+    private static boolean isTooLarge(int current, int added) {
+        int max = CadmusConfig.get().maxTownSize;
+        return max > 0 && current + added > max;
     }
 
     private static boolean isTooCloseToOtherTowns(MinecraftServer server, ServerLevel level, Set<ChunkPos> positions, UUID excludeTownId) {

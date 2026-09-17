@@ -3,10 +3,12 @@ package earth.terrarium.cadmus.common.commands.claims;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import earth.terrarium.argonauts.api.NotificationApi;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
+import earth.terrarium.cadmus.common.claims.ClaimGroups;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,6 +18,8 @@ import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
+
+import java.util.Set;
 
 public class UnclaimCommand {
 
@@ -57,6 +61,10 @@ public class UnclaimCommand {
         var claim = ClaimApi.API.getClaim(source.getLevel(), pos);
         if (claim.isEmpty()) throw NOT_CLAIMED.create();
         if (!TeamApi.API.canManageClaims(player, claim.get().team())) throw NO_CLAIM_PERMISSION.create();
+        if (!ClaimGroups.canRemove(source.getLevel(), claim.get().team(), Set.of(pos))) {
+            NotificationApi.notify(player, ConstantComponents.CANNOT_DISCONNECT);
+            throw new SimpleCommandExceptionType(ConstantComponents.CANNOT_DISCONNECT).create();
+        }
 
         ClaimApi.API.getClaim(source.getLevel(), pos).ifPresent(team -> {
             ClaimApi.API.unclaim(source.getLevel(), team.team(), pos);
