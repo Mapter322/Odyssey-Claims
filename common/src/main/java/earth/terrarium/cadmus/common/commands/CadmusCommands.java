@@ -8,6 +8,7 @@ import earth.terrarium.cadmus.common.commands.claims.ClaimSettingsCommand;
 import earth.terrarium.cadmus.common.commands.claims.ForceloadCommand;
 import earth.terrarium.cadmus.common.commands.claims.UnclaimAreaCommand;
 import earth.terrarium.cadmus.common.commands.claims.UnclaimCommand;
+import earth.terrarium.cadmus.common.commands.outposts.OutpostCommand;
 import earth.terrarium.cadmus.common.commands.towns.TownCommand;
 import earth.terrarium.cadmus.common.commands.wilderness.WildernessCommands;
 import net.minecraft.commands.CommandSourceStack;
@@ -22,6 +23,7 @@ public class CadmusCommands {
         ForceloadCommand.register(dispatcher);
         CampCommand.register(dispatcher);
         TownCommand.register(dispatcher);
+        OutpostCommand.register(dispatcher);
 
         AdminClaimCommands.register(dispatcher);
         WildernessCommands.register(dispatcher);
