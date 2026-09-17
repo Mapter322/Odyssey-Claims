@@ -257,6 +257,23 @@ settingsButton.active = isAdminSelected() || isTownSelected();
                 .withAlignment(OverlayAlignment.TOP_RIGHT, selected)
                 .withTexture(UIConstants.LIST_BG)
                 .withCloseCallback(() -> selected.setOpened(false));
+            for (UUID town : towns) {
+                ctx.add(() -> Widgets.button()
+                    .withTexture(UIConstants.LIST_ENTRY)
+                    .withRenderer(WidgetRenderers.text(townName(town)).withColor(townColor(town)).withAlignment(0).withPadding(0, 4))
+                    .withSize(MAP_SIZE / 2, 20)
+                    .withCallback(() -> select(town)));
+            }
+            ctx.add(() -> Widgets.button()
+                .withTexture(UIConstants.LIST_ENTRY)
+                .withRenderer(WidgetRenderers.text(ConstantComponents.OUTPOST).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                .withSize(MAP_SIZE / 2, 20)
+                .withCallback(() -> select(CREATE_OUTPOST_SELECTION)));
+            ctx.add(() -> Widgets.button()
+                .withTexture(UIConstants.LIST_ENTRY)
+                .withRenderer(WidgetRenderers.text(Component.translatable("gui.cadmus.claim_map.personal_camp")).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                .withSize(MAP_SIZE / 2, 20)
+                .withCallback(() -> select(CAMP_SELECTION)));
             if (player.hasPermissions(2)) {
                 ctx.add(() -> Widgets.button()
                     .withTexture(UIConstants.LIST_ENTRY)
@@ -266,27 +283,17 @@ settingsButton.active = isAdminSelected() || isTownSelected();
             }
             ctx.add(() -> Widgets.button()
                 .withTexture(UIConstants.LIST_ENTRY)
-                .withRenderer(WidgetRenderers.text(Component.translatable("gui.cadmus.claim_map.personal_camp")).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
-                .withSize(MAP_SIZE / 2, 20)
-                .withCallback(() -> select(CAMP_SELECTION)));
-            for (UUID town : towns) {
-                ctx.add(() -> Widgets.button()
-                    .withTexture(UIConstants.LIST_ENTRY)
-                    .withRenderer(WidgetRenderers.text(townName(town)).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
-                    .withSize(MAP_SIZE / 2, 20)
-                    .withCallback(() -> select(town)));
-            }
-            ctx.add(() -> Widgets.button()
-                .withTexture(UIConstants.LIST_ENTRY)
-                .withRenderer(WidgetRenderers.text(ConstantComponents.CREATE_TOWN).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
+                .withRenderer(WidgetRenderers.text(ConstantComponents.CREATE_TOWN).withColor(MinecraftColors.GRAY).withAlignment(0).withPadding(0, 4))
                 .withSize(MAP_SIZE / 2, 20)
                 .withCallback(() -> select(CREATE_TOWN_SELECTION)));
-            ctx.add(() -> Widgets.button()
-                .withTexture(UIConstants.LIST_ENTRY)
-                .withRenderer(WidgetRenderers.text(ConstantComponents.OUTPOST).withColor(MinecraftColors.WHITE).withAlignment(0).withPadding(0, 4))
-                .withSize(MAP_SIZE / 2, 20)
-                .withCallback(() -> select(CREATE_OUTPOST_SELECTION)));
         });
+    }
+
+    private Color townColor(UUID townId) {
+        return Optional.ofNullable(CadmusClient.TOWNS.get(townId))
+            .map(CadmusClient.ClientTown::team)
+            .map(team -> CadmusClient.TEAM_INFO.getOrDefault(team, new TeamInfo("", Color.DEFAULT)).color())
+            .orElse(MinecraftColors.WHITE);
     }
 
     private Component townName(UUID townId) {
