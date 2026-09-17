@@ -19,6 +19,7 @@ import earth.terrarium.olympus.client.components.base.ListWidget;
 import earth.terrarium.olympus.client.components.base.renderer.WidgetRenderer;
 import earth.terrarium.olympus.client.components.buttons.Button;
 import earth.terrarium.olympus.client.components.compound.radio.RadioState;
+import earth.terrarium.olympus.client.components.renderers.TristateRenderers;
 import earth.terrarium.olympus.client.components.renderers.WidgetRenderers;
 import earth.terrarium.olympus.client.constants.MinecraftColors;
 import earth.terrarium.olympus.client.ui.UIConstants;
@@ -126,9 +127,22 @@ public class ClaimSettingsScreen extends BaseScreen {
             } else {
                 RadioState<TriState> state = this.booleanStates.get(id);
                 if (state != null) {
-                    var tri = Widgets.tristate(state).withTooltip(inheritedTooltip(id));
-                    if (!this.canEdit) tri.asDisabled();
-                    list.add(new LabelledEntry(this.font, settingLabel(id), tri).setLockedWidth().setColor(MinecraftColors.GRAY.getValue()).setDrawDivider(true));
+                    var tri = Widgets.tristate(state, builder -> builder
+                        .withRenderer((option, active) -> WidgetRenderers.layered(
+                            WidgetRenderers.sprite(active && this.canEdit ? TristateRenderers.getButtonSprites(option) : UIConstants.BUTTON),
+                            WidgetRenderers.icon(TristateRenderers.getIcon(option))
+                                .withColor(this.canEdit
+                                    ? (active ? MinecraftColors.WHITE : TristateRenderers.getColor(option))
+                                    : MinecraftColors.GRAY)
+                                .withCentered(12, 12)
+                                .withPadding(0, 0, 2, 0)
+                        )), layout -> {});
+                    tri.withTooltip(inheritedTooltip(id));
+                    if (!this.canEdit) {
+                        tri.asDisabled();
+                        tri.visit(Button.class, button -> button.asDisabled());
+                    }
+                    list.add(new LabelledEntry(this.font, settingLabel(id), tri).setLockedWidth().setEntryYOffset(-2).setColor(MinecraftColors.GRAY.getValue()).setDrawDivider(true));
                     return;
                 }
             }
