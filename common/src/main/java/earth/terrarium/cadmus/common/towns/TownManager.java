@@ -103,7 +103,7 @@ public final class TownManager {
         name = name == null ? "" : name.strip();
         if (!isValidTownName(name)) return Component.translatable(ERR_TOWN_NAME);
         Collection<Town> towns = getTowns(player.server, team);
-        for (Town town : towns) {
+        for (Town town : CadmusSaveData.read(player.server).towns().values()) {
             if (town.name().equalsIgnoreCase(name)) return Component.translatable(ERR_TOWN_NAME_TAKEN);
         }
         if (towns.size() >= TeamApi.API.getMaxTowns(player.level(), team)) return Component.translatable(ERR_MAX_TOWNS);
