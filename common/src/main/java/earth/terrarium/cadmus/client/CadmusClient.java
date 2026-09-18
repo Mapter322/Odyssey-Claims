@@ -1,13 +1,11 @@
 package earth.terrarium.cadmus.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.compat.argonauts.CadmusRoleTargets;
-import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ChatClaimPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.ForceloadActionPacket;
@@ -24,7 +22,6 @@ import earth.terrarium.argonauts.client.screens.members.MembersScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -48,18 +45,7 @@ public class CadmusClient {
     public static final Map<UUID, ClientCamp> CAMPS = new HashMap<>();
     public static final Map<MemberSettingKey, Map<String, String>> MEMBER_SETTINGS = new HashMap<>();
 
-    public static final KeyMapping KEY_OPEN_CLAIM_MAP = new KeyMapping(
-        ConstantComponents.OPEN_CLAIM_MAP_KEY.getString(),
-        InputConstants.KEY_M,
-        ConstantComponents.PROJECT_ODYSSEY_CATEGORY.getString());
-
     public static void init() {}
-
-    public static void onClientTick() {
-        if (KEY_OPEN_CLAIM_MAP.consumeClick()) {
-            openClaimMap();
-        }
-    }
 
     public static void onPlayerLoggedOut() {
         ClaimSaveData.clearClientClaims();

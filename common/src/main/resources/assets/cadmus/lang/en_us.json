@@ -1,7 +1,4 @@
 {
-  "key.categories.project_odyssey": "Project Odyssey",
-  "key.cadmus.open_claim_map": "Open Claim Map",
-
   "command.cadmus.info.claimed_by": "§7Claimed by: §b%s",
   "command.cadmus.info.id": "§7ID: §b%s",
   "command.cadmus.info.position": "§7Chunk Position: §b[%s, %s]",

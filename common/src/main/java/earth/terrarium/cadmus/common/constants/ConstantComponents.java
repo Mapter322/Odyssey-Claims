@@ -8,9 +8,6 @@ public class ConstantComponents {
 
     public static final Component UNKNOWN = Component.literal("Unknown");
 
-    public static final Component PROJECT_ODYSSEY_CATEGORY = Component.translatable("key.categories.project_odyssey");
-    public static final Component OPEN_CLAIM_MAP_KEY = Component.translatable("key.cadmus.open_claim_map");
-
     public static final Component CHUNK_LOADED_TRUE = CommonUtils.serverTranslatable("command.cadmus.info.chunk_loaded_true");
     public static final Component CHUNK_LOADED_FALSE = CommonUtils.serverTranslatable("command.cadmus.info.chunk_loaded_false");
 

@@ -8,9 +8,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
@@ -18,7 +16,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 public class CadmusClientNeoForge {
 
     public CadmusClientNeoForge() {
-        NeoForge.EVENT_BUS.addListener(CadmusClientNeoForge::onClientTick);
         NeoForge.EVENT_BUS.addListener(CadmusClientNeoForge::onPlayerLoggedOut);
         NeoForge.EVENT_BUS.addListener(CadmusClientNeoForge::onRegisterClientCommands);
     }
@@ -26,10 +23,6 @@ public class CadmusClientNeoForge {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(CadmusClient::init);
-    }
-
-    public static void onClientTick(ClientTickEvent.Pre event) {
-        CadmusClient.onClientTick();
     }
 
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -45,10 +38,5 @@ public class CadmusClientNeoForge {
                 })
             )
         );
-    }
-
-    @SubscribeEvent
-    public static void onRegisterKeyBindings(RegisterKeyMappingsEvent event) {
-        event.register(CadmusClient.KEY_OPEN_CLAIM_MAP);
     }
 }
