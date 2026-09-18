@@ -6,6 +6,7 @@ import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.argonauts.client.Modals;
 import earth.terrarium.argonauts.client.screens.BaseScreen;
+import earth.terrarium.argonauts.client.widget.ConditionEntry;
 import earth.terrarium.argonauts.client.widget.LabelledEntry;
 import earth.terrarium.argonauts.client.widget.SettingCategoryEntry;
 import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
@@ -27,6 +28,7 @@ import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.base.ListWidget;
 import earth.terrarium.olympus.client.components.buttons.Button;
 import earth.terrarium.olympus.client.components.compound.radio.RadioState;
+import earth.terrarium.olympus.client.components.renderers.TristateRenderers;
 import earth.terrarium.olympus.client.components.renderers.WidgetRenderers;
 import earth.terrarium.olympus.client.constants.MinecraftColors;
 import earth.terrarium.olympus.client.ui.OverlayAlignment;
@@ -38,6 +40,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +65,8 @@ public class AdminClaimSettingsScreen extends BaseScreen {
     private static final int HEADER_PAD = 4;
     private static final int SAVE_W = 80;
     private static final int SAVE_H = 16;
+    private static final int TRISTATE_W = 36;
+    private static final int TRISTATE_H = 14;
 
     private OpenAdminClaimSettingsPacket packet;
     private final Map<String, RadioState<TriState>> booleanStates = new LinkedHashMap<>();
@@ -215,7 +220,7 @@ public class AdminClaimSettingsScreen extends BaseScreen {
                     addSettingRow(list, child.id(), child.label(), true, child.dynamic());
                 }
                 if (TargetConditions.isValidParent(root.id())) {
-                    list.add(addConditionButton(root.id()));
+                    list.add(addConditionEntry(root.id()));
                 }
             }
         }
@@ -270,9 +275,10 @@ public class AdminClaimSettingsScreen extends BaseScreen {
     private void addSettingRow(ListWidget list, String id, Component label, boolean child, boolean dynamic) {
         RadioState<TriState> state = this.booleanStates.get(id);
         if (state != null) {
-            AbstractWidget value = dynamic ? dynamicToggle(state, id) : Widgets.tristate(state);
+            AbstractWidget value = dynamic ? dynamicToggle(state, id) : tristate(state);
             LabelledEntry entry = new LabelledEntry(this.font, label, value)
                 .setLockedWidth()
+                .setEntryYOffset(-1)
                 .setColor(MinecraftColors.GRAY.getValue())
                 .setDrawDivider(true);
             if (child) entry.setLeftPadding(14);
@@ -291,13 +297,25 @@ public class AdminClaimSettingsScreen extends BaseScreen {
         list.add(entry);
     }
 
+    private AbstractWidget tristate(RadioState<TriState> state) {
+        return Widgets.tristate(state, builder -> builder
+            .withRenderer((option, active) -> WidgetRenderers.layered(
+                WidgetRenderers.sprite(active ? TristateRenderers.getButtonSprites(option) : UIConstants.BUTTON),
+                WidgetRenderers.icon(TristateRenderers.getIcon(option))
+                    .withColor(active ? MinecraftColors.WHITE : TristateRenderers.getColor(option))
+                    .withPaddingBottom(1)
+                    .withCentered(10, 10)
+            ))
+            .withSize(TRISTATE_W, TRISTATE_H), layout -> {});
+    }
+
     private AbstractWidget dynamicToggle(RadioState<TriState> state, String id) {
         return Widgets.carousel(widget -> {
-            widget.withSize(80, 20);
+            widget.withSize(TRISTATE_W + 14, TRISTATE_H);
             widget.withContents(layout -> {
-                layout.withChild(Widgets.tristate(state));
+                layout.withChild(tristate(state));
                 layout.withChild(Widgets.button(button -> {
-                    button.withSize(20);
+                    button.withSize(14);
                     button.withTexture(null);
                     button.withRenderer(WidgetRenderers.icon(UIIcons.TRASH).withColor(MinecraftColors.RED));
                     button.withTooltip(Component.translatable("gui.cadmus.claim_settings.remove_condition", id));
@@ -307,13 +325,19 @@ public class AdminClaimSettingsScreen extends BaseScreen {
         });
     }
 
-    private Button addConditionButton(String parent) {
-        return Widgets.button(button -> {
-            button.withSize(1, 16);
-            button.withTexture(UIConstants.DARK_BUTTON);
-            button.withRenderer(WidgetRenderers.text(Component.translatable("gui.cadmus.claim_settings.add_condition")).withColor(MinecraftColors.WHITE));
-            button.withCallback(() -> this.openConditionModal(parent));
-        });
+    private ConditionEntry addConditionEntry(String parent) {
+        return new ConditionEntry(
+            this.font,
+            Component.translatable("gui.cadmus.claim_settings.add_condition"),
+            0xFFAAAAAA,
+            UIIcons.PLUS,
+            MinecraftColors.WHITE,
+            null,
+            true,
+            () -> openConditionModal(parent),
+            9,
+            -1
+        ).withRowPress(() -> openConditionModal(parent));
     }
 
     private void openConditionModal(String parent) {
@@ -399,8 +423,23 @@ public class AdminClaimSettingsScreen extends BaseScreen {
             super(width, height);
         }
 
+        @Override
+        public void setFocused(@Nullable GuiEventListener listener) {
+            double scroll = this.scroll;
+            super.setFocused(listener);
+            this.scroll = scroll;
+        }
+
         void restoreScroll(int scroll) {
-            this.scroll = Math.max(0, Math.min(scroll, Math.max(0, this.getContentHeight() - this.getHeight())));
+            this.scroll = Math.max(0, Math.min(scroll, Math.max(0, this.contentHeight() - this.getHeight())));
+        }
+
+        private int contentHeight() {
+            int height = 0;
+            for (AbstractWidget item : this.items) {
+                height += item.getHeight() + this.gap;
+            }
+            return height;
         }
     }
 
