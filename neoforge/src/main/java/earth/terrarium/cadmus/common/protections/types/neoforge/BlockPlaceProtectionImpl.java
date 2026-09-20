@@ -1,16 +1,20 @@
 package earth.terrarium.cadmus.common.protections.types.neoforge;
 
 import earth.terrarium.cadmus.Cadmus;
+import earth.terrarium.cadmus.api.protections.PlacerTracked;
 import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.player.BonemealEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.PistonEvent;
@@ -24,11 +28,23 @@ final class BlockPlaceProtectionImpl {
         if (entity != null) {
             if (!Protections.BLOCK_PLACING.canPlaceBlock(entity, event.getPos(), event.getPlacedBlock())) {
                 event.setCanceled(true);
+                return;
             }
+            tagPlacer(event, entity);
         } else if (event.getLevel() instanceof Level level) {
             if (!Protections.BLOCK_PLACING.canPlaceBlock(level, event.getPos(), event.getPlacedBlock())) {
                 event.setCanceled(true);
             }
+        }
+    }
+
+    private static void tagPlacer(BlockEvent.EntityPlaceEvent event, Entity entity) {
+        if (!(entity instanceof ServerPlayer player) || player instanceof FakePlayer) return;
+        if (!(event.getLevel() instanceof Level level)) return;
+        BlockEntity blockEntity = level.getBlockEntity(event.getPos());
+        if (blockEntity instanceof PlacerTracked tracked) {
+            tracked.cadmus$setPlacerUUID(player.getUUID());
+            blockEntity.setChanged();
         }
     }
 

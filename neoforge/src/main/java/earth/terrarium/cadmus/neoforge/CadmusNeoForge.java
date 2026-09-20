@@ -4,9 +4,11 @@ import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.client.neoforge.CadmusClientNeoForge;
 import earth.terrarium.cadmus.common.camps.CampManager;
 import earth.terrarium.cadmus.common.commands.CadmusCommands;
+import earth.terrarium.cadmus.common.compat.cbc.CBCProtectionEvents;
 import earth.terrarium.cadmus.common.protections.Protections;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
@@ -27,6 +29,9 @@ public class CadmusNeoForge {
         NeoForge.EVENT_BUS.addListener(this::onEnterSection);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onRightClick);
+        if (ModList.get().isLoaded("createbigcannons")) {
+            CBCProtectionEvents.register();
+        }
     }
 
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {

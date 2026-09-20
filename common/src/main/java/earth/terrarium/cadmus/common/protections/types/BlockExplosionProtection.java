@@ -39,4 +39,9 @@ public final class BlockExplosionProtection implements Protection {
         }
         return !ClaimApi.API.isClaimed(level, pos) && Settings.getAt(level, new net.minecraft.world.level.ChunkPos(pos), SettingDefinitions.BLOCK_EXPLOSIONS);
     }
+
+    public boolean canExplodeBlock(Level level, BlockPos pos) {
+        if (level.isClientSide()) return true;
+        return !ClaimApi.API.isClaimed(level, pos) && Settings.getAt(level, new net.minecraft.world.level.ChunkPos(pos), SettingDefinitions.BLOCK_EXPLOSIONS);
+    }
 }
