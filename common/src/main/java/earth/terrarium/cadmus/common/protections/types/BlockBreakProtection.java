@@ -12,9 +12,13 @@ import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.CadmusNotifications;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 public final class BlockBreakProtection implements Protection {
 
@@ -29,17 +33,28 @@ public final class BlockBreakProtection implements Protection {
     }
 
     public boolean canBreakBlock(Level level, GameProfile player, BlockPos pos) {
+        return canBreakBlock(level, player, pos, true);
+    }
+
+    public boolean canBreakBlock(Player player, BlockPos pos) {
+        return canBreakBlock(player.level(), player.getGameProfile(), pos);
+    }
+
+    public boolean canNonPlayerBreak(Level level, @Nullable UUID placer, BlockPos pos) {
+        if (level.isClientSide()) return true;
+        if (level.getGameRules().getBoolean(gameRule())) return true;
+        if (Settings.getAt(level, new ChunkPos(pos), SettingDefinitions.NON_PLAYERS_BREAK)) return true;
+        return placer != null && canBreakBlock(level, new GameProfile(placer, ""), pos, false);
+    }
+
+    private boolean canBreakBlock(Level level, GameProfile player, BlockPos pos, boolean notify) {
         if (level.isClientSide()) return true;
         BlockState state = level.getBlockState(pos);
         boolean allowed = getId(level, pos)
             .map(id -> isPlayerAllowed(level, player, id, specific(state, Settings.scopeOf(id))))
             .orElse(true);
-        if (!allowed) CadmusNotifications.noAccess(level, player);
+        if (!allowed && notify) CadmusNotifications.noAccess(level, player);
         return allowed;
-    }
-
-    public boolean canBreakBlock(Player player, BlockPos pos) {
-        return canBreakBlock(player.level(), player.getGameProfile(), pos);
     }
 
     @SuppressWarnings("unchecked")

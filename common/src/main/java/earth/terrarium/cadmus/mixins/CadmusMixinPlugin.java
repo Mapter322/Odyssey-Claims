@@ -23,6 +23,12 @@ public class CadmusMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.contains("client.compat.xaero")) {
             return ModUtils.isMixinModLoaded("xaeroworldmap");
         }
+        if (mixinClassName.contains("compat.create")) {
+            return ModUtils.isMixinModLoaded("create");
+        }
+        if (mixinClassName.contains("compat.cbc")) {
+            return ModUtils.isMixinModLoaded("createbigcannons");
+        }
         return true;
     }
 

@@ -41,6 +41,7 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> MOB_GRIEFING = townBoolean("mob-griefing", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ITEM_PICKUP = townBoolean("item-pickup", SettingTarget.PLAYER, false);
     public static final SettingDefinition<Boolean> NON_PLAYERS_PLACE = townBoolean("non-players-place", SettingTarget.GLOBAL, false);
+    public static final SettingDefinition<Boolean> NON_PLAYERS_BREAK = townBoolean("non-players-break", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> FIRE_SPREAD = townBoolean("fire-spread", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> PVP = townBoolean("pvp", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ALLOW_ENTRY = townBoolean("allow-entry", SettingTarget.GLOBAL);
@@ -67,6 +68,7 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> ADMIN_ITEM_PICKUP = adminBoolean("item-pickup", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> ADMIN_DIRT_ITEM = adminCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> ADMIN_NON_PLAYERS_PLACE = adminBoolean("non-players-place", SettingTarget.GLOBAL, false);
+    public static final SettingDefinition<Boolean> ADMIN_NON_PLAYERS_BREAK = adminBoolean("non-players-break", SettingTarget.GLOBAL, false);
     public static final SettingDefinition<Boolean> ADMIN_PVP = adminBoolean("pvp", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_MONSTER_DAMAGE = adminBoolean("monster-damage", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> ADMIN_CREATURE_DAMAGE = adminBoolean("creature-damage", SettingTarget.GLOBAL);
@@ -119,6 +121,7 @@ public final class SettingDefinitions {
     public static final SettingDefinition<Boolean> WILDERNESS_ITEM_PICKUP = wildernessBoolean("item-pickup", SettingTarget.PLAYER);
     public static final SettingDefinition<Boolean> WILDERNESS_DIRT_ITEM = wildernessCondition("item-pickup/minecraft:dirt", SettingTarget.PLAYER, "item-pickup", new ItemValueCondition(ResourceLocation.withDefaultNamespace("dirt")));
     public static final SettingDefinition<Boolean> WILDERNESS_NON_PLAYERS_PLACE = wildernessBoolean("non-players-place", SettingTarget.GLOBAL);
+    public static final SettingDefinition<Boolean> WILDERNESS_NON_PLAYERS_BREAK = wildernessBoolean("non-players-break", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> WILDERNESS_PVP = wildernessBoolean("pvp", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> WILDERNESS_MONSTER_DAMAGE = wildernessBoolean("monster-damage", SettingTarget.GLOBAL);
     public static final SettingDefinition<Boolean> WILDERNESS_CREATURE_DAMAGE = wildernessBoolean("creature-damage", SettingTarget.GLOBAL);

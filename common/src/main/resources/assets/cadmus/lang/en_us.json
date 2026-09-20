@@ -160,6 +160,7 @@
   "cadmus.setting.mob-griefing": "Mob griefing",
   "cadmus.setting.item-pickup": "Item pickup",
   "cadmus.setting.non-players-place": "Non-player block placement",
+  "cadmus.setting.non-players-break": "Non-player block breaking",
   "cadmus.setting.fire-spread": "Fire spread",
   "cadmus.setting.pvp": "PVP",
   "cadmus.setting.monster-damage": "Monster damage",
