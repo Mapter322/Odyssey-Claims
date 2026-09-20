@@ -61,6 +61,7 @@ subprojects {
         val journeymapVersion: String by project
         val journeymapApiVersion: String by project
         val argonautsVersion: String by project
+        val depsMinecraftVersion: String by project
 
         "minecraft"("::$minecraftVersion")
 
@@ -70,15 +71,15 @@ subprojects {
 
             officialMojangMappings()
 
-            parchment(create(group = "org.parchmentmc.data", name = "parchment-1.21", version = parchmentVersion))
+            parchment(create(group = "org.parchmentmc.data", name = "parchment-$minecraftVersion", version = parchmentVersion))
         })
 
-        "modApi"(group = "com.teamresourceful.resourcefullib", name = "resourcefullib-$modLoader-$minecraftVersion", version = "3.0.12")
-        val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-$minecraftVersion", version = "1.0.19") {
+        "modApi"(group = "com.teamresourceful.resourcefullib", name = "resourcefullib-$modLoader-$depsMinecraftVersion", version = "3.0.12")
+        val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-$depsMinecraftVersion", version = "1.0.19") {
             isTransitive = false
         }
 
-        "modCompileOnly"(group = "earth.terrarium.argonauts", name = "argonauts-$modLoader-$minecraftVersion", version = argonautsVersion) {
+        "modCompileOnly"(group = "earth.terrarium.argonauts", name = "argonauts-$modLoader-$depsMinecraftVersion", version = argonautsVersion) {
             isTransitive = false
         }
 
