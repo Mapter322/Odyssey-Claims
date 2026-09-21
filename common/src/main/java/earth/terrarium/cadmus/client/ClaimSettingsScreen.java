@@ -14,6 +14,7 @@ import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.clientbound.SyncClaimSettingsPacket;
 import earth.terrarium.cadmus.common.network.packets.serverbound.BulkClaimSettingsPacket;
 import earth.terrarium.cadmus.common.settings.SettingDefinitions;
+import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.olympus.client.components.Widgets;
 import earth.terrarium.olympus.client.components.base.ListWidget;
 import earth.terrarium.olympus.client.components.base.renderer.WidgetRenderer;
@@ -82,9 +83,13 @@ public class ClaimSettingsScreen extends BaseScreen {
                 this.textStates.put(id, State.of(value));
             }
         });
+        if (this.target.isChunk()) {
+            this.textStates.put(Settings.CHUNK_NAME, State.of(packet.values().getOrDefault(Settings.CHUNK_NAME, "")));
+        }
     }
 
     private static Component title(SyncClaimSettingsPacket packet) {
+        if (packet.target().isChunk()) return Component.translatable("gui.cadmus.claim_settings.title.chunk", packet.name());
         if (packet.target().isGlobal()) return Component.translatable("gui.cadmus.claim_settings.title");
         return Component.translatable("gui.cadmus.claim_settings.title.town", packet.name());
     }
@@ -115,6 +120,19 @@ public class ClaimSettingsScreen extends BaseScreen {
         ListWidget list = new ListWidget(listWidth, listHeight);
         list.withGap(3);
         list.setPosition(this.leftPos + SIDE_PADDING, listY);
+
+        if (this.target.isChunk()) {
+            State<String> nameState = this.textStates.get(Settings.CHUNK_NAME);
+            if (nameState != null) {
+                AbstractWidget input = Widgets.textInput(nameState).withMaxLength(32).withSize(100, 16);
+                input.active = this.canEdit;
+                list.add(new LabelledEntry(this.font, Component.literal("   ").append(Component.translatable("gui.cadmus.chunk.name")), input)
+                    .setLockedWidth()
+                    .setEntryYOffset(-2)
+                    .setColor(MinecraftColors.GRAY.getValue())
+                    .setDrawDivider(true));
+            }
+        }
 
         SettingDefinitions.forScope(SettingScope.TOWN).forEach((id, definition) -> {
             if (definition.target() != SettingTarget.GLOBAL) return;

@@ -5,6 +5,7 @@ import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
@@ -124,6 +125,9 @@ public class ClaimApiImpl implements ClaimApi {
             NetworkHandler.sendToAllClientPlayers(new RemoveClaimPacket(id, pos), serverLevel.getServer());
             TeamApi.API.displayTeamNameToAll(serverLevel.getServer());
             TeamApi.API.syncTeamInfo(serverLevel.getServer(), id, false);
+            if (CadmusSaveData.removeChunkData(serverLevel.getServer(), ChunkRef.of(level, pos))) {
+                TownManager.sync(serverLevel.getServer());
+            }
         }
         CadmusEvents.RemoveClaimsEvent.fire(level, id, Set.of(pos));
         TownManager.removeChunk(level, id, pos);
@@ -150,6 +154,11 @@ public class ClaimApiImpl implements ClaimApi {
             NetworkHandler.sendToAllClientPlayers(new RemoveBulkClaimsPacket(id, positions), serverLevel.getServer());
             TeamApi.API.displayTeamNameToAll(serverLevel.getServer());
             TeamApi.API.syncTeamInfo(serverLevel.getServer(), id, false);
+            boolean removed = false;
+            for (var pos : positions) {
+                removed |= CadmusSaveData.removeChunkData(serverLevel.getServer(), ChunkRef.of(level, pos));
+            }
+            if (removed) TownManager.sync(serverLevel.getServer());
         }
         CadmusEvents.RemoveClaimsEvent.fire(level, id, positions);
         positions.forEach(pos -> TownManager.removeChunk(level, id, pos));
@@ -157,6 +166,9 @@ public class ClaimApiImpl implements ClaimApi {
 
     @Override
     public void clear(Level level, TeamId id) {
+        Set<ChunkPos> removedChunks = getOwnedClaims(level, id)
+            .map(claims -> new HashSet<>(claims.keySet()))
+            .orElseGet(HashSet::new);
         getOwnedClaims(level, id).ifPresent(claims -> claims.forEach((pos, chunkLoad) -> {
             if (chunkLoad) {
                 level.getChunkSource().updateChunkForced(pos, false);
@@ -173,6 +185,11 @@ public class ClaimApiImpl implements ClaimApi {
             NetworkHandler.sendToAllClientPlayers(new ClearClaimsPacket(id), serverLevel.getServer());
             TeamApi.API.displayTeamNameToAll(serverLevel.getServer());
             TeamApi.API.syncTeamInfo(serverLevel.getServer(), id, false);
+            boolean removed = false;
+            for (var pos : removedChunks) {
+                removed |= CadmusSaveData.removeChunkData(serverLevel.getServer(), ChunkRef.of(level, pos));
+            }
+            if (removed) TownManager.sync(serverLevel.getServer());
         }
         CadmusEvents.ClearClaimsEvent.fire(level, id);
     }

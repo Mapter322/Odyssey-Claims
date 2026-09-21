@@ -9,7 +9,10 @@ import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.base.ServerboundPacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
+import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.claims.ClaimData;
 import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.settings.SettingAccess;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
@@ -22,7 +25,10 @@ import earth.terrarium.cadmus.common.settings.SettingDefinitions;
 import earth.terrarium.cadmus.common.settings.Settings;
 import earth.terrarium.cadmus.common.towns.TownManager;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +48,10 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
         NetworkHandle.handle((packet, player) -> {
             MinecraftServer server = player.getServer();
             if (server == null) return;
+            if (packet.target().chunk() != null) {
+                applyChunk(server, packet, player);
+                return;
+            }
             TeamId teamId = packet.target().team();
             UUID townId = packet.target().townId().orElse(null);
             if (townId != null && TownManager.getTown(server, townId).filter(town -> town.team().equals(teamId)).isEmpty()) return;
@@ -86,6 +96,52 @@ public record BulkClaimSettingsPacket(ClaimSettingsTarget target, Map<String, St
     private static boolean canModify(Player player, SettingDefinition<?> definition, TeamId id) {
         if (definition.access() == SettingAccess.ADMIN) return player.hasPermissions(2);
         return player.hasPermissions(2) || TeamApi.API.canModifySettings(player, id);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void applyChunk(MinecraftServer server, BulkClaimSettingsPacket packet, Player player) {
+        ClaimSettingsTarget target = packet.target();
+        ChunkRef chunk = target.chunk();
+        ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, chunk.dimension()));
+        if (level == null) return;
+        ClaimData claim = ClaimApi.API.getClaim(level, chunk.pos()).orElse(null);
+        if (claim == null || !claim.team().equals(target.team())) return;
+        if (!player.hasPermissions(2) && !TeamApi.API.canModifySettings(player, target.team())) return;
+
+        SettingScope scope = Settings.scopeOf(target.team());
+        boolean changed = false;
+        for (Map.Entry<String, String> entry : packet.values().entrySet()) {
+            String setting = entry.getKey();
+            String value = entry.getValue();
+            if (setting.equals(Settings.CHUNK_NAME)) {
+                if (!TownManager.isValidChunkName(value)) continue;
+                CadmusSaveData.setChunkName(server, chunk, value.strip());
+                changed = true;
+                continue;
+            }
+            SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
+            if (definition == null || definition.target() != SettingTarget.GLOBAL) continue;
+            if (!canModify(player, definition, target.team())) continue;
+            try {
+                SettingValue<?> parsed = SettingCommandSupport.parse(definition, value);
+                CadmusSaveData.setChunkSettingValue(server, chunk, (SettingDefinition) definition, (SettingValue) parsed);
+                changed = true;
+            } catch (CommandSyntaxException ignored) {
+            }
+        }
+        for (String setting : packet.resets()) {
+            if (setting.equals(Settings.CHUNK_NAME)) {
+                CadmusSaveData.setChunkName(server, chunk, "");
+                changed = true;
+                continue;
+            }
+            SettingDefinition<?> definition = SettingDefinitions.forScope(scope).get(setting);
+            if (definition == null || definition.target() != SettingTarget.GLOBAL) continue;
+            if (!canModify(player, definition, target.team())) continue;
+            CadmusSaveData.resetChunkSettingValue(server, chunk, definition);
+            changed = true;
+        }
+        if (changed) TownManager.sync(server);
     }
 
     @Override

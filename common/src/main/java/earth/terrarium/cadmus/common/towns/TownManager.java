@@ -95,6 +95,11 @@ public final class TownManager {
         return !RESERVED_NAMES.contains(name.toLowerCase(Locale.ROOT));
     }
 
+    public static boolean isValidChunkName(String name) {
+        if (name == null || name.length() > MAX_TOWN_NAME_LENGTH) return false;
+        return name.indexOf('|') < 0 && name.indexOf('/') < 0;
+    }
+
     public static Component create(ServerPlayer player, ChunkPos start, ChunkPos end, String name) {
         TeamId team = TeamApi.API.getTeamsList(player).stream().findFirst().orElse(null);
         if (team == null) return Component.translatable(ERR_NO_GUILD);
@@ -216,13 +221,19 @@ public final class TownManager {
     }
 
     public static void sync(MinecraftServer server) {
-        NetworkHandler.sendToAllClientPlayers(new SyncTownsPacket(encode(server)), server);
+        NetworkHandler.sendToAllClientPlayers(new SyncTownsPacket(encode(server), encodeChunkNames(server)), server);
     }
 
     public static String encode(MinecraftServer server) {
         return CadmusSaveData.read(server).towns().values().stream()
             .map(town -> town.id() + "|" + town.team().provider() + "|" + town.team().id() + "|" + town.name() + "|" +
                 town.chunks().stream().map(pos -> pos.x + "," + pos.z).collect(Collectors.joining(";")))
+            .collect(Collectors.joining("/"));
+    }
+
+    public static String encodeChunkNames(MinecraftServer server) {
+        return CadmusSaveData.read(server).chunkNames().entrySet().stream()
+            .map(entry -> entry.getKey().dimension() + "|" + entry.getKey().key() + "|" + entry.getValue())
             .collect(Collectors.joining("/"));
     }
 }

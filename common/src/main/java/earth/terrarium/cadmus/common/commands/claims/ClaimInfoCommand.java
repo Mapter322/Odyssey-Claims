@@ -2,8 +2,10 @@ package earth.terrarium.cadmus.common.commands.claims;
 
 import com.mojang.brigadier.CommandDispatcher;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
+import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.argonauts.api.util.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -11,6 +13,9 @@ import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClaimInfoCommand {
 
@@ -37,12 +42,16 @@ public class ClaimInfoCommand {
             boolean chunkLoaded = claim.isChunkLoaded();
             Component name = TeamApi.API.getName(source.getLevel(), claim.team());
 
-            source.sendSuccess(() -> CommonComponents.joinLines(
-                ModUtils.translatableWithStyle("command.cadmus.info.claimed_by", name.getString()).copy().withStyle(name.getStyle()),
-                ModUtils.translatableWithStyle("command.cadmus.info.id", claim.team()),
-                ModUtils.translatableWithStyle("command.cadmus.info.position", pos.x, pos.z),
-                chunkLoaded ? ConstantComponents.CHUNK_LOADED_TRUE : ConstantComponents.CHUNK_LOADED_FALSE
-            ), false);
+            List<Component> lines = new ArrayList<>();
+            lines.add(ModUtils.translatableWithStyle("command.cadmus.info.claimed_by", name.getString()).copy().withStyle(name.getStyle()));
+            CadmusSaveData.getChunkName(source.getServer(), ChunkRef.of(source.getLevel(), pos))
+                .filter(value -> !value.isBlank())
+                .ifPresent(value -> lines.add(ModUtils.translatableWithStyle("command.cadmus.info.name", value)));
+            lines.add(ModUtils.translatableWithStyle("command.cadmus.info.id", claim.team()));
+            lines.add(ModUtils.translatableWithStyle("command.cadmus.info.position", pos.x, pos.z));
+            lines.add(chunkLoaded ? ConstantComponents.CHUNK_LOADED_TRUE : ConstantComponents.CHUNK_LOADED_FALSE);
+
+            source.sendSuccess(() -> CommonComponents.joinLines(lines), false);
         }, () -> source.sendFailure(ConstantComponents.NOT_CLAIMED));
     }
 }

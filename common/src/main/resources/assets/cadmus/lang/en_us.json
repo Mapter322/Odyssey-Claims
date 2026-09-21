@@ -1,5 +1,6 @@
 {
   "command.cadmus.info.claimed_by": "§7Claimed by: §b%s",
+  "command.cadmus.info.name": "§7Name: §b%s",
   "command.cadmus.info.id": "§7ID: §b%s",
   "command.cadmus.info.position": "§7Chunk Position: §b[%s, %s]",
   "command.cadmus.info.chunk_loaded_true": "§7Forceloaded: §b✔",
@@ -116,6 +117,7 @@
   "gui.cadmus.claim_map.tooltip.owner": "Owner: %s",
   "gui.cadmus.claim_map.tooltip.expires": "Expires in: %s",
   "gui.cadmus.claim_map.tooltip.forceload": "Forceload: %s",
+  "gui.cadmus.claim_map.tooltip.name": "Name: %s",
   "gui.cadmus.claim_map.yes": "Yes",
   "gui.cadmus.claim_map.no": "No",
   "gui.cadmus.claim_map.type.town": "Town",
@@ -132,6 +134,8 @@
 
   "gui.cadmus.claim_settings.title": "Claim Settings",
   "gui.cadmus.claim_settings.title.town": "Claim Settings — %s",
+  "gui.cadmus.claim_settings.title.chunk": "Chunk Settings — %s",
+  "gui.cadmus.chunk.name": "Name",
   "gui.cadmus.claim_settings.inherited": "Inherited: %s",
   "gui.cadmus.claim_settings.add_condition": "Add Condition",
   "gui.cadmus.claim_settings.add_condition.description": "Enter an extra target, e.g. \"minecraft:stone\" or \"#minecraft:logs\".",

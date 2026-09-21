@@ -2,6 +2,7 @@ package earth.terrarium.cadmus.client;
 
 import com.teamresourceful.resourcefullib.common.color.Color;
 import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
@@ -41,6 +42,7 @@ public class CadmusClient {
 
     public static final Map<TeamId, TeamInfo> TEAM_INFO = new HashMap<>();
     public static final Map<UUID, ClientTown> TOWNS = new HashMap<>();
+    public static final Map<ChunkRef, String> CHUNK_NAMES = new HashMap<>();
     public static final Map<TeamId, Set<ChunkPos>> OUTPOSTS = new HashMap<>();
     public static final Map<UUID, ClientCamp> CAMPS = new HashMap<>();
     public static final Map<MemberSettingKey, Map<String, String>> MEMBER_SETTINGS = new HashMap<>();
@@ -51,6 +53,7 @@ public class CadmusClient {
         ClaimSaveData.clearClientClaims();
         TEAM_INFO.clear();
         TOWNS.clear();
+        CHUNK_NAMES.clear();
         OUTPOSTS.clear();
         CAMPS.clear();
         MEMBER_SETTINGS.clear();
@@ -175,6 +178,24 @@ public class CadmusClient {
         public Component displayName() {
             return Component.literal(name.isBlank() ? "Town " + id : name);
         }
+    }
+
+    public static void updateChunkNames(String encoded) {
+        CHUNK_NAMES.clear();
+        if (encoded.isBlank()) return;
+        for (String chunkValue : encoded.split("/")) {
+            String[] fields = chunkValue.split("\\|", 3);
+            if (fields.length != 3) continue;
+            try {
+                ResourceLocation dimension = ResourceLocation.parse(fields[0]);
+                String[] position = fields[1].split(",", 2);
+                CHUNK_NAMES.put(new ChunkRef(dimension,
+                    new ChunkPos(Integer.parseInt(position[0]), Integer.parseInt(position[1]))), fields[2]);
+            } catch (RuntimeException ignored) {
+                // Ignore malformed data from an incompatible server.
+            }
+        }
+        if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) screen.refresh();
     }
 
     public static void updateOutposts(String encoded) {

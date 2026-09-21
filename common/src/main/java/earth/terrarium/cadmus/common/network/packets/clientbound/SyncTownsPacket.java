@@ -10,11 +10,18 @@ import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketTyp
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.client.CadmusClient;
 
-public record SyncTownsPacket(String data) implements Packet<SyncTownsPacket> {
+public record SyncTownsPacket(String data, String chunkNames) implements Packet<SyncTownsPacket> {
     public static final ClientboundPacketType<SyncTownsPacket> TYPE = CodecPacketType.Client.create(
         Cadmus.id("sync_towns"),
-        ObjectByteCodec.create(ByteCodec.STRING.fieldOf(SyncTownsPacket::data), SyncTownsPacket::new),
-        NetworkHandle.handle(packet -> CadmusClient.updateTowns(packet.data()))
+        ObjectByteCodec.create(
+            ByteCodec.STRING.fieldOf(SyncTownsPacket::data),
+            ByteCodec.STRING.fieldOf(SyncTownsPacket::chunkNames),
+            SyncTownsPacket::new
+        ),
+        NetworkHandle.handle(packet -> {
+            CadmusClient.updateTowns(packet.data());
+            CadmusClient.updateChunkNames(packet.chunkNames());
+        })
     );
 
     @Override

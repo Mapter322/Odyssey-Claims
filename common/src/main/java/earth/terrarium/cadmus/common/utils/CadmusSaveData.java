@@ -3,6 +3,7 @@ package earth.terrarium.cadmus.common.utils;
 import com.teamresourceful.resourcefullib.common.color.Color;
 import com.teamresourceful.resourcefullib.common.utils.SaveHandler;
 import earth.terrarium.argonauts.api.util.ModUtils;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingScope;
@@ -24,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -32,6 +34,8 @@ public class CadmusSaveData extends SaveHandler {
 
     private final Map<SettingScope, Map<TeamId, Map<String, SettingValue<?>>>> settingValues = new EnumMap<>(SettingScope.class);
     private final Map<SettingScope, Map<UUID, Map<String, SettingValue<?>>>> townSettingValues = new EnumMap<>(SettingScope.class);
+    private final Map<SettingScope, Map<ChunkRef, Map<String, SettingValue<?>>>> chunkSettingValues = new EnumMap<>(SettingScope.class);
+    private final Map<ChunkRef, String> chunkNames = new HashMap<>();
     private final Map<SettingScope, Map<TeamId, Map<UUID, Map<String, SettingOverride>>>> playerSettingOverrides = new EnumMap<>(SettingScope.class);
     private final Map<UUID, String> adminTeams = new HashMap<>();
     private final Set<UUID> bypassPlayers = new HashSet<>();
@@ -82,6 +86,8 @@ UUID id = UUID.fromString(idString);
 
         loadSettingValues(tag.getCompound("settingValues"));
         loadTownSettingValues(tag.getCompound("townSettings"));
+        loadChunkSettingValues(tag.getCompound("chunkSettings"));
+        loadChunkNames(tag.getCompound("chunkNames"));
         loadPlayerSettingOverrides(tag.getCompound("playerSettingOverrides"));
     }
 
@@ -126,6 +132,8 @@ tag.put("towns", townsTag);
 
         tag.put("settingValues", saveSettingValues());
         tag.put("townSettings", saveTownSettingValues());
+        tag.put("chunkSettings", saveChunkSettingValues());
+        tag.put("chunkNames", saveChunkNames());
         tag.put("playerSettingOverrides", savePlayerSettingOverrides());
     }
 
@@ -268,6 +276,69 @@ public static CadmusSaveData read(MinecraftServer server) {
         data.setDirty();
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> SettingValue<T> getChunkSettingValue(MinecraftServer server, ChunkRef chunk, SettingDefinition<T> definition) {
+        var data = read(server);
+        return data.chunkSettingValues
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(chunk, Map.of())
+            .getOrDefault(definition.id(), definition.defaultValue()) instanceof SettingValue<?> value
+            ? (SettingValue<T>) value
+            : definition.defaultValue();
+    }
+
+    public static boolean hasChunkSettingValue(MinecraftServer server, ChunkRef chunk, SettingDefinition<?> definition) {
+        return read(server).chunkSettingValues
+            .getOrDefault(definition.scope(), Map.of())
+            .getOrDefault(chunk, Map.of())
+            .containsKey(definition.id());
+    }
+
+    public static <T> void setChunkSettingValue(MinecraftServer server, ChunkRef chunk, SettingDefinition<T> definition, SettingValue<T> value) {
+        var data = read(server);
+        data.chunkSettingValues
+            .computeIfAbsent(definition.scope(), ignored -> new HashMap<>())
+            .computeIfAbsent(chunk, ignored -> new HashMap<>())
+            .put(definition.id(), value);
+        data.setDirty();
+    }
+
+    public static void resetChunkSettingValue(MinecraftServer server, ChunkRef chunk, SettingDefinition<?> definition) {
+        var data = read(server);
+        Map<ChunkRef, Map<String, SettingValue<?>>> scopeValues = data.chunkSettingValues.get(definition.scope());
+        if (scopeValues != null) {
+            scopeValues.computeIfPresent(chunk, (ignored, values) -> {
+                values.remove(definition.id());
+                return values.isEmpty() ? null : values;
+            });
+        }
+        data.setDirty();
+    }
+
+    public static Optional<String> getChunkName(MinecraftServer server, ChunkRef chunk) {
+        return Optional.ofNullable(read(server).chunkNames.get(chunk));
+    }
+
+    public static void setChunkName(MinecraftServer server, ChunkRef chunk, String name) {
+        var data = read(server);
+        if (name.isBlank()) {
+            data.chunkNames.remove(chunk);
+        } else {
+            data.chunkNames.put(chunk, name);
+        }
+        data.setDirty();
+    }
+
+    public static boolean removeChunkData(MinecraftServer server, ChunkRef chunk) {
+        var data = read(server);
+        boolean removed = data.chunkNames.remove(chunk) != null;
+        for (Map<ChunkRef, Map<String, SettingValue<?>>> values : data.chunkSettingValues.values()) {
+            removed |= values.remove(chunk) != null;
+        }
+        data.setDirty();
+        return removed;
+    }
+
     public static <T> void setSettingValue(MinecraftServer server, TeamId id, SettingDefinition<T> definition, SettingValue<T> value) {
         var data = read(server);
         data.settingValues
@@ -322,6 +393,8 @@ public static CadmusSaveData read(MinecraftServer server) {
         var data = read(server);
         data.settingValues.clear();
         data.townSettingValues.clear();
+        data.chunkSettingValues.clear();
+        data.chunkNames.clear();
         data.playerSettingOverrides.clear();
         data.adminTeams.clear();
         data.teamConditions.clear();
@@ -352,6 +425,10 @@ public static CadmusSaveData read(MinecraftServer server) {
 
     public Map<UUID, Town> towns() {
         return towns;
+    }
+
+    public Map<ChunkRef, String> chunkNames() {
+        return chunkNames;
     }
 
     private void loadSettingValues(CompoundTag root) {
@@ -442,6 +519,84 @@ public static CadmusSaveData read(MinecraftServer server) {
             root.put(scope.name(), scopeTag);
         });
         return root;
+    }
+
+    private void loadChunkSettingValues(CompoundTag root) {
+        root.getAllKeys().forEach(scopeName -> {
+            SettingScope scope = SettingScope.valueOf(scopeName);
+            CompoundTag scopeTag = root.getCompound(scopeName);
+            scopeTag.getAllKeys().forEach(dimensionName -> {
+                ResourceLocation dimension = ResourceLocation.tryParse(dimensionName);
+                if (dimension == null) return;
+                CompoundTag dimensionTag = scopeTag.getCompound(dimensionName);
+                dimensionTag.getAllKeys().forEach(chunkKey -> {
+                    ChunkPos pos = parseChunkKey(chunkKey);
+                    if (pos == null) return;
+                    ChunkRef chunk = new ChunkRef(dimension, pos);
+                    CompoundTag chunkTag = dimensionTag.getCompound(chunkKey);
+                    chunkTag.getAllKeys().forEach(id -> {
+                        SettingValue<?> value = readSettingValue(chunkTag.getCompound(id));
+                        if (value != null) {
+                            chunkSettingValues.computeIfAbsent(scope, ignored -> new HashMap<>())
+                                .computeIfAbsent(chunk, ignored -> new HashMap<>())
+                                .put(id, value);
+                        }
+                    });
+                });
+            });
+        });
+    }
+
+    private void loadChunkNames(CompoundTag root) {
+        root.getAllKeys().forEach(dimensionName -> {
+            ResourceLocation dimension = ResourceLocation.tryParse(dimensionName);
+            if (dimension == null) return;
+            CompoundTag dimensionTag = root.getCompound(dimensionName);
+            dimensionTag.getAllKeys().forEach(chunkKey -> {
+                ChunkPos pos = parseChunkKey(chunkKey);
+                if (pos == null) return;
+                chunkNames.put(new ChunkRef(dimension, pos), dimensionTag.getString(chunkKey));
+            });
+        });
+    }
+
+    private CompoundTag saveChunkSettingValues() {
+        CompoundTag root = new CompoundTag();
+        chunkSettingValues.forEach((scope, chunks) -> {
+            CompoundTag scopeTag = new CompoundTag();
+            chunks.forEach((chunk, values) -> {
+                String dimension = chunk.dimension().toString();
+                CompoundTag dimensionTag = scopeTag.getCompound(dimension);
+                CompoundTag chunkTag = new CompoundTag();
+                values.forEach((id, value) -> chunkTag.put(id, writeSettingValue(value)));
+                dimensionTag.put(chunk.key(), chunkTag);
+                scopeTag.put(dimension, dimensionTag);
+            });
+            root.put(scope.name(), scopeTag);
+        });
+        return root;
+    }
+
+    private CompoundTag saveChunkNames() {
+        CompoundTag root = new CompoundTag();
+        chunkNames.forEach((chunk, name) -> {
+            String dimension = chunk.dimension().toString();
+            CompoundTag dimensionTag = root.getCompound(dimension);
+            dimensionTag.putString(chunk.key(), name);
+            root.put(dimension, dimensionTag);
+        });
+        return root;
+    }
+
+    @Nullable
+    private static ChunkPos parseChunkKey(String key) {
+        int separator = key.indexOf(',');
+        if (separator < 0) return null;
+        try {
+            return new ChunkPos(Integer.parseInt(key.substring(0, separator)), Integer.parseInt(key.substring(separator + 1)));
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private CompoundTag savePlayerSettingOverrides() {

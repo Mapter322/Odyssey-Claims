@@ -12,6 +12,7 @@ import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.client.events.CadmusClientEvents;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
 import earth.terrarium.cadmus.api.settings.ClaimSettingsTarget;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.api.teams.TeamId;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
@@ -518,6 +519,12 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             CadmusClient.sendForceload(startPos, !forceloaded);
             clearSelection();
         }, canForceload);
+        boolean canChunkSettings = tile != null && !tile.team().isAdmin() && (teams.containsKey(tile.team()) || player.hasPermissions(2));
+        contextMenu.addItem(ConstantComponents.SETTINGS, () -> {
+            NetworkHandler.CHANNEL.sendToServer(new RequestClaimSettingsPacket(new ClaimSettingsTarget(
+                tile.team(), ClaimSettingsTarget.GLOBAL, new ChunkRef(level.dimension().location(), startPos))));
+            clearSelection();
+        }, canChunkSettings);
         contextMenu.open(mouseX, mouseY);
     }
 
@@ -888,6 +895,12 @@ return new TeamData(info.name(), ClaimCommand.getClaimsCount(level, admin, false
             } else {
                 lines.add(ownerLine(id));
             }
+        }
+
+        String chunkName = CadmusClient.CHUNK_NAMES.get(new ChunkRef(level.dimension().location(), pos));
+        if (chunkName != null && !chunkName.isBlank()) {
+            lines.add(Component.translatable("gui.cadmus.claim_map.tooltip.name",
+                Component.literal(chunkName).withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.GRAY));
         }
 
         lines.add(Component.translatable("gui.cadmus.claim_map.tooltip.forceload",

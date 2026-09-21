@@ -3,6 +3,7 @@ package earth.terrarium.cadmus.common.settings;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.claims.ClaimData;
+import earth.terrarium.cadmus.api.settings.ChunkRef;
 import earth.terrarium.cadmus.api.settings.SettingDefinition;
 import earth.terrarium.cadmus.api.settings.SettingOverride;
 import earth.terrarium.cadmus.api.settings.SettingScope;
@@ -30,6 +31,8 @@ import java.util.function.Function;
 
 public final class Settings {
 
+    public static final String CHUNK_NAME = "name";
+
     private Settings() {
     }
 
@@ -42,7 +45,7 @@ public final class Settings {
             .map(team -> {
                 Town town = TownManager.getTownAt(server, team, pos);
                 UUID townId = town == null ? null : town.id();
-                return (T) resolve(server, team, townId, definition).value();
+                return (T) resolve(server, team, townId, ChunkRef.of(level, pos), definition).value();
             })
             .orElseGet(() -> (T) resolve(server, WildernessTeamProvider.team(), null, definition).value());
     }
@@ -56,8 +59,20 @@ public final class Settings {
      * Resolves the effective value for the given owner (guild when {@code townId} is null, otherwise town).
      */
     public static SettingValue<?> resolve(MinecraftServer server, TeamId team, @Nullable UUID townId, SettingDefinition<?> definition) {
+        return resolve(server, team, townId, null, definition);
+    }
+
+    /**
+     * Resolves the effective value for the given owner, checking the chunk override first.
+     */
+    public static SettingValue<?> resolve(MinecraftServer server, TeamId team, @Nullable UUID townId, @Nullable ChunkRef chunk, SettingDefinition<?> definition) {
         SettingScope scope = scopeOf(team);
         SettingDefinition<?> scoped = scoped(scope, definition);
+        if (chunk != null) {
+            SettingValue<?> value = findValue(scoped, scope, d ->
+                CadmusSaveData.hasChunkSettingValue(server, chunk, d) ? CadmusSaveData.getChunkSettingValue(server, chunk, d) : null);
+            if (value != null) return value;
+        }
         if (townId != null) {
             SettingValue<?> value = findValue(scoped, scope, d ->
                 CadmusSaveData.hasTownSettingValue(server, townId, d) ? CadmusSaveData.getTownSettingValue(server, townId, d) : null);
@@ -70,6 +85,14 @@ public final class Settings {
      * Resolves the value inherited by the given owner from the levels below it.
      */
     public static SettingValue<?> resolveInherited(MinecraftServer server, TeamId team, @Nullable UUID townId, SettingDefinition<?> definition) {
+        return resolveInherited(server, team, townId, null, definition);
+    }
+
+    /**
+     * Resolves the value inherited by the given owner from the levels below it.
+     */
+    public static SettingValue<?> resolveInherited(MinecraftServer server, TeamId team, @Nullable UUID townId, @Nullable ChunkRef chunk, SettingDefinition<?> definition) {
+        if (chunk != null) return resolve(server, team, townId, definition);
         SettingScope scope = scopeOf(team);
         SettingDefinition<?> scoped = scoped(scope, definition);
         if (townId == null) return resolveDefaults(scoped, scope);
