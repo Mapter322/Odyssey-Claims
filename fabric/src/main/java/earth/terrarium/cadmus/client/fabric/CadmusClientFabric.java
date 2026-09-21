@@ -18,13 +18,11 @@ public class CadmusClientFabric implements ClientModInitializer {
 
     private static void registerClientCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-            dispatcher.register(ClientCommandManager.literal("cadmus")
-                .then(ClientCommandManager.literal("claimmap")
-                    .executes(context -> {
-                        Minecraft.getInstance().tell(CadmusClient::openClaimMap);
-                        return 0;
-                    })
-                )
+            dispatcher.register(ClientCommandManager.literal("claimmap")
+                .executes(context -> {
+                    Minecraft.getInstance().tell(CadmusClient::openClaimMap);
+                    return 0;
+                })
             ));
     }
 }
